@@ -162,54 +162,63 @@ export function Notifications() {
         </>
       }
     >
-      {(close) =>
-        notes.length === 0 ? (
-          <p className="text-ink-3 p-3 text-sm">
-            You're all caught up: no lineup problems and no new articles about your players in the
-            last 24 hours.
-          </p>
-        ) : (
-          <ul className="grid max-h-96 gap-0.5 overflow-y-auto">
-            {notes.map((n) => {
-              const inner = (
-                <>
-                  <span className={`mt-0.5 ${n.kind === 'fact' ? 'text-amber' : 'text-accent'}`}>
-                    {n.kind === 'fact' ? (
-                      <AlertTriangle size={16} aria-hidden />
+      {(close) => (
+        <>
+          {notes.length === 0 ? (
+            <p className="text-ink-3 p-3 text-sm">
+              You're all caught up: no lineup problems and no new articles about your players in the
+              last 24 hours.
+            </p>
+          ) : (
+            <ul className="grid max-h-96 gap-0.5 overflow-y-auto">
+              {notes.map((n) => {
+                const inner = (
+                  <>
+                    <span className={`mt-0.5 ${n.kind === 'fact' ? 'text-amber' : 'text-accent'}`}>
+                      {n.kind === 'fact' ? (
+                        <AlertTriangle size={16} aria-hidden />
+                      ) : (
+                        <Newspaper size={16} aria-hidden />
+                      )}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold">{n.text}</span>
+                      <span className="text-ink-3 block text-xs">{n.meta}</span>
+                    </span>
+                  </>
+                )
+                const cls = 'hover:bg-active flex items-start gap-2.5 rounded-xl p-2.5'
+                return (
+                  <li key={n.key}>
+                    {n.href ? (
+                      <a
+                        href={n.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={close}
+                        className={cls}
+                      >
+                        {inner}
+                      </a>
                     ) : (
-                      <Newspaper size={16} aria-hidden />
+                      <Link to={n.to!} onClick={close} className={cls}>
+                        {inner}
+                      </Link>
                     )}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm font-semibold">{n.text}</span>
-                    <span className="text-ink-3 block text-xs">{n.meta}</span>
-                  </span>
-                </>
-              )
-              const cls = 'hover:bg-active flex items-start gap-2.5 rounded-xl p-2.5'
-              return (
-                <li key={n.key}>
-                  {n.href ? (
-                    <a
-                      href={n.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={close}
-                      className={cls}
-                    >
-                      {inner}
-                    </a>
-                  ) : (
-                    <Link to={n.to!} onClick={close} className={cls}>
-                      {inner}
-                    </Link>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        )
-      }
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+          <Link
+            to="/alerts"
+            onClick={close}
+            className="text-accent border-line mt-1 block border-t px-3 pt-2.5 pb-1 text-sm font-bold hover:underline"
+          >
+            Open Alert Center
+          </Link>
+        </>
+      )}
     </Popover>
   )
 }

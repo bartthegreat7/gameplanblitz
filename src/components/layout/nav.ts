@@ -1,6 +1,7 @@
 import {
   ArrowLeftRight,
   BarChart3,
+  BellRing,
   Binoculars,
   Briefcase,
   HeartPulse,
@@ -46,6 +47,7 @@ export const isGroup = (e: NavEntry): e is NavGroup => 'children' in e
 export const NAV_TREE: NavEntry[] = [
   { to: '/', label: 'Dashboard', icon: Home, primary: true },
   { to: '/edge', label: 'The Edge', icon: Zap },
+  { to: '/alerts', label: 'Alert Center', icon: BellRing },
   { to: '/gm', label: 'Fantasy GM', icon: Briefcase },
   {
     id: 'leagues',
