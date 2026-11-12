@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+import type { KeeperRules } from '../lib/analytics/keepers'
+
 export type Theme = 'light' | 'dark'
 
 function systemTheme(): Theme {
@@ -22,6 +24,8 @@ interface AppState {
   /** saved / read news article ids */
   bookmarks: string[]
   read: string[]
+  /** keeper rules per league id (Sleeper does not store keeper costs) */
+  keeperRules: Record<string, KeeperRules>
 
   toggleTheme: () => void
   toggleSidebar: () => void
@@ -33,6 +37,7 @@ interface AppState {
   toggleBookmark: (id: string) => void
   markRead: (id: string) => void
   toggleRead: (id: string) => void
+  setKeeperRules: (leagueId: string, rules: KeeperRules | null) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -45,6 +50,7 @@ export const useAppStore = create<AppState>()(
       sidebarCollapsed: false,
       bookmarks: [],
       read: [],
+      keeperRules: {},
 
       toggleTheme: () => set({ theme: get().theme === 'light' ? 'dark' : 'light' }),
       toggleSidebar: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
@@ -57,6 +63,12 @@ export const useAppStore = create<AppState>()(
         if (!get().read.includes(id)) set({ read: [...get().read, id].slice(-500) })
       },
       toggleRead: (id) => set({ read: toggleIn(get().read, id).slice(-500) }),
+      setKeeperRules: (leagueId, rules) => {
+        const next = { ...get().keeperRules }
+        if (rules) next[leagueId] = rules
+        else delete next[leagueId]
+        set({ keeperRules: next })
+      },
     }),
     {
       name: 'gb-app',
@@ -68,6 +80,7 @@ export const useAppStore = create<AppState>()(
         sidebarCollapsed: s.sidebarCollapsed,
         bookmarks: s.bookmarks,
         read: s.read,
+        keeperRules: s.keeperRules,
       }),
     },
   ),

@@ -41,6 +41,10 @@ export interface SleeperLeague {
   scoring_settings: Record<string, number>
   roster_positions: string[]
   settings: SleeperLeagueSettings
+  /** this season's draft (unverified on a real league) */
+  draft_id?: string | null
+  /** last season's league in a keeper/dynasty chain (unverified on a real league) */
+  previous_league_id?: string | null
 }
 
 export interface SleeperRoster {
@@ -309,4 +313,22 @@ export async function getTradedPicks(leagueId: string): Promise<SleeperTradedPic
     .map((r) => r as Partial<SleeperTradedPick>)
     .filter((r): r is SleeperTradedPick => typeof r.round === "number" && typeof r.roster_id === "number" && typeof r.owner_id === "number" && r.season !== undefined)
     .map((r) => ({ ...r, season: String(r.season) }))
+}
+
+/** One pick in a Sleeper draft. Sleeper marks keepers with is_keeper. Parsed defensively. */
+export interface SleeperDraftPick {
+  round: number
+  pick_no?: number
+  player_id: string | null
+  roster_id: number | null
+  is_keeper?: boolean | null
+}
+
+export async function getDraftPicks(draftId: string): Promise<SleeperDraftPick[]> {
+  const rows = await getJson<unknown>(`${SLEEPER}/draft/${draftId}/picks`)
+  if (!Array.isArray(rows)) return []
+  return rows
+    .map((r) => r as Partial<SleeperDraftPick>)
+    .filter((r) => typeof r.round === "number")
+    .map((r) => ({ round: r.round!, pick_no: r.pick_no, player_id: r.player_id ? String(r.player_id) : null, roster_id: typeof r.roster_id === "number" ? r.roster_id : null, is_keeper: r.is_keeper ?? null }))
 }

@@ -144,6 +144,7 @@ export function resetStore(over: Partial<ReturnType<typeof useAppStore.getState>
     sidebarCollapsed: false,
     bookmarks: [],
     read: [],
+    keeperRules: {},
     theme: 'dark',
     ...over,
   })
