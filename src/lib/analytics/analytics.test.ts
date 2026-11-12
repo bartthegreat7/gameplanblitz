@@ -54,6 +54,11 @@ describe('optimalAssignment', () => {
     expect(optimalAssignment(['RB', 'RB'], players, ['x', 'y'])).toEqual(['x', 'y'])
   })
 
+  it('between equal lineups, fills the specific slot before the flex', () => {
+    expect(optimalAssignment(['FLEX', 'WR'], [{ id: 'w', pos: 'WR', value: 9 }])).toEqual([null, 'w'])
+    expect(optimalAssignment(['WR', 'FLEX'], [{ id: 'w', pos: 'WR', value: 9 }])).toEqual(['w', null])
+  })
+
   it('does not hold a player in place when moving him is worth real points', () => {
     const players = [
       { id: 'cur', pos: 'RB', value: 5 },

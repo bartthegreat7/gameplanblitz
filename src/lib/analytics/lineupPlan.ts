@@ -68,6 +68,8 @@ const INELIGIBLE = -1e9
 const EMPTY = -1e-6
 /** Tie-break bonus for leaving a player in the slot he already occupies. */
 export const STABILITY = 0.001
+/** Smaller tie-break: between equal lineups, fill specific slots (WR) before flexible ones (FLEX). */
+export const SPECIFICITY = 0.00001
 
 /**
  * Best total value over the slots, each slot filled by an eligible, distinct player (or left
@@ -84,7 +86,7 @@ export function optimalAssignment(
   const rows = slots.map((slot, i) => {
     const elig = SLOT_ELIG[slot] ?? [slot]
     const row = players.map((pl) =>
-      elig.includes(pl.pos) ? pl.value + (keep[i] === pl.id ? STABILITY : 0) : INELIGIBLE,
+      elig.includes(pl.pos) ? pl.value + (keep[i] === pl.id ? STABILITY : 0) + SPECIFICITY / elig.length : INELIGIBLE,
     )
     for (let k = 0; k < S; k++) row.push(EMPTY)
     return row.map((x) => -x)
