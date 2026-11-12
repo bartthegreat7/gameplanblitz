@@ -58,9 +58,9 @@ describe('dashboard', () => {
     )
   })
 
-  it('finds the free-agent upgrade in The Edge', async () => {
+  it('finds the free-agent upgrade in the Free-Agent Edge', async () => {
     renderApp()
-    const card = within(await openTool('The Edge')).getByRole('region', { name: 'The Edge' })
+    const card = within(await openTool('Free-Agent Edge')).getByRole('region', { name: 'Free-Agent Edge' })
     expect(within(card).getByText('Upgrades available')).toBeInTheDocument()
     expect(within(card).getByText('+4.0')).toBeInTheDocument() // 12 - 8
   })
@@ -149,7 +149,7 @@ describe('degraded data', () => {
       await screen.findByText(/hasn't published Week 5 projections/, {}, { timeout: 15_000 }),
     ).toBeInTheDocument()
     // and the tools that depend on projections say so too
-    const card = within(await openTool('The Edge')).getByRole('region', { name: 'The Edge' })
+    const card = within(await openTool('Free-Agent Edge')).getByRole('region', { name: 'Free-Agent Edge' })
     expect(within(card).getByText(/hasn't published Week 5 projections/)).toBeInTheDocument()
   })
 

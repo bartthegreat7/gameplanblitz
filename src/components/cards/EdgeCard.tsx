@@ -14,13 +14,13 @@ export function EdgeCard({ data }: CardProps) {
 
   if (!e)
     return (
-      <Card id="edge" title="The Edge" icon={TrendingUp} tone="orange">
+      <Card id="edge" title="Free-Agent Edge" icon={TrendingUp} tone="orange">
         <EmptyState>No lineup to compare against waivers yet.</EmptyState>
       </Card>
     )
 
   return (
-    <Card id="edge" title="The Edge" context={`Your lineup vs waivers · Week ${week}`} icon={TrendingUp} tone="orange">
+    <Card id="edge" title="Free-Agent Edge" context={`Your lineup vs waivers · Week ${week}`} icon={TrendingUp} tone="orange">
       <ProjNotice data={data} />
       <div className="border-coral/30 bg-panel flex items-start justify-between gap-4 rounded-2xl border p-5">
         <div>

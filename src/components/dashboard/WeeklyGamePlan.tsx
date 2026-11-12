@@ -3,11 +3,14 @@ import {
   Briefcase,
   Check,
   ChevronRight,
+  CloudSun,
+  HeartPulse,
   Lock,
   Medal,
   Newspaper,
   Plus,
   Route,
+  TrendingUp,
   type LucideIcon,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -18,6 +21,9 @@ import { ICON_TONE, type IconTone } from './styles'
 
 const AREA: Record<Area, { icon: LucideIcon; tone: IconTone; label: string }> = {
   lineup: { icon: Check, tone: 'good', label: 'Lineup' },
+  injury: { icon: HeartPulse, tone: 'coral', label: 'Injury' },
+  weather: { icon: CloudSun, tone: 'amber', label: 'Weather' },
+  breakout: { icon: TrendingUp, tone: 'good', label: 'Breakout' },
   waivers: { icon: Plus, tone: 'purple', label: 'Waivers' },
   trades: { icon: ArrowLeftRight, tone: 'amber', label: 'Trade' },
   news: { icon: Newspaper, tone: 'accent', label: 'News' },

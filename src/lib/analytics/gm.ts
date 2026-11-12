@@ -11,7 +11,16 @@ import type { WaiverReport } from './waivers'
 /* The Fantasy GM: a rules-based brief assembled from the app's own tools. It adds no new numbers:
    every action points to the tool (and evidence) it came from. No AI is involved. */
 
-export type Area = 'lineup' | 'waivers' | 'trades' | 'news' | 'playoffs' | 'keepers'
+export type Area =
+  | 'lineup'
+  | 'injury'
+  | 'weather'
+  | 'waivers'
+  | 'breakout'
+  | 'trades'
+  | 'news'
+  | 'playoffs'
+  | 'keepers'
 /** 1 = do now (a fact needs fixing), 2 = this week, 3 = worth considering */
 export type Priority = 1 | 2 | 3
 
@@ -24,6 +33,10 @@ export interface GmAction {
   /** the size of the effect, in the tool's own units */
   impact: string
   confidence: Confidence | null
+  /** what could make this wrong, in plain words (when not covered by `confidence`) */
+  uncertainty?: string
+  /** when it has to be done by */
+  deadline?: string
   sources: string[]
   /** route of the tool behind it */
   to: string
@@ -55,6 +68,8 @@ export interface GmInput {
   /** recent articles about my players, newest first */
   myNews: Article[]
   keepers: KeeperCandidate[] | null
+  /** extra actions from other signals (injury watch, weather, breakouts, injury openings) */
+  extras?: GmAction[]
   /** show keeper notes (keeper/dynasty league) */
   keeperLeague: boolean
 }
@@ -64,7 +79,8 @@ const NEWS_ITEMS = 2
 /** Projected-only lineup changes smaller than this are noise, not an action (same floor as Game Day swaps). */
 export const MIN_LINEUP_GAIN = 0.5
 
-export function buildBrief(i: GmInput): GmBrief {
+/** `max` caps the list (the dashboard and GM page show the top 8; The Edge shows everything). */
+export function buildBrief(i: GmInput, max = MAX_ACTIONS): GmBrief {
   const actions: GmAction[] = []
 
   // ---- lineup: facts first (Out, bye, empty), then projected upgrades, largest gain first
@@ -86,7 +102,10 @@ export function buildBrief(i: GmInput): GmBrief {
       detail: s.reasons[0] ?? '',
       impact: `${signed(s.delta)} projected pts`,
       confidence: s.confidence,
-      sources: [`Sleeper projections${i.lineup?.provider ? ` (${i.lineup.provider})` : ''}`, 'Lineup Optimizer'],
+      sources: [
+        `Sleeper projections${i.lineup?.provider ? ` (${i.lineup.provider})` : ''}`,
+        'Lineup Optimizer',
+      ],
       to: '/lineup',
     })
   }
@@ -129,7 +148,11 @@ export function buildBrief(i: GmInput): GmBrief {
       priority: 2,
       title: `Read: ${a.title}`,
       detail: a.excerpt ?? '',
-      impact: (a.players ?? []).map((p) => p.name).slice(0, 3).join(', ') || 'Your roster',
+      impact:
+        (a.players ?? [])
+          .map((p) => p.name)
+          .slice(0, 3)
+          .join(', ') || 'Your roster',
       confidence: null,
       sources: [a.publisher ?? 'Publisher'],
       to: '/news',
@@ -164,7 +187,18 @@ export function buildBrief(i: GmInput): GmBrief {
       to: '/keepers',
     })
 
-  const order: Area[] = ['lineup', 'news', 'waivers', 'trades', 'playoffs', 'keepers']
+  actions.push(...(i.extras ?? []))
+  const order: Area[] = [
+    'lineup',
+    'injury',
+    'news',
+    'waivers',
+    'breakout',
+    'weather',
+    'trades',
+    'playoffs',
+    'keepers',
+  ]
   actions.sort((a, b) => a.priority - b.priority || order.indexOf(a.area) - order.indexOf(b.area))
 
   return {
@@ -177,6 +211,6 @@ export function buildBrief(i: GmInput): GmBrief {
       playoffPct: i.playoff?.playoffPct ?? null,
       championPct: i.playoff?.championPct ?? null,
     },
-    actions: actions.slice(0, MAX_ACTIONS),
+    actions: actions.slice(0, max),
   }
 }

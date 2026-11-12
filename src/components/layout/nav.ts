@@ -18,6 +18,7 @@ import {
   Trophy,
   TrendingUp,
   Users,
+  Zap,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -44,6 +45,7 @@ export const isGroup = (e: NavEntry): e is NavGroup => 'children' in e
 /** Sidebar order. "My Leagues" also lists the user's Sleeper leagues (rendered by the sidebar). */
 export const NAV_TREE: NavEntry[] = [
   { to: '/', label: 'Dashboard', icon: Home, primary: true },
+  { to: '/edge', label: 'The Edge', icon: Zap },
   { to: '/gm', label: 'Fantasy GM', icon: Briefcase },
   {
     id: 'leagues',

@@ -80,7 +80,7 @@ export function QuickAccess({ data }: { data: Ready }) {
       },
       {
         id: 'edge',
-        label: 'The Edge',
+        label: 'Free-Agent Edge',
         summary: e
           ? e.upgrades.length
             ? `${n(e.upgrades.length, 'free-agent upgrade')} · ${n(e.busts.length, 'bust risk')}`

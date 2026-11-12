@@ -18,6 +18,7 @@ const Breakouts = lazy(() => import('./routes/Breakouts'))
 const Injuries = lazy(() => import('./routes/Injuries'))
 const StartSit = lazy(() => import('./routes/StartSit'))
 const Market = lazy(() => import('./routes/Market'))
+const Edge = lazy(() => import('./routes/Edge'))
 const Lineup = lazy(() => import('./routes/Lineup'))
 const Waivers = lazy(() => import('./routes/Waivers'))
 const Trades = lazy(() => import('./routes/Trades'))
@@ -51,6 +52,7 @@ export default function App({ client = defaultClient }: { client?: QueryClient }
               <Route path="injuries" element={<Injuries />} />
               <Route path="startsit" element={<StartSit />} />
               <Route path="market" element={<Market />} />
+              <Route path="edge" element={<Edge />} />
               <Route path="lineup" element={<Lineup />} />
               <Route path="waivers" element={<Waivers />} />
               <Route path="trades" element={<Trades />} />

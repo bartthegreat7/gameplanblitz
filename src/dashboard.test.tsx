@@ -189,13 +189,13 @@ describe('dashboard', () => {
     expect(within(qa).getByRole('button', { name: 'Waiver Bids' })).toHaveAccessibleDescription(
       '$100 of $100 left · bid sheet',
     )
-    expect(within(qa).getByRole('button', { name: 'The Edge' })).toHaveAccessibleDescription(
+    expect(within(qa).getByRole('button', { name: 'Free-Agent Edge' })).toHaveAccessibleDescription(
       /1 free-agent upgrade/,
     )
     const tools: [string, string][] = [
       ['Position Battles', 'Game Day'],
       ['Lineup Check', 'Lineup Check'],
-      ['The Edge', 'The Edge'],
+      ['Free-Agent Edge', 'Free-Agent Edge'],
       ['Trade Machine', 'Trade Machine'],
       ['Waiver Wire', 'Waiver Wire'],
       ['Waiver Bids', 'Waiver Bids'],

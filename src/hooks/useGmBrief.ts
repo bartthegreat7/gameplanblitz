@@ -1,13 +1,30 @@
+import { useQueries } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { buildBrief } from '../lib/analytics/gm'
+import {
+  breakoutPickups,
+  injuryOpenings,
+  injuryWatch,
+  weatherRisk,
+} from '../lib/analytics/edgeSignals'
+import { buildBrief, type GmAction } from '../lib/analytics/gm'
+import { breakouts } from '../lib/analytics/opportunity'
 import { defaultRules, myKeepers } from '../lib/analytics/keepers'
 import { analyzeLineup, mostCommon } from '../lib/analytics/lineupAnalysis'
 import { DEFAULT_SEED, DEFAULT_SIMS, prepareSeason, simulate } from '../lib/analytics/playoffs'
 import { headToHead } from '../lib/analytics/scouting'
 import { findTrades } from '../lib/analytics/trades'
 import { analyzeWaivers } from '../lib/analytics/waivers'
-import { findOpponent } from '../lib/insights'
+import { findMyMatchup, findOpponent } from '../lib/insights'
+import { STADIUMS } from '../lib/weather/stadiums'
+import {
+  gameFor,
+  getForecast,
+  risksOf,
+  summarize,
+  todayIn,
+  weatherPlan,
+} from '../lib/weather/weather'
 import { NewsNotPublished, playerIdsOf } from '../lib/news'
 import { mentioning, tsOf } from '../lib/newsFeed'
 import { useAppStore } from '../store/app'
@@ -17,6 +34,7 @@ import { useLeagueMatchups } from './useLeagueMatchups'
 import { useLineupInputs } from './useLineupInputs'
 import { useNews } from './useNews'
 import { useTradeInputs } from './useTradeInputs'
+import { useUsageBook } from './useUsageBook'
 import { useWaiverInputs } from './useWaiverInputs'
 
 /** Roster news older than this isn't a "this week" action. */
@@ -158,22 +176,91 @@ export function useGmBrief(data: Ready) {
     [keeperLeague, keeperIn.dynasty, keeperIn.history, keeperIn.historyLoading, m, rules, teams],
   )
 
-  const brief = useMemo(
-    () =>
-      buildBrief({
-        week,
-        opponent: opp ? m.teamName(opp.roster_id) : null,
-        lineup,
-        waivers,
-        trades,
-        h2h,
-        playoff,
-        myNews,
-        keepers,
-        keeperLeague,
-      }),
-    [week, opp, m, lineup, waivers, trades, h2h, playoff, myNews, keepers, keeperLeague],
+  // ---- The Edge signals: injury watch, weather risk, breakout pickups, injury openings
+  const { book } = useUsageBook(data)
+  const schedule = lineupIn.schedule
+  const starters = useMemo(
+    () => (findMyMatchup(matchups, m.myRosterId)?.starters ?? []).filter(Boolean),
+    [matchups, m.myRosterId],
   )
+  const [today] = useState(() => new Date())
+  const weatherPlans = starters
+    .filter((id) => id !== '0')
+    .map((id) => {
+      const g = gameFor(schedule, m.team(id), week)
+      const plan = weatherPlan(
+        g,
+        g ? todayIn(STADIUMS[g.home]?.tz ?? 'America/New_York', today) : '',
+      )
+      return { id, g, plan }
+    })
+  const stadiums = [
+    ...new Map(
+      weatherPlans
+        .filter((w) => w.plan.needsForecast && w.plan.stadium)
+        .map((w) => [`${w.plan.stadium!.lat},${w.plan.stadium!.lon}`, w.plan.stadium!]),
+    ).values(),
+  ]
+  const forecastQs = useQueries({
+    queries: stadiums.map((st) => ({
+      queryKey: ['forecast', st.lat, st.lon],
+      queryFn: () => getForecast(st),
+      staleTime: 60 * 60_000,
+      retry: 1,
+    })),
+  })
+  const riskStamp = forecastQs.map((q) => q.dataUpdatedAt).join(',')
+  const starterKey = starters.join()
+  const risky = useMemo(
+    () =>
+      weatherPlans.flatMap((w) => {
+        if (!w.g || !w.plan.needsForecast || !w.plan.stadium) return []
+        const i = stadiums.findIndex(
+          (st) => st.lat === w.plan.stadium!.lat && st.lon === w.plan.stadium!.lon,
+        )
+        const fc = forecastQs[i]?.data
+        const f = fc ? summarize(fc.hourly, w.g.date) : null
+        const risks = f ? risksOf(f) : []
+        return risks.length ? [{ id: w.id, risks, matchup: `${w.g.away} @ ${w.g.home}` }] : []
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [riskStamp, starterKey, schedule, week],
+  )
+  const extras = useMemo<GmAction[]>(() => {
+    const rostered = m.allRostered()
+    return [
+      ...injuryWatch(
+        m,
+        findMyMatchup(matchups, m.myRosterId)?.starters ?? [],
+        m.startSlots,
+        schedule,
+        week,
+      ),
+      ...weatherRisk(m, risky, schedule, week),
+      ...breakoutPickups(m, breakouts(book, m.pos), rostered),
+      ...injuryOpenings(m, book, rostered),
+    ]
+  }, [m, matchups, schedule, week, risky, book])
+
+  const briefInput = useMemo(
+    () => ({
+      week,
+      opponent: opp ? m.teamName(opp.roster_id) : null,
+      lineup,
+      waivers,
+      trades,
+      h2h,
+      playoff,
+      myNews,
+      keepers,
+      keeperLeague,
+      extras,
+    }),
+    [week, opp, m, lineup, waivers, trades, h2h, playoff, myNews, keepers, keeperLeague, extras],
+  )
+  const brief = useMemo(() => buildBrief(briefInput), [briefInput])
+  /** every action, uncapped, for The Edge */
+  const allActions = useMemo(() => buildBrief(briefInput, Infinity).actions, [briefInput])
 
   const pending = [
     !waiversReady && 'waivers',
@@ -193,6 +280,7 @@ export function useGmBrief(data: Ready) {
 
   return {
     brief,
+    allActions,
     lineup,
     waivers,
     waiversLoading: !waiversReady,
