@@ -7,6 +7,7 @@ import { ProjNotice } from '../components/cards/shared'
 import { LeagueGate } from '../components/LeagueGate'
 import { PlayerAvatar } from '../components/ui/Avatar'
 import { WeatherIndicator } from '../components/weather/WeatherIndicator'
+import { AvailabilityFacts } from '../components/opportunity/parts'
 import { Pill, PosTag } from '../components/ui/Pill'
 import { EmptyState, ErrorState, ListSkeleton } from '../components/ui/states'
 import { ProjectionBreakdown } from '../components/projection/ProjectionBreakdown'
@@ -27,14 +28,20 @@ function Detail({ data, id }: { data: Ready; id: string }) {
 
   // full-name matches from the aggregator (legacy responses fall back to name search for this player)
   const items = useMemo(
-    () => newestFirst((news.data?.articles ?? []).filter((a) => playerIdsOf(a, [id], model.players).includes(id))).slice(0, 10),
+    () =>
+      newestFirst(
+        (news.data?.articles ?? []).filter((a) => playerIdsOf(a, [id], model.players).includes(id)),
+      ).slice(0, 10),
     [news.data, id, model.players],
   )
 
   if (!p)
     return (
       <div className="mx-auto max-w-md">
-        <ErrorState title="Player not found" message={`No player with id “${id}” in Sleeper's player list.`} />
+        <ErrorState
+          title="Player not found"
+          message={`No player with id “${id}” in Sleeper's player list.`}
+        />
       </div>
     )
 
@@ -55,7 +62,10 @@ function Detail({ data, id }: { data: Ready; id: string }) {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link to="/players" className="text-ink-2 hover:text-ink mb-4 inline-flex items-center gap-1.5 text-sm font-bold">
+      <Link
+        to="/players"
+        className="text-ink-2 hover:text-ink mb-4 inline-flex items-center gap-1.5 text-sm font-bold"
+      >
         <ArrowLeft size={16} aria-hidden /> Players
       </Link>
       <ProjNotice data={data} />
@@ -69,12 +79,16 @@ function Detail({ data, id }: { data: Ready; id: string }) {
               <span>{model.team(id) || 'Free agent'}</span>
               <WeatherIndicator team={model.team(id)} />
               {inj && <Pill tone={OUT_INJ.has(inj) ? 'warn' : 'caution'}>{inj}</Pill>}
-              <Pill tone={owner ? 'info' : 'prio'}>{owner ? `On ${model.teamName(owner.roster_id)}` : 'Free agent in your league'}</Pill>
+              <Pill tone={owner ? 'info' : 'prio'}>
+                {owner ? `On ${model.teamName(owner.roster_id)}` : 'Free agent in your league'}
+              </Pill>
             </div>
           </div>
         </div>
         {(p.injury_body_part || p.injury_notes) && (
-          <p className="text-ink-2 mt-3 text-sm">{[p.injury_body_part, p.injury_notes].filter(Boolean).join(' — ')}</p>
+          <p className="text-ink-2 mt-3 text-sm">
+            {[p.injury_body_part, p.injury_notes].filter(Boolean).join(' — ')}
+          </p>
         )}
         <dl className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
           {tiles.map(([k, v]) => (
@@ -85,6 +99,14 @@ function Detail({ data, id }: { data: Ready; id: string }) {
           ))}
         </dl>
       </div>
+
+      <section aria-labelledby="pavail" className="border-line bg-card mt-5 rounded-3xl border p-5">
+        <h2 id="pavail" className="mb-3 text-lg font-extrabold">
+          Availability
+        </h2>
+
+        <AvailabilityFacts m={model} id={id} />
+      </section>
 
       <ProjectionBreakdown
         p={engine.projectionFor(id)}
@@ -98,7 +120,10 @@ function Detail({ data, id }: { data: Ready; id: string }) {
         <h2 id="pnews" className="mb-2 text-lg font-extrabold">
           Latest expert analysis
         </h2>
-        <p className="text-ink-3 mb-3 text-sm">Articles from connected publishers that name {model.name(id)}. Coverage, not a recommendation.</p>
+        <p className="text-ink-3 mb-3 text-sm">
+          Articles from connected publishers that name {model.name(id)}. Coverage, not a
+          recommendation.
+        </p>
         {news.isPending ? (
           <ListSkeleton rows={3} />
         ) : news.isError ? (
@@ -108,7 +133,9 @@ function Detail({ data, id }: { data: Ready; id: string }) {
             <ErrorState title="Couldn't load news" onRetry={() => void news.refetch()} />
           )
         ) : items.length === 0 ? (
-          <EmptyState>No recent articles from connected publishers mention {model.name(id)}.</EmptyState>
+          <EmptyState>
+            No recent articles from connected publishers mention {model.name(id)}.
+          </EmptyState>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {items.map((a) => (

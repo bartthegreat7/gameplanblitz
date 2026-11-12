@@ -3,6 +3,7 @@ import {
   BarChart3,
   Binoculars,
   Briefcase,
+  HeartPulse,
   Home,
   ListChecks,
   Lock,
@@ -13,6 +14,7 @@ import {
   Settings,
   Target,
   Trophy,
+  TrendingUp,
   Users,
   type LucideIcon,
 } from 'lucide-react'
@@ -57,6 +59,8 @@ export const NAV_TREE: NavEntry[] = [
     label: 'Analytics',
     icon: BarChart3,
     children: [
+      { to: '/breakouts', label: 'Breakout Radar', icon: TrendingUp },
+      { to: '/injuries', label: 'Injury Center', icon: HeartPulse },
       { to: '/scouting', label: 'Opponent Scouting', icon: Binoculars },
       { to: '/playoffs', label: 'Playoff Simulator', icon: Medal },
       { to: '/accuracy', label: 'Projection Accuracy', icon: Target },
