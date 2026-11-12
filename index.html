@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GameplanBlitz</title>
+<script>
+  /* set theme before paint: saved choice, else the system preference */
+  (function(){
+    var t=null; try{ t=localStorage.getItem("huddle.theme"); }catch(e){}
+    if(t!=="light" && t!=="dark") t = (window.matchMedia && matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -29,17 +37,58 @@
     --purple:#b79cff;
     --good:#56d9b3;
     --bad:#ff6b6b;
+    --panel:#0f1728; --panel-2:#141d31; --panel-3:#1a2234;
+    --av-bg:#182238; --av-line:#2a3a58; --track:#26324d; --line-hover:#33425f;
+    --dot-off:#44506b; --glow:#13203c; --hair:rgba(255,255,255,.05);
+    --tint-edge-a:#201a14; --tint-edge-b:#15110d; --tint-edge-line:#4a3524;
+    --tint-lineup-a:#1d1810; --tint-lineup-b:#15120b; --tint-lineup-line:#43371f;
+    --tint-bids-a:#1e180c; --tint-bids-b:#141007; --tint-bids-line:#4b3b1a;
+    --edge-top-bg:#1a140d; --budget-bg:#1b150a;
+    --t-warn:#ffb0b0; --t-q:#f2d79a; --t-news:#a9cbff; --t-blue:#8fbcff; --t-ok:#bdeedd;
+    --t-red:#ff8f8f; --t-green:#7fe0c0; --t-purple:#c7a0ff; --t-gray:#9aa7bd; --t-orange:#f6a35f;
     --radius:20px;
     --radius-sm:14px;
     --safe-t: env(safe-area-inset-top, 0px);
     --safe-b: env(safe-area-inset-bottom, 0px);
   }
+  :root[data-theme="light"]{
+    color-scheme: light;
+    --bg:#f3f6fb; --bg-2:#e9eef7; --card:#ffffff; --card-2:#f8fafd; --card-line:#d7dfec;
+    --ink:#0f1a2e; --ink-2:#45546f; --ink-3:#6b7a94;
+    --mint:#0d9488; --mint-deep:#0f9f8f; --mint-ink:#ffffff;
+    --amber:#a16207; --amber-warm:#b45309; --coral:#e5484d; --coral-soft:#d6455d;
+    --blue:#2563eb; --purple:#7c3aed; --good:#0f8f6b; --bad:#d93a3a;
+    --panel:#f1f5fb; --panel-2:#eaf0f8; --panel-3:#e6ecf5;
+    --av-bg:#e3eaf5; --av-line:#c5d0e3; --track:#d9e1ee; --line-hover:#b3c0d6;
+    --dot-off:#b8c2d4; --glow:#dbe7fb; --hair:rgba(15,26,46,.08);
+    --tint-edge-a:#fff6ee; --tint-edge-b:#fff1e3; --tint-edge-line:#f0cfae;
+    --tint-lineup-a:#fffaee; --tint-lineup-b:#fff5dd; --tint-lineup-line:#ecd9a4;
+    --tint-bids-a:#fff7e0; --tint-bids-b:#fff2cf; --tint-bids-line:#e8d08f;
+    --edge-top-bg:#fff3e6; --budget-bg:#fff6e0;
+    --t-warn:#b42318; --t-q:#8a5a00; --t-news:#1d4ed8; --t-blue:#2563eb; --t-ok:#0b6b4e;
+    --t-red:#dc2626; --t-green:#0f8f6b; --t-purple:#7c3aed; --t-gray:#5b6980; --t-orange:#c2570c;
+  }
+  :root[data-theme="light"] .card{box-shadow:0 10px 24px -18px rgba(15,26,46,.35)}
+  .sec-ic{color:var(--ink-2)}
+  .sec-ic.mint{color:var(--mint)} .sec-ic.edge{color:var(--t-orange)} .sec-ic.blue{color:var(--blue)}
+  .sec-ic.green{color:var(--good)} .sec-ic.gold{color:var(--amber)}
+  .theme-ic{display:none} :root[data-theme="light"] .theme-ic.moon{display:block} :root:not([data-theme="light"]) .theme-ic.sun{display:block}
+
+  /* News */
+  .news-item{display:flex; gap:12px; padding:14px 0; border-top:1px solid var(--hair); text-decoration:none; color:inherit}
+  .news-item:first-of-type{border-top:0}
+  .news-item .nt{font-weight:700; font-size:16px; line-height:1.3}
+  .news-item:hover .nt{color:var(--mint)}
+  .news-item .nm{color:var(--ink-3); font-size:13px; margin-top:4px; display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+  .news-item .nx{color:var(--ink-2); font-size:14px; margin-top:4px}
+  .news-item img{width:72px; height:72px; border-radius:12px; object-fit:cover; flex:none; background:var(--av-bg)}
+  .news-item[hidden]{display:none}
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%; scroll-padding-top: var(--safe-t);}
   body{
     margin:0;
     background:
-      radial-gradient(1200px 520px at 50% -140px, #13203c 0%, rgba(19,32,60,0) 62%),
+      radial-gradient(1200px 520px at 50% -140px, var(--glow) 0%, rgba(19,32,60,0) 62%),
       var(--bg);
     color:var(--ink);
     font-family:"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
@@ -49,6 +98,14 @@
     line-height:1.45;
   }
   .wrap{max-width:720px; margin:0 auto; padding:14px 16px 40px;}
+  .card-head:focus-visible, .fix:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible{outline:2px solid var(--mint); outline-offset:2px}
+  /* Desktop: widen and flow cards into two columns */
+  #app.dash{display:block}
+  @media (min-width:1000px){
+    .wrap{max-width:1180px}
+    #app.dash{columns:2; column-gap:20px}
+    #app.dash .card{break-inside:avoid; margin-top:0; margin-bottom:20px}
+  }
 
   /* ---------- Header ---------- */
   header.app{
@@ -67,14 +124,14 @@
   .brand .sub{color:var(--ink-3); font-size:14px; font-weight:500}
   .hdr-actions{margin-left:auto; display:flex; align-items:center; gap:10px}
   .live-dot{width:10px; height:10px; border-radius:50%; background:var(--mint-deep); box-shadow:0 0 10px 1px rgba(45,212,191,.7)}
-  .live-dot.off{background:#44506b; box-shadow:none}
+  .live-dot.off{background:var(--dot-off); box-shadow:none}
   .icon-btn{
     width:44px; height:44px; border-radius:50%; flex:none;
     border:1px solid var(--card-line); background:var(--card);
     color:var(--ink-2); display:grid; place-items:center; cursor:pointer;
     font-size:19px; transition:border-color .15s, color .15s, background .15s;
   }
-  .icon-btn:hover{color:var(--ink); border-color:#33425f}
+  .icon-btn:hover{color:var(--ink); border-color:var(--line-hover)}
   .icon-btn:active{transform:scale(.95)}
   .icon-btn svg{width:20px; height:20px}
 
@@ -100,9 +157,9 @@
     margin-top:18px; overflow:hidden;
     box-shadow:0 20px 40px -32px rgba(0,0,0,.9);
   }
-  .card.tint-edge{border-color:#4a3524; background:linear-gradient(180deg,#201a14,#15110d)}
-  .card.tint-lineup{border-color:#43371f; background:linear-gradient(180deg,#1d1810,#15120b)}
-  .card.tint-bids{border-color:#4b3b1a; background:linear-gradient(180deg,#1e180c,#141007)}
+  .card.tint-edge{border-color:var(--tint-edge-line); background:linear-gradient(180deg,var(--tint-edge-a),var(--tint-edge-b))}
+  .card.tint-lineup{border-color:var(--tint-lineup-line); background:linear-gradient(180deg,var(--tint-lineup-a),var(--tint-lineup-b))}
+  .card.tint-bids{border-color:var(--tint-bids-line); background:linear-gradient(180deg,var(--tint-bids-a),var(--tint-bids-b))}
   .card-head{
     display:flex; align-items:center; gap:14px; padding:20px 20px 4px; cursor:pointer;
   }
@@ -127,28 +184,28 @@
   /* ---------- Game Day ---------- */
   .matchup{display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center}
   .team{
-    background:#0f1728; border:1px solid var(--card-line); border-radius:18px; padding:20px 14px; text-align:center;
+    background:var(--panel); border:1px solid var(--card-line); border-radius:18px; padding:20px 14px; text-align:center;
   }
   .team.me{border-color:rgba(94,234,212,.35)}
-  .team .av{width:74px; height:74px; border-radius:50%; margin:0 auto 12px; background:#182238; border:2px solid #2a3a58; display:grid; place-items:center; color:var(--ink-3); font-weight:800; font-size:24px; overflow:hidden}
+  .team .av{width:74px; height:74px; border-radius:50%; margin:0 auto 12px; background:var(--av-bg); border:2px solid var(--av-line); display:grid; place-items:center; color:var(--ink-3); font-weight:800; font-size:24px; overflow:hidden}
   .team.me .av{border-color:var(--mint)}
   .team .name{font-weight:700; font-size:19px; margin-bottom:6px}
   .team .pts{font-size:46px; font-weight:800; letter-spacing:-1.5px; line-height:1}
   .team.me .pts{color:var(--mint)}
   .team .plabel{color:var(--ink-3); font-size:14px; margin-top:4px}
   .vs{color:var(--ink-3); font-weight:800; font-size:18px}
-  .winbar{height:12px; border-radius:999px; background:#26324d; margin:20px 0 8px; overflow:hidden}
-  .winbar>span{display:block; height:100%; background:linear-gradient(90deg,#2dd4bf,#5eead4); border-radius:999px}
+  .winbar{height:12px; border-radius:999px; background:var(--track); margin:20px 0 8px; overflow:hidden}
+  .winbar>span{display:block; height:100%; background:linear-gradient(90deg,var(--mint-deep),var(--mint)); border-radius:999px}
   .winrow{display:flex; justify-content:space-between; color:var(--ink-3); font-size:15px}
   .winrow b{color:var(--ink)}
   .btn-ghost{
     display:block; width:100%; margin-top:16px; padding:15px; border-radius:14px; text-align:center;
-    background:#1a2234; border:1px solid var(--card-line); color:var(--ink); font-weight:700; font-size:16px; cursor:pointer;
+    background:var(--panel-3); border:1px solid var(--card-line); color:var(--ink); font-weight:700; font-size:16px; cursor:pointer;
   }
-  .btn-ghost:hover{border-color:#36466a}
+  .btn-ghost:hover{border-color:var(--line-hover)}
   .battles{margin-top:14px; display:none; flex-direction:column; gap:8px}
   .battles.open{display:flex}
-  .battle{display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; background:#0f1728; border:1px solid var(--card-line); border-radius:12px; padding:10px 12px; font-size:14.5px}
+  .battle{display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; background:var(--panel); border:1px solid var(--card-line); border-radius:12px; padding:10px 12px; font-size:14.5px}
   .battle .slot{color:var(--ink-3); font-weight:700; text-align:center; font-size:13px}
   .battle .pl{min-width:0; overflow:hidden}
   .battle .pl .nm{font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
@@ -158,40 +215,40 @@
 
   /* ---------- Generic rows / pills ---------- */
   .pill{display:inline-block; padding:5px 11px; border-radius:999px; font-size:13.5px; font-weight:700; line-height:1.2}
-  .pill.warn{background:rgba(255,107,107,.16); color:#ffb0b0}
-  .pill.q{background:rgba(242,198,109,.16); color:#f2d79a}
-  .pill.news{background:rgba(106,168,255,.16); color:#a9cbff}
-  .pill.pos{background:rgba(106,168,255,.14); color:#8fbcff; font-weight:800; letter-spacing:.3px}
+  .pill.warn{background:rgba(255,107,107,.16); color:var(--t-warn)}
+  .pill.q{background:rgba(242,198,109,.16); color:var(--t-q)}
+  .pill.news{background:rgba(106,168,255,.16); color:var(--t-news)}
+  .pill.pos{background:rgba(106,168,255,.14); color:var(--t-blue); font-weight:800; letter-spacing:.3px}
   .pill.prio{background:rgba(94,234,212,.12); color:var(--mint); border:1px solid rgba(94,234,212,.4)}
   .banner{border:1px solid rgba(86,217,179,.3); background:rgba(86,217,179,.07); border-radius:14px; padding:16px; color:var(--ink-2); font-size:16px; margin-bottom:6px}
-  .banner.ok{color:#bdeedd}
-  .checkline{display:flex; gap:10px; align-items:center; border:1px solid rgba(86,217,179,.25); background:rgba(86,217,179,.06); border-radius:12px; padding:12px 14px; color:#bdeedd; font-size:14.5px; margin-top:14px}
+  .banner.ok{color:var(--t-ok)}
+  .checkline{display:flex; gap:10px; align-items:center; border:1px solid rgba(86,217,179,.25); background:rgba(86,217,179,.06); border-radius:12px; padding:12px 14px; color:var(--t-ok); font-size:14.5px; margin-top:14px}
 
-  .fix{display:flex; gap:14px; align-items:center; border:1px solid rgba(86,217,179,.28); border-radius:16px; padding:16px; background:#0f1728; cursor:pointer}
+  .fix{display:flex; gap:14px; align-items:center; border:1px solid rgba(86,217,179,.28); border-radius:16px; padding:16px; background:var(--panel); cursor:pointer}
   .fix .badge{width:60px; height:60px; border-radius:50%; flex:none; display:grid; place-items:center; font-size:28px; font-weight:800}
-  .fix.alert .badge{background:rgba(255,107,107,.14); color:#ff8f8f; border:1px solid rgba(255,107,107,.4)}
+  .fix.alert .badge{background:rgba(255,107,107,.14); color:var(--t-red); border:1px solid rgba(255,107,107,.4)}
   .fix.clear .badge{background:rgba(86,217,179,.14); color:var(--good); border:1px solid rgba(86,217,179,.4)}
   .fix .big{font-size:30px; font-weight:800; line-height:1}
   .fix .cap{color:var(--ink-2); font-size:15px}
   .fix .arrow{margin-left:auto; color:var(--good); font-size:22px}
   .fixlist{margin-top:12px; display:none; flex-direction:column; gap:10px}
   .fixlist.open{display:flex}
-  .fixitem{border:1px solid var(--card-line); border-radius:14px; padding:14px; background:#0f1728}
+  .fixitem{border:1px solid var(--card-line); border-radius:14px; padding:14px; background:var(--panel)}
   .fixitem .t{font-weight:700; margin-bottom:4px}
   .fixitem .d{color:var(--ink-2); font-size:14.5px}
 
   /* Edge big number */
-  .edge-top{display:flex; justify-content:space-between; gap:16px; align-items:flex-start; border:1px solid #4a3524; border-radius:16px; padding:20px; background:#1a140d}
-  .edge-top .n{font-size:48px; font-weight:800; color:#f6a35f; line-height:.9; letter-spacing:-1px}
-  .edge-top .n.zero{color:#f2c66d}
+  .edge-top{display:flex; justify-content:space-between; gap:16px; align-items:flex-start; border:1px solid var(--tint-edge-line); border-radius:16px; padding:20px; background:var(--edge-top-bg)}
+  .edge-top .n{font-size:48px; font-weight:800; color:var(--t-orange); line-height:.9; letter-spacing:-1px}
+  .edge-top .n.zero{color:var(--amber)}
   .edge-top .lab{color:var(--ink-2); font-size:15.5px; max-width:230px; margin-top:8px}
   .edge-top .meta{color:var(--ink-2); font-size:15px; text-align:right; min-width:92px}
   .subhead{color:var(--coral-soft); font-weight:800; font-size:17px; margin:18px 2px 10px}
   .subhead.mint{color:var(--mint)}
   .watch{display:flex; gap:14px; padding-left:16px; position:relative; margin-bottom:14px}
-  .watch::before{content:""; position:absolute; left:0; top:4px; bottom:4px; width:4px; border-radius:4px; background:#ff6b6b}
+  .watch::before{content:""; position:absolute; left:0; top:4px; bottom:4px; width:4px; border-radius:4px; background:var(--bad)}
   .watch.up::before{background:var(--mint-deep)}
-  .watch .av{width:52px; height:52px; border-radius:50%; flex:none; background:#182238; border:1px solid #2a3a58; overflow:hidden; display:grid; place-items:center; color:var(--ink-3); font-weight:700}
+  .watch .av{width:52px; height:52px; border-radius:50%; flex:none; background:var(--av-bg); border:1px solid var(--av-line); overflow:hidden; display:grid; place-items:center; color:var(--ink-3); font-weight:700}
   .watch .body{min-width:0}
   .watch .nm{font-weight:700; font-size:18px; margin-bottom:6px}
   .watch .nm .sc{color:var(--ink-2); font-weight:700; margin-left:6px}
@@ -200,16 +257,16 @@
   .watch .note{color:var(--ink-3); font-size:14.5px}
 
   /* Player list rows (waiver/roster/value) */
-  .prow{display:flex; gap:13px; align-items:center; padding:14px 0; border-top:1px solid rgba(255,255,255,.05)}
+  .prow{display:flex; gap:13px; align-items:center; padding:14px 0; border-top:1px solid var(--hair)}
   .prow:first-child{border-top:0}
   .prow .rank{width:26px; flex:none; text-align:center; color:var(--ink-3); font-weight:800; font-size:18px}
-  .prow .av{width:46px; height:46px; border-radius:50%; flex:none; background:#182238; border:1px solid #2a3a58; overflow:hidden; display:grid; place-items:center; color:var(--ink-3); font-weight:700; font-size:15px}
+  .prow .av{width:46px; height:46px; border-radius:50%; flex:none; background:var(--av-bg); border:1px solid var(--av-line); overflow:hidden; display:grid; place-items:center; color:var(--ink-3); font-weight:700; font-size:15px}
   .prow .mid{min-width:0; flex:1}
   .prow .nm{font-weight:700; font-size:16.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .prow .meta{color:var(--ink-3); font-size:13.5px; display:flex; gap:6px; align-items:center; flex-wrap:wrap}
   .prow .meta .ppos{font-weight:800}
-  .prow .meta .ppos.QB{color:#ff8f8f}.prow .meta .ppos.RB{color:#7fe0c0}.prow .meta .ppos.WR{color:#8fbcff}
-  .prow .meta .ppos.TE{color:#f2c66d}.prow .meta .ppos.K{color:#c7a0ff}.prow .meta .ppos.DEF{color:#9aa7bd}
+  .prow .meta .ppos.QB{color:var(--t-red)}.prow .meta .ppos.RB{color:var(--t-green)}.prow .meta .ppos.WR{color:var(--t-blue)}
+  .prow .meta .ppos.TE{color:var(--amber)}.prow .meta .ppos.K{color:var(--t-purple)}.prow .meta .ppos.DEF{color:var(--t-gray)}
   .prow .right{margin-left:auto; text-align:right; flex:none}
   .prow .val{font-weight:800; font-size:17px}
   .prow .val .u{color:var(--ink-3); font-size:12px; font-weight:600}
@@ -219,18 +276,18 @@
   .bid.cost{background:rgba(242,198,109,.1); color:var(--amber); border:1px solid rgba(242,198,109,.3)}
 
   .seg{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap}
-  .seg button{flex:1; min-width:96px; padding:11px; border-radius:12px; border:1px solid var(--card-line); background:#0f1728; color:var(--ink-2); font:inherit; font-weight:700; font-size:14.5px; cursor:pointer}
-  .seg button.on{background:var(--ink); color:#0a0f1d; border-color:var(--ink)}
+  .seg button{flex:1; min-width:96px; padding:11px; border-radius:12px; border:1px solid var(--card-line); background:var(--panel); color:var(--ink-2); font:inherit; font-weight:700; font-size:14.5px; cursor:pointer}
+  .seg button.on{background:var(--ink); color:var(--bg); border-color:var(--ink)}
 
   /* Budget coin */
-  .budget{display:flex; gap:16px; align-items:center; border:1px solid #4b3b1a; background:#1b150a; border-radius:16px; padding:18px}
+  .budget{display:flex; gap:16px; align-items:center; border:1px solid var(--tint-bids-line); background:var(--budget-bg); border-radius:16px; padding:18px}
   .coin{width:86px; height:86px; border-radius:50%; flex:none; display:grid; place-items:center; font-size:26px; font-weight:800; color:#3a2c08;
     background:radial-gradient(circle at 35% 30%, #ffe08a, #e9b445 70%); box-shadow:0 0 22px -4px rgba(242,198,109,.6), inset 0 0 0 3px rgba(255,255,255,.25)}
   .budget .t{font-size:22px; font-weight:800}
   .budget .d{color:var(--ink-2); font-size:15px; margin-top:2px}
 
   /* Trade machine */
-  .trade{border:1px solid var(--card-line); border-radius:16px; padding:16px; background:#0f1728; margin-top:14px}
+  .trade{border:1px solid var(--card-line); border-radius:16px; padding:16px; background:var(--panel); margin-top:14px}
   .trade .th{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px}
   .trade .th .nm{font-weight:800; font-size:18px}
   .trade .th .delta{color:var(--ink-2); font-size:14px}
@@ -239,27 +296,27 @@
   .leg{display:flex; flex-direction:column; gap:7px}
   .leg .cap{font-size:12px; font-weight:800; letter-spacing:.4px}
   .leg.get .cap{color:var(--mint)} .leg.give .cap{color:var(--coral-soft); text-align:right}
-  .chip{display:flex; align-items:center; gap:9px; background:#141d31; border:1px solid var(--card-line); border-radius:12px; padding:9px 11px}
+  .chip{display:flex; align-items:center; gap:9px; background:var(--panel-2); border:1px solid var(--card-line); border-radius:12px; padding:9px 11px}
   .chip.get{border-left:3px solid var(--coral)}
   .chip.give{border-right:3px solid var(--blue); flex-direction:row-reverse; text-align:right}
-  .chip .av{width:34px; height:34px; border-radius:50%; flex:none; background:#182238; overflow:hidden; display:grid; place-items:center; font-size:12px; color:var(--ink-3)}
+  .chip .av{width:34px; height:34px; border-radius:50%; flex:none; background:var(--av-bg); overflow:hidden; display:grid; place-items:center; font-size:12px; color:var(--ink-3)}
   .chip .ci{min-width:0}
   .chip .ci .n{font-weight:700; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .chip .ci .m{color:var(--ink-3); font-size:12px}
-  .swap{width:40px; height:40px; border-radius:50%; background:#141d31; border:1px solid var(--card-line); display:grid; place-items:center; color:var(--ink-2)}
-  .fair{height:8px; border-radius:999px; margin:16px 0 6px; position:relative; background:linear-gradient(90deg,#ff6b6b,#f2c66d 50%,#2dd4bf)}
+  .swap{width:40px; height:40px; border-radius:50%; background:var(--panel-2); border:1px solid var(--card-line); display:grid; place-items:center; color:var(--ink-2)}
+  .fair{height:8px; border-radius:999px; margin:16px 0 6px; position:relative; background:linear-gradient(90deg,var(--bad),var(--amber) 50%,var(--mint-deep))}
   .fair .knob{position:absolute; top:50%; width:16px; height:16px; border-radius:50%; background:#fff; transform:translate(-50%,-50%); box-shadow:0 0 0 3px rgba(10,15,29,.6)}
   .fairrow{display:flex; justify-content:space-between; color:var(--ink-3); font-size:13px}
   .fairrow .mid{color:var(--ink-2); font-weight:700}
   .tradenote{color:var(--ink-2); font-size:14.5px; margin:10px 0 2px}
-  .copybtn{margin-top:12px; width:100%; padding:14px; border-radius:14px; background:var(--mint); color:#062b26; font-weight:800; font-size:16px; border:0; cursor:pointer}
+  .copybtn{margin-top:12px; width:100%; padding:14px; border-radius:14px; background:var(--mint); color:var(--mint-ink); font-weight:800; font-size:16px; border:0; cursor:pointer}
   .copybtn:active{transform:scale(.99)}
 
   /* standings table */
   .stand{width:100%; border-collapse:collapse; font-size:15px}
   .stand th{color:var(--ink-3); font-weight:700; text-align:right; padding:8px 6px; font-size:13px; border-bottom:1px solid var(--card-line)}
   .stand th:first-child{text-align:left}
-  .stand td{padding:11px 6px; text-align:right; border-bottom:1px solid rgba(255,255,255,.04)}
+  .stand td{padding:11px 6px; text-align:right; border-bottom:1px solid var(--hair)}
   .stand td:first-child{text-align:left; font-weight:600}
   .stand tr.me td{color:var(--mint)}
   .stand .rk{color:var(--ink-3); font-weight:800; width:20px; display:inline-block}
@@ -272,20 +329,20 @@
   .ufield{display:flex; gap:10px; max-width:440px; margin:0 auto; flex-wrap:wrap}
   .ufield input{flex:1; min-width:180px; padding:16px 18px; border-radius:14px; border:1px solid var(--card-line); background:var(--card); color:var(--ink); font:inherit; font-size:17px}
   .ufield input:focus{outline:none; border-color:var(--mint)}
-  .ufield button{padding:16px 22px; border-radius:14px; border:0; background:var(--mint); color:#062b26; font-weight:800; font-size:16px; cursor:pointer}
-  .err{color:#ffb0b0; font-size:14.5px; margin-top:12px; min-height:18px}
+  .ufield button{padding:16px 22px; border-radius:14px; border:0; background:var(--mint); color:var(--mint-ink); font-weight:800; font-size:16px; cursor:pointer}
+  .err{color:var(--t-warn); font-size:14.5px; margin-top:12px; min-height:18px}
   .hint{color:var(--ink-3); font-size:13.5px; margin-top:16px}
 
   .loading{display:flex; gap:12px; align-items:center; justify-content:center; padding:40px 10px; color:var(--ink-2); font-size:16px}
-  .spin{width:22px; height:22px; border-radius:50%; border:3px solid #2a3a58; border-top-color:var(--mint); animation:spin .8s linear infinite}
+  .spin{width:22px; height:22px; border-radius:50%; border:3px solid var(--av-line); border-top-color:var(--mint); animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   @media (prefers-reduced-motion: reduce){ .spin{animation-duration:2s} }
 
   .empty{color:var(--ink-3); font-size:15px; text-align:center; padding:18px 6px}
-  .warnbox{border:1px solid rgba(242,198,109,.35); background:rgba(242,198,109,.06); color:#f2d79a; border-radius:12px; padding:12px 14px; font-size:14px; margin-top:10px}
+  .warnbox{border:1px solid rgba(242,198,109,.35); background:rgba(242,198,109,.06); color:var(--t-q); border-radius:12px; padding:12px 14px; font-size:14px; margin-top:10px}
   footer{color:var(--ink-3); font-size:12.5px; text-align:center; margin-top:28px; line-height:1.6}
   footer a{color:var(--ink-2)}
-  .skeleton{background:#0f1728; border:1px solid var(--card-line); border-radius:12px; height:60px; margin-top:10px; animation:pulse 1.4s ease-in-out infinite}
+  .skeleton{background:var(--panel); border:1px solid var(--card-line); border-radius:12px; height:60px; margin-top:10px; animation:pulse 1.4s ease-in-out infinite}
   @keyframes pulse{50%{opacity:.5}}
 </style>
 </head>
@@ -300,6 +357,10 @@
     </div>
     <div class="hdr-actions">
       <span class="live-dot off" id="liveDot" title="Live Sleeper data"></span>
+      <button class="icon-btn" id="btnTheme" title="Toggle light/dark theme" aria-label="Toggle light or dark theme">
+        <svg class="theme-ic sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="theme-ic moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
       <button class="icon-btn" id="btnRefresh" title="Refresh" aria-label="Refresh">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
       </button>
@@ -335,7 +396,12 @@ const LS = {
   user:   "huddle.username",
   league: "huddle.leagueId",
   closed: "huddle.closed",
+  theme:  "huddle.theme",
 };
+
+/* News API: base URL of the news Worker (GET {NEWS_API}/api/news). Leave empty until it's deployed —
+   the News card then shows a roster injury report built from Sleeper data instead. */
+const NEWS_API = "";
 
 /* ---------- tiny helpers ---------- */
 const $  = (s, r=document) => r.querySelector(s);
@@ -447,6 +513,11 @@ function seasonPPG(pid){
    =================================================================== */
 window.addEventListener("DOMContentLoaded", () => {
   $("#btnRefresh").addEventListener("click", () => loadLeague(true));
+  $("#btnTheme").addEventListener("click", () => {
+    const next = document.documentElement.getAttribute("data-theme")==="light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    try{ localStorage.setItem(LS.theme, next); }catch{}
+  });
   $("#btnSignout").addEventListener("click", signOut);
   $("#leagueSelect").addEventListener("change", e => {
     S.leagueId = e.target.value;
@@ -460,6 +531,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
 function renderSetup(msg){
   $("#controls").hidden = true;
+  $("#app").classList.remove("dash");
   $("#app").innerHTML = `
     <div class="setup">
       <h2>Connect your Sleeper team</h2>
@@ -539,6 +611,7 @@ async function startSession(){
    =================================================================== */
 async function loadLeague(refresh){
   $("#liveDot").classList.add("off");
+  $("#app").classList.remove("dash");
   $("#app").innerHTML = `<div class="loading"><span class="spin"></span> ${refresh?"Refreshing":"Loading"} live data…</div>`;
   try{
     const [league, rosters, users] = await Promise.all([
@@ -563,7 +636,7 @@ async function loadLeague(refresh){
     // players DB (cached in memory for the tab)
     if(!S.players){
       $("#app").innerHTML = `<div class="loading"><span class="spin"></span> Loading the NFL player book…</div>`;
-      S.players = await jget(`${API}/players/nfl`);
+      S.players = await loadPlayers(refresh);
     }
 
     // matchups + projections + season stats + trade values, in parallel (soft-fail individually)
@@ -572,14 +645,18 @@ async function loadLeague(refresh){
       jget(`${PROJ}/${S.season}/${S.week}?season_type=regular`),
       jget(`${STATS}/${S.season}?season_type=regular`),
       loadFantasyCalc(),
+      loadNews(),
     ]);
+    S.newsError = results[4].status==="rejected";
+    S.projFailed = results[1].status==="rejected";
+    S.projEmpty  = !S.projFailed && Object.keys(S.proj).length===0;
     S.matchups    = results[0].status==="fulfilled" ? results[0].value : [];
     S.proj        = results[1].status==="fulfilled" ? normalizeProj(results[1].value) : {};
     S.seasonStats = results[2].status==="fulfilled" ? results[2].value : null;
     // fantasycalc handled inside loader
 
     $("#liveDot").classList.remove("off");
-    $("#brandSub").textContent = `${esc(league.name)} · Week ${S.week}`;
+    $("#brandSub").textContent = `${league.name} · Week ${S.week}`;
     renderDashboard();
   }catch(err){
     $("#app").innerHTML = `<div class="setup"><h2>Couldn't load this league</h2>
@@ -618,6 +695,44 @@ async function loadFantasyCalc(){
   }
 }
 
+/* Sleeper's player book is ~5 MB: cache it in IndexedDB (localStorage is too small) with a 24h TTL.
+   Every storage step is best-effort — if IndexedDB is blocked, we just fetch as before. */
+const PLAYERS_TTL = 24*60*60*1000;
+function idb(){
+  return new Promise((res,rej)=>{
+    const rq = indexedDB.open("gameplanblitz", 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore("kv");
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  });
+}
+async function idbGet(key){
+  const db = await idb();
+  return new Promise((res,rej)=>{ const r=db.transaction("kv").objectStore("kv").get(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+}
+async function idbSet(key, val){
+  const db = await idb();
+  return new Promise((res,rej)=>{ const tx=db.transaction("kv","readwrite"); tx.objectStore("kv").put(val,key); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); });
+}
+async function loadPlayers(forceFresh){
+  if(!forceFresh){
+    try{
+      const hit = await idbGet("players");
+      if(hit && hit.data && Date.now()-hit.ts < PLAYERS_TTL) return hit.data;
+    }catch{}
+  }
+  const data = await jget(`${API}/players/nfl`);
+  try{ await idbSet("players", { ts:Date.now(), data }); }catch{}
+  return data;
+}
+
+async function loadNews(){
+  S.news = null;
+  if(!NEWS_API) return;                               // not configured: card falls back to roster report
+  const data = await jget(`${NEWS_API.replace(/\/+$/,"")}/api/news?limit=40`);
+  S.news = Array.isArray(data && data.articles) ? data.articles : [];
+}
+
 /* ===================================================================
    Lineup model
    =================================================================== */
@@ -654,7 +769,7 @@ function optimalLineup(playerIds){
 function card(id, icClass, icon, title, ctx, bodyHTML){
   const closed = getClosed().has(id);
   return `<section class="card ${closed?'collapsed':''}" data-card="${id}">
-    <div class="card-head" data-toggle="${id}">
+    <div class="card-head" data-toggle="${id}" role="button" tabindex="0" aria-expanded="${!closed}">
       <div class="sec-ic ${icClass}">${icon}</div>
       <div class="card-title"><b>${title}</b>${ctx?`<span class="ctx">${ctx}</span>`:""}</div>
       <div class="chev">▾</div>
@@ -668,6 +783,7 @@ function renderDashboard(){
     gameDayCard(),
     lineupCard(),
     edgeCard(),
+    newsCard(),
     tradeCard(),
     waiverCard(),
     bidsCard(),
@@ -676,29 +792,39 @@ function renderDashboard(){
     valueCard(),
   ].join("");
   $("#app").innerHTML = html;
+  $("#app").classList.add("dash");
 
   // wire collapses
   document.querySelectorAll("[data-toggle]").forEach(h=>{
-    h.addEventListener("click", ()=>{
+    const toggle = ()=>{
       const id=h.getAttribute("data-toggle");
       const sec=document.querySelector(`[data-card="${id}"]`);
       sec.classList.toggle("collapsed");
+      const isClosed=sec.classList.contains("collapsed");
+      h.setAttribute("aria-expanded", String(!isClosed));
       const closed=getClosed();
-      sec.classList.contains("collapsed")?closed.add(id):closed.delete(id);
+      isClosed?closed.add(id):closed.delete(id);
       setClosed(closed);
-    });
+    };
+    h.addEventListener("click", toggle);
+    h.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(); } });
   });
   // interactive bits
   const bb=$("#battlesBtn"); if(bb) bb.addEventListener("click", ()=>{ $("#battles").classList.toggle("open"); bb.textContent = $("#battles").classList.contains("open")?"Hide position battles":"Show position battles"; });
   const fb=$("#fixBtn"); if(fb) fb.addEventListener("click", ()=>$("#fixlist").classList.toggle("open"));
-  document.querySelectorAll("[data-seg]").forEach(s=>s.addEventListener("click", onSeg));
+  document.querySelectorAll("[data-newsf]").forEach(b=>b.addEventListener("click", ()=>{
+    const mineOnly = b.dataset.newsf==="mine";
+    document.querySelectorAll("[data-newsf]").forEach(x=>x.classList.toggle("on", x===b));
+    document.querySelectorAll(".news-item").forEach(a=>{ a.hidden = mineOnly && !a.dataset.mine; });
+    const none = $("#newsNone"); if(none) none.hidden = !mineOnly || !!document.querySelector(".news-item[data-mine]");
+  }));
   document.querySelectorAll("[data-copy]").forEach(b=>b.addEventListener("click", onCopyTrade));
 }
 
 /* ---------- Game Day ---------- */
 function gameDayCard(){
   const me=myMatchup(), opp=oppMatchup();
-  const icon = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#5eead4" stroke-width="2"><path d="M4 11h16M4 11a8 8 0 0 1 16 0M4 11a8 8 0 0 0 16 0" /></svg>`;
+  const icon = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11h16M4 11a8 8 0 0 1 16 0M4 11a8 8 0 0 0 16 0" /></svg>`;
   if(!me){
     return card("gameday","mint",icon,"Game Day","No matchup yet",
       `<div class="empty">No Week ${S.week} matchup is posted for your team yet. Check back once Sleeper sets the schedule.</div>`);
@@ -716,12 +842,6 @@ function gameDayCard(){
   const wp = Math.round(100/(1+Math.exp(-diff/28)));
   const myName=teamName(S.myRosterId);
 
-  // position battles
-  const battleRows = myLine.map(s=>{
-    const opR=(S.rosters||[]).find(r=>r.roster_id===(opp&&opp.roster_id));
-    return s;
-  });
-
   const battles = (opp? buildBattles(myLine) : []).map(b=>`
     <div class="battle">
       <div class="pl ${b.meWin?'win':''}"><div class="nm">${esc(b.me.name)}</div><div class="pj">${f1(b.me.pj)}</div></div>
@@ -729,7 +849,7 @@ function gameDayCard(){
       <div class="pl right ${!b.meWin?'win':''}"><div class="nm">${esc(b.opp.name)}</div><div class="pj">${f1(b.opp.pj)}</div></div>
     </div>`).join("");
 
-  const body = `
+  const body = `${projNotice()}
     <div class="matchup">
       <div class="team me">
         ${teamAvatar(myRoster().owner_id,"av")}
@@ -751,6 +871,12 @@ function gameDayCard(){
     <div class="battles" id="battles">${battles||'<div class="empty">No projections to compare.</div>'}</div>`:""}
   `;
   return card("gameday","mint",icon,"Game Day",`Week ${S.week} matchup`,body);
+}
+/* shown on cards that depend on weekly projections */
+function projNotice(){
+  if(S.projFailed) return `<div class="warnbox" style="margin:0 0 12px">Couldn't load Week ${S.week} projections from Sleeper, so projected points below are 0 and can't be trusted. Tap Refresh to retry.</div>`;
+  if(S.projEmpty)  return `<div class="warnbox" style="margin:0 0 12px">Sleeper hasn't published Week ${S.week} projections yet, so projected points below are 0. Check back closer to kickoff.</div>`;
+  return "";
 }
 function trim(s){ return s && s.length>20 ? s.slice(0,19)+"…" : s; }
 function buildBattles(myLine){
@@ -774,7 +900,7 @@ function flexLabel(s){ return s==="SUPER_FLEX"?"SFLX": s==="WRRB_FLEX"||s==="WRR
 
 /* ---------- Lineup Check ---------- */
 function lineupCard(){
-  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f2c66d" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`;
+  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`;
   const me=myMatchup();
   if(!me) return card("lineup","gold",icon,"Lineup Check","",`<div class="empty">Set your Week ${S.week} lineup in Sleeper to run a check.</div>`);
 
@@ -825,7 +951,7 @@ function lineupCard(){
 
 /* ---------- The Edge ---------- */
 function edgeCard(){
-  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f6a35f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-7"/><path d="M17 8h4v4"/></svg>`;
+  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-7"/><path d="M17 8h4v4"/></svg>`;
   const me=myMatchup();
   if(!me) return card("edge","edge",icon,"The Edge","",`<div class="empty">No lineup to compare against waivers yet.</div>`);
 
@@ -864,7 +990,7 @@ function edgeCard(){
   upgrades.sort((a,b)=>b.gain-a.gain);
 
   const seasonMissing = !S.seasonStats;
-  const body = `
+  const body = `${projNotice()}
     <div class="edge-top">
       <div>
         <div class="n ${upgradePts<0.1?'zero':''}">${f1(upgradePts)}</div>
@@ -901,9 +1027,96 @@ function edgeCard(){
   return card("edge","edge",icon,"The Edge",ctx,body);
 }
 
+/* ---------- News ---------- */
+function relTime(ms){
+  const m = Math.round((Date.now()-ms)/60000);
+  if(!isFinite(m)) return "";
+  if(m<1) return "just now"; if(m<60) return m+"m ago";
+  const h=Math.round(m/60); if(h<24) return h+"h ago";
+  const d=Math.round(h/24); return d<30 ? d+"d ago" : new Date(ms).toLocaleDateString();
+}
+function articleTime(a){
+  let t = a.ts!=null ? +a.ts : NaN;
+  if(isFinite(t)) return t<1e12 ? t*1000 : t;         // seconds or ms
+  t = Date.parse(a.published||""); return isFinite(t) ? t : NaN;
+}
+/* roster players mentioned in an article: full names, or last names of 5+ letters */
+function rosterNameIndex(){
+  const idx=[];
+  for(const pid of ((myRoster().players)||[])){
+    const p=S.players[pid]; if(!p || p.position==="DEF") continue;
+    const full=(p.full_name||((p.first_name||"")+" "+(p.last_name||"")).trim()).toLowerCase();
+    if(full.length>4) idx.push({pid, key:full});
+    const ln=(p.last_name||"").toLowerCase();
+    if(ln.length>=5) idx.push({pid, key:ln});
+  }
+  return idx;
+}
+function safeUrl(u){ return /^https?:\/\//i.test(u||"") ? u : null; }
+
+function newsCard(){
+  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2z"/><path d="M19 8h1a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2M8 8h7M8 12h7M8 16h4"/></svg>`;
+
+  // roster injury report built from Sleeper data (always available)
+  const hurt=((myRoster().players)||[]).filter(pid=>pinj(pid)).map(pid=>({pid, inj:pinj(pid), p:S.players[pid]}))
+    .sort((a,b)=>(OUT_INJ.has(b.inj)-OUT_INJ.has(a.inj)));
+  const reportHTML = hurt.length ? hurt.map(h=>{
+    const bits=[h.p.injury_body_part, h.p.injury_notes].filter(Boolean).join(" — ");
+    return `<div class="prow">${avatarHTML(h.pid,"av")}
+      <div class="mid"><div class="nm">${esc(pname(h.pid))}</div>
+        <div class="meta"><span class="ppos ${esc(pos(h.pid))}">${esc(pos(h.pid))}</span><span>${esc(pteam(h.pid))||"FA"}</span>
+        <span class="pill ${OUT_INJ.has(h.inj)?"warn":"q"}" style="padding:2px 8px">${esc(h.inj)}</span></div>
+        ${bits?`<div class="sub" style="margin-top:4px">${esc(bits.length>140?bits.slice(0,139)+"…":bits)}</div>`:""}</div></div>`;
+  }).join("") : `<div class="banner ok">No injury designations on your roster right now.</div>`;
+
+  // not configured → roster report only
+  if(!NEWS_API){
+    return card("news","blue",icon,"News & Injuries","Roster report",
+      `<div class="lead">Injury designations for your players, straight from Sleeper.</div>${reportHTML}
+       <div class="warnbox">Article feeds (FantasyPros, RotoWire…) aren't connected yet. Set <b>NEWS_API</b> at the top of the script once the news Worker is deployed.</div>`);
+  }
+  // configured but failed → error state + roster report
+  if(S.newsError || !S.news){
+    return card("news","blue",icon,"News & Injuries","Feed unavailable",
+      `<div class="warnbox" style="margin-top:0">Couldn't load the news feed. Tap Refresh to try again. Showing your roster injury report instead.</div>
+       <div style="margin-top:12px">${reportHTML}</div>`);
+  }
+  if(!S.news.length){
+    return card("news","blue",icon,"News & Injuries","Latest",
+      `<div class="empty">No articles right now.</div><div class="subhead">Roster report</div>${reportHTML}`);
+  }
+
+  const idx=rosterNameIndex();
+  const items=S.news.slice(0,40).map(a=>{
+    const text=((a.title||"")+" "+(a.excerpt||"")).toLowerCase();
+    const hits=[...new Set(idx.filter(i=>text.includes(i.key)).map(i=>i.pid))];
+    return {a, hits, t:articleTime(a)};
+  });
+  const shown=items.slice(0,12);
+  const mineCount=items.filter(i=>i.hits.length).length;
+  const list=shown.map(({a,hits,t})=>{
+    const url=safeUrl(a.url); const img=safeUrl(a.image);
+    const open=url?`<a class="news-item" href="${esc(url)}" target="_blank" rel="noopener noreferrer"`:`<div class="news-item"`;
+    return `${open}${hits.length?' data-mine="1"':""}>
+      <div style="min-width:0;flex:1">
+        <div class="nt">${esc(a.title||"Untitled")}</div>
+        <div class="nm">${a.publisher?`<span class="pill news" style="padding:2px 8px">${esc(a.publisher)}</span>`:""}
+          ${isFinite(t)?`<span>${esc(relTime(t))}</span>`:""}
+          ${hits.slice(0,2).map(pid=>`<span class="pill prio" style="padding:2px 8px">${esc(shortName(pid))}</span>`).join("")}</div>
+        ${a.excerpt?`<div class="nx">${esc(a.excerpt.length>160?a.excerpt.slice(0,159)+"…":a.excerpt)}</div>`:""}
+      </div>
+      ${img?`<img src="${esc(img)}" alt="" loading="lazy" onerror="this.remove()">`:""}
+    ${url?"</a>":"</div>"}`;
+  }).join("");
+  return card("news","blue",icon,"News & Injuries",`${items.length} recent · ${mineCount} about your roster`,
+    `<div class="seg"><button class="on" data-newsf="all">All news</button><button data-newsf="mine">My roster</button></div>
+     ${list}<div class="empty" id="newsNone" hidden>Nothing about your players in the latest articles.</div>
+     <div class="subhead">Roster report</div>${reportHTML}`);
+}
+
 /* ---------- Trade Machine ---------- */
 function tradeCard(){
-  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#6aa8ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>`;
+  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>`;
   if(!S.fcAvailable || !S.fcValues){
     return card("trade","blue",icon,"Trade Machine","Fair deals priced by FantasyCalc",
       `<div class="lead">Every deal is fair by FantasyCalc market value and raises your starting lineup.</div>
@@ -922,7 +1135,8 @@ function tradeCard(){
 function fcVal(pid){ const v=S.fcValues[pid]; return v?v.value:0; }
 function findTrades(){
   const myR=myRoster(); const myPlayers=(myR.players)||[];
-  const myStarterIds=new Set(optimalLineup(myPlayers).filter(s=>s.pick).map(s=>s.pick.id));
+  const lineupTotal = ids => optimalLineup(ids).reduce((t,s)=>t+(s.pick?s.pick.pj:0),0);
+  const baseTotal = lineupTotal(myPlayers);           // computed once, not per candidate
   const deals=[];
   for(const r of (S.rosters||[])){
     if(r.roster_id===S.myRosterId) continue;
@@ -940,9 +1154,7 @@ function findTrades(){
         if(fair < 0.82) continue;                 // within ~18%
         if(mp.val > tval*1.12) continue;          // don't overpay badly
         // weekly gain: swap mp->tp in optimal lineup
-        const after = optimalLineup(myPlayers.filter(p=>p!==mp.id).concat([tp]));
-        const before = optimalLineup(myPlayers);
-        const gain = after.reduce((t,s)=>t+(s.pick?s.pick.pj:0),0) - before.reduce((t,s)=>t+(s.pick?s.pick.pj:0),0);
+        const gain = lineupTotal(myPlayers.filter(p=>p!==mp.id).concat([tp])) - baseTotal;
         if(gain < 0.6) continue;
         deals.push({ theyId:r.roster_id, get:tp, give:[mp.id], fair:Math.round(fair*100), you:gain, them:-gain*0.5, theirName:teamName(r.roster_id) });
         break;
@@ -993,7 +1205,7 @@ function copy(text, btn, label){
 
 /* ---------- Waiver Wire ---------- */
 function waiverCard(){
-  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#56d9b3" stroke-width="2"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4v2a2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4v-2a2 2 0 0 0 0-4z"/></svg>`;
+  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4v2a2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4v-2a2 2 0 0 0 0-4z"/></svg>`;
   const rostered=allRostered();
   const fas=[];
   for(const pid in S.players){
@@ -1006,7 +1218,7 @@ function waiverCard(){
   }
   fas.sort((a,b)=>b.pj-a.pj);
   const top=fas.slice(0,12);
-  if(!top.length) return card("waiver","green",icon,"Waiver Wire","",`<div class="empty">No projected free agents found for Week ${S.week}.</div>`);
+  if(!top.length) return card("waiver","green",icon,"Waiver Wire","",`${projNotice()}<div class="empty">No projected free agents found for Week ${S.week}.</div>`);
   const body = top.map((p,i)=>`
     <div class="prow">
       <div class="rank">${i+1}</div>
@@ -1023,7 +1235,7 @@ function waiverCard(){
 
 /* ---------- Waiver Bids (FAAB) ---------- */
 function bidsCard(){
-  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f2c66d" stroke-width="2"><circle cx="9" cy="9" r="5"/><path d="M15 15a5 5 0 1 0 0-9.9"/></svg>`;
+  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="5"/><path d="M15 15a5 5 0 1 0 0-9.9"/></svg>`;
   const waiverType = S.league.settings && S.league.settings.waiver_type;
   const budget = (S.league.settings && S.league.settings.waiver_budget) || 100;
   const myR = myRoster();
@@ -1087,7 +1299,7 @@ function ordinal(n){ const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%
 
 /* ---------- Standings ---------- */
 function standingsCard(){
-  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#9aa7bd" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>`;
+  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>`;
   const rows=(S.rosters||[]).map(r=>{
     const s=r.settings||{};
     const pf=(s.fpts||0)+((s.fpts_decimal||0)/100);
@@ -1108,7 +1320,7 @@ function standingsCard(){
 
 /* ---------- Roster ---------- */
 function rosterCard(){
-  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#5eead4" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>`;
+  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>`;
   const me=myMatchup();
   const starters=new Set((me&&me.starters||[]).filter(p=>p&&p!=="0"));
   const all=((myRoster().players)||[]).map(pid=>({id:pid, pos:pos(pid), pj:projPts(pid), start:starters.has(pid)}));
@@ -1126,7 +1338,7 @@ function rosterCard(){
 
 /* ---------- Player Value ---------- */
 function valueCard(){
-  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f2c66d" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`;
+  const icon=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`;
   const rostered=allRostered();
   // build value = blend of season PPG and this-week projection, in league scoring
   const items=[];

@@ -1,0 +1,5 @@
+# Tooling-generated type stubs (not part of the app)
+/*.d.ts
+node_modules/
+dist/
+.env
