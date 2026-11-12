@@ -29,7 +29,8 @@ const PAIRS: [string, string][] = [
   ['accent', 'card'], ['accent', 'panel'], ['accent', 'bg'],
   ['accent-ink', 'accent'], ['bad-ink', 'bad'], ['logo-ink', 'logo-to'],
   ['good', 'card'], ['good', 'panel'], ['bad', 'card'], ['bad', 'panel'],
-  ['ink', 'sidebar'], ['ink-2', 'sidebar'], ['ink-2', 'card-2'], ['ink-3', 'card-2'], ['accent', 'card-2'], ['accent', 'active'], ['ink', 'active'],
+  ['ink', 'sidebar'], ['ink-2', 'sidebar'], ['ink-3', 'sidebar'], ['accent', 'sidebar'],
+  ['ink', 'raised'], ['ink-2', 'raised'], ['ink-3', 'raised'], ['accent', 'raised'], ['ink-2', 'active'], ['ink-2', 'card-2'], ['ink-3', 'card-2'], ['accent', 'card-2'], ['accent', 'active'], ['ink', 'active'],
   ['purple', 'card'], ['ink', 'plan-from'], ['ink', 'plan-to'], ['ink-2', 'plan-from'], ['ink-2', 'plan-to'], ['accent', 'plan-from'],
   ['amber', 'card'], ['amber', 'panel'], ['coral', 'card'], ['blue', 'card'], ['blue', 'panel'],
 ]

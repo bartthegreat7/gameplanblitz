@@ -78,9 +78,11 @@ function Overlay({ open, onClose, title, children, variant }: OverlayProps) {
       'max-h-[85dvh] rounded-t-3xl md:max-h-none md:max-w-md md:rounded-t-none md:rounded-l-3xl',
     panel:
       'max-h-[88dvh] rounded-t-3xl md:max-h-none md:max-w-xl md:rounded-t-none md:rounded-l-3xl',
-    nav: 'max-w-[320px] rounded-r-3xl',
+    nav: 'max-w-[min(360px,calc(100vw-2.5rem))] rounded-r-3xl',
     palette: 'max-h-[80dvh] max-w-xl rounded-2xl',
   }[variant]
+  // the navigation drawer uses the sidebar's surface and softer lines
+  const nav = variant === 'nav'
 
   return createPortal(
     <div className={`fixed inset-0 z-50 flex ${pos}`}>
@@ -91,9 +93,9 @@ function Overlay({ open, onClose, title, children, variant }: OverlayProps) {
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`border-line bg-card text-ink relative flex w-full flex-col overflow-hidden border shadow-2xl outline-none ${size}`}
+        className={`text-ink relative flex w-full flex-col overflow-hidden border shadow-2xl outline-none ${nav ? 'border-line/60 bg-sidebar' : 'border-line bg-card'} ${size}`}
       >
-        <div className="border-line flex items-center justify-between gap-3 border-b px-5 py-4">
+        <div className={`flex items-center justify-between gap-3 border-b px-5 py-4 ${nav ? 'border-line/40' : 'border-line'}`}>
           <h2 id={titleId} className="text-lg font-extrabold">
             {title}
           </h2>

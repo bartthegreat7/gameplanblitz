@@ -204,8 +204,11 @@ describe('settings and theme', () => {
     const user = userEvent.setup()
     renderApp('#/settings')
     await screen.findByRole('heading', { name: 'Settings', level: 1 })
-    await user.click(screen.getAllByRole('button', { name: 'Light' })[0])
+    // the sidebar's connection card holds the toggle
+    await user.click(screen.getByRole('button', { name: 'Switch to light theme' }))
     expect(document.documentElement).toHaveAttribute('data-theme', 'light')
+    await user.click(screen.getByRole('button', { name: 'Switch to dark theme' }))
+    expect(document.documentElement).not.toHaveAttribute('data-theme', 'light')
   })
 
   it('signs out only after confirming', async () => {

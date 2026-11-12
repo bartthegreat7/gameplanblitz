@@ -8,7 +8,9 @@
   color-scheme: dark;
   --bg: #080f20;
   --glow: #0f1d3a;
-  --sidebar: #070d1c;
+  /* navigation layers: sidebar sits a step above the page, raised = hover, active = selected */
+  --sidebar: #0b1427;
+  --raised: #141f37;
   --card: #151e31;
   --card-2: #1b2740;
   --active: #1c3158;
@@ -39,6 +41,7 @@
   --bg: #f1f5fb;
   --glow: #dfe8fb;
   --sidebar: #ffffff;
+  --raised: #eef3fa;
   --card: #ffffff;
   --card-2: #f6f8fc;
   --active: #dce8fd;
@@ -72,6 +75,7 @@
   --color-card: var(--card);
   --color-card-2: var(--card-2);
   --color-sidebar: var(--sidebar);
+  --color-raised: var(--raised);
   --color-active: var(--active);
   --color-purple: var(--purple);
   --color-plan-from: var(--plan-from);
@@ -116,6 +120,29 @@ body {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+/* navigation: accordion groups and rail flyouts ease in */
+@keyframes nav-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes nav-flyout {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}
+.nav-reveal {
+  animation: nav-reveal 160ms ease-out;
+}
+.nav-flyout {
+  animation: nav-flyout 160ms ease-out;
+}
+.nav-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
 }
 @media (prefers-reduced-motion: reduce) {
   *,

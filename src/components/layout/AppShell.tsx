@@ -39,10 +39,12 @@ export function AppShell() {
       <AskFab />
       <BottomNav onMore={() => setNavOpen(true)} moreOpen={navOpen} />
       <NavDrawer open={navOpen} onClose={close} title="Menu">
-        <div className="grid gap-4">
+        <div className="-mx-2 grid gap-6 pt-1">
           <NavContent inDrawer onNavigate={close} />
-          <ConnectionBox onNavigate={close} />
-          <ThemeSwitch />
+          <div className="grid gap-2.5">
+            <ConnectionBox onNavigate={close} />
+            <ThemeSwitch />
+          </div>
         </div>
       </NavDrawer>
     </div>
