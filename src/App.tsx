@@ -18,6 +18,7 @@ const Trades = lazy(() => import('./routes/Trades'))
 const Scouting = lazy(() => import('./routes/Scouting'))
 const Playoffs = lazy(() => import('./routes/Playoffs'))
 const Keepers = lazy(() => import('./routes/Keepers'))
+const GameDay = lazy(() => import('./routes/GameDay'))
 const News = lazy(() => import('./routes/News'))
 const Standings = lazy(() => import('./routes/Standings'))
 const Players = lazy(() => import('./routes/Players'))
@@ -44,6 +45,7 @@ export default function App({ client = defaultClient }: { client?: QueryClient }
               <Route path="scouting" element={<Scouting />} />
               <Route path="playoffs" element={<Playoffs />} />
               <Route path="keepers" element={<Keepers />} />
+              <Route path="gameday" element={<GameDay />} />
               <Route path="news" element={<News />} />
               <Route path="standings" element={<Standings />} />
               <Route path="players" element={<Players />} />

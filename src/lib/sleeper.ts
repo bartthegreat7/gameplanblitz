@@ -77,6 +77,8 @@ export interface SleeperMatchup {
   starters: string[]
   players: string[]
   starters_points?: number[]
+  /** live points per player id (fact, updated during games) */
+  players_points?: Record<string, number>
 }
 
 export interface SleeperPlayer {

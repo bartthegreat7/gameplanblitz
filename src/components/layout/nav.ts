@@ -1,9 +1,10 @@
-import { ArrowLeftRight, Binoculars, Crosshair, Gem, Medal, LayoutDashboard, ListChecks, Newspaper, Settings, Trophy, Users } from 'lucide-react'
+import { ArrowLeftRight, Binoculars, Crosshair, Gem, Medal, Radio, LayoutDashboard, ListChecks, Newspaper, Settings, Trophy, Users } from 'lucide-react'
 
 /** `primary` items get a tab on phones (using `short` when the label is long); the rest live in the "More" sheet. */
 export const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, primary: true },
   { to: '/lineup', label: 'Lineup', icon: ListChecks, primary: true },
+  { to: '/gameday', label: 'Game Day', icon: Radio, primary: false },
   { to: '/waivers', label: 'Waivers', icon: Crosshair, primary: true },
   { to: '/trades', label: 'Trades', icon: ArrowLeftRight, primary: false },
   { to: '/scouting', label: 'Scouting', icon: Binoculars, primary: false },
