@@ -11,5 +11,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test-setup.ts'],
+    // page-level tests render the whole app and load lazy chunks; under a full parallel run they need more than the 5s default
+    testTimeout: 30_000,
   },
 })

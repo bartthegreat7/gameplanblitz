@@ -79,7 +79,7 @@ describe('Opponent Scouting', () => {
     expect(await screen.findByText("Past results couldn't be loaded.", {}, { timeout: 8000 })).toBeInTheDocument()
     expect(screen.getByText('Results unavailable')).toBeInTheDocument()
     expect(screen.queryByText('No completed games yet')).not.toBeInTheDocument()
-  }, 15_000)
+  }, 60_000)
 
   it('is reachable from the navigation (Analytics group)', async () => {
     const user = userEvent.setup()

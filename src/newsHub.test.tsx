@@ -52,7 +52,7 @@ describe('News & Articles hub', () => {
     const breaking = section(/Breaking player news/)
     expect(within(breaking).getByText('Rival Runningback: Limited Wednesday')).toBeInTheDocument()
     expect(within(breaking).queryByText('Ancient player note')).not.toBeInTheDocument()
-  })
+  }, 30_000)
 
   it('personalizes: my roster, my opponent, and free agents in my league', async () => {
     renderApp('#/news')

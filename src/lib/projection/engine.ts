@@ -200,6 +200,31 @@ export function residualQuantiles(rows: { proj: number; actual: number }[]): Qua
   })
 }
 
+/** 5th, 10th, ... 95th percentiles: the published error distribution, used for simulations */
+export const QGRID = Array.from({ length: 19 }, (_, i) => (i + 1) / 20)
+/** per tier: 19 error quantiles (actual - projection), or [] when the tier has too few games */
+export type ErrorGrid = number[][]
+
+export function residualGrid(rows: { proj: number; actual: number }[]): ErrorGrid {
+  return [0, 1, 2].map((t) => {
+    const e = rows.filter((r) => tierOf(r.proj) === t).map((r) => r.actual - r.proj)
+    return e.length >= 40 ? QGRID.map((q) => quantile(e, q)) : []
+  })
+}
+
+/** A 19-point grid from just [p10, p50, p90]: linear between them, tails held at p10/p90 (narrower, conservative). */
+export function gridFromTriple(t: [number, number, number]): number[] {
+  return QGRID.map((q) =>
+    q <= 0.1
+      ? t[0]
+      : q <= 0.5
+        ? t[0] + ((q - 0.1) / 0.4) * (t[1] - t[0])
+        : q <= 0.9
+          ? t[1] + ((q - 0.5) / 0.4) * (t[2] - t[1])
+          : t[2],
+  )
+}
+
 export interface Range {
   floor: number
   median: number
@@ -349,6 +374,8 @@ export function gate(p: Prediction[]): Gate {
 export interface PositionModel {
   coef: Coef
   quantiles: Quantiles
+  /** optional finer error distribution (newer model files) */
+  grid?: ErrorGrid
   gate: Gate
 }
 
@@ -357,6 +384,7 @@ export interface FormatModel {
   positions: Partial<Record<Pos, PositionModel>>
   /** baseline intervals: residual quantiles of the baseline itself (used when the correction is off) */
   baselineQuantiles: Partial<Record<Pos, Quantiles>>
+  baselineGrid?: Partial<Record<Pos, ErrorGrid>>
 }
 
 export interface Breakdown {
@@ -403,6 +431,8 @@ export interface Projection {
   enabled: boolean
   features: Features
   range: Range | null
+  /** 19 outcome quantiles (5th..95th pct.) in points, for simulations; null without error data */
+  dist: number[] | null
   /** each signal's contribution in points (0 when the correction is off) */
   contributions: { label: string; pts: number }[]
 }
@@ -413,6 +443,15 @@ export function project(pos: string, f: Features, fm: FormatModel | undefined): 
   const enabled = !!pm?.gate.enabled && corrected !== null
   const value = enabled ? corrected! : f.baseline
   const q = enabled ? pm!.quantiles : fm?.baselineQuantiles[pos as Pos]
+  const tier = tierOf(value)
+  const fine = (enabled ? pm?.grid : fm?.baselineGrid?.[pos as Pos])?.[tier]
+  const triple = q?.[tier]
+  const offsets =
+    fine && fine.length === QGRID.length
+      ? fine
+      : triple && !(triple[0] === 0 && triple[2] === 0)
+        ? gridFromTriple(triple)
+        : null
   const [b0, b1, b2, b3] = pm?.coef.beta ?? [0, 0, 0, 0]
   const contributions =
     enabled && f.baseline >= MIN_BASELINE
@@ -430,6 +469,7 @@ export function project(pos: string, f: Features, fm: FormatModel | undefined): 
     enabled,
     features: f,
     range: rangeFor(value, q),
+    dist: offsets ? offsets.map((o) => Math.max(0, value + o)) : null,
     contributions,
   }
 }

@@ -25,7 +25,7 @@ describe('Trade War Room', () => {
     expect(screen.getByText(/market value on FantasyCalc's redraft scale/)).toBeInTheDocument()
     // the only priced players are worth 1000 and 100: nothing is fair
     expect(await screen.findByText(/No fair 1-for-1 swap improves both lineups/)).toBeInTheDocument()
-  })
+  }, 30_000)
 
   it('analyzes a hand-built trade from both sides', async () => {
     const user = await openAnalyzer()

@@ -23,6 +23,7 @@ import {
   MODEL_VERSION,
   played,
   POSITIONS,
+  residualGrid,
   residualQuantiles,
   tierOf,
   TIERS,
@@ -177,7 +178,12 @@ function formatModel(
   preds: Prediction[],
   xfpGames: { pos: string; stats: Stats; pts: number }[],
 ): FormatModel {
-  const fm: FormatModel = { xfp: fitXfp(xfpGames), positions: {}, baselineQuantiles: {} }
+  const fm: FormatModel = {
+    xfp: fitXfp(xfpGames),
+    positions: {},
+    baselineQuantiles: {},
+    baselineGrid: {},
+  }
   for (const pos of POSITIONS) {
     const s = samples.filter((x) => x.pos === pos)
     const p = preds.filter((x) => x.pos === pos)
@@ -185,11 +191,13 @@ function formatModel(
     fm.positions[pos] = {
       coef: fitCoef(s),
       quantiles: residualQuantiles(p.map((x) => ({ proj: x.model, actual: x.actual }))),
+      grid: residualGrid(p.map((x) => ({ proj: x.model, actual: x.actual }))),
       gate: gate(p),
     }
     fm.baselineQuantiles[pos] = residualQuantiles(
       p.map((x) => ({ proj: x.baseline, actual: x.actual })),
     )
+    fm.baselineGrid![pos] = residualGrid(p.map((x) => ({ proj: x.baseline, actual: x.actual })))
   }
   return fm
 }

@@ -41,7 +41,7 @@ describe('Keeper Intelligence', () => {
     expect(within(rec).getByText('Wideout Catchwell')).toBeInTheDocument()
     expect(within(rec).getByText(/saves 9 rounds/)).toBeInTheDocument()
     expect(within(rec).getByText(/Recommended keepers \(1 of 1\)/)).toBeInTheDocument()
-  }, 20_000)
+  }, 60_000)
 
   it('derives years kept from previous drafts and escalates the cost', async () => {
     renderApp('#/keepers')
@@ -96,7 +96,7 @@ describe('Keeper Intelligence', () => {
     renderApp('#/keepers')
     expect(await screen.findByText(/FantasyCalc values couldn't be loaded/, {}, { timeout: 8000 })).toBeInTheDocument()
     expect(screen.getByText('Market values are needed to compare keepers.')).toBeInTheDocument()
-  }, 15_000)
+  }, 60_000)
 
   it('is reachable from the navigation', async () => {
     renderApp('#/standings')

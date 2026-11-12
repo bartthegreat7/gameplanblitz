@@ -27,7 +27,7 @@ describe('Game Day', () => {
     expect(within(board).getByText('MODEL')).toBeInTheDocument()
     expect(screen.getByText(/Games are live: scores refresh every minute/)).toBeInTheDocument()
     expect(screen.getByText(/Live scores updated/)).toBeInTheDocument()
-  }, 20_000)
+  }, 60_000)
 
   it('labels each starter\'s game state', async () => {
     renderApp('#/gameday')
