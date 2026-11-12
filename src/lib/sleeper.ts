@@ -223,8 +223,10 @@ export interface ScheduleGame {
 export const getSchedule = (season: string) =>
   getJson<ScheduleGame[]>(`https://api.sleeper.app/schedule/nfl/regular/${season}`)
 
-export const getSeasonStats = (season: string) =>
-  getJson<Record<string, StatLine>>(`${SLEEPER_STATS}/${season}?season_type=regular`)
+/** Season totals as player id -> stat line. Sleeper returns an array of rows (an object keyed by id is also accepted). */
+export async function getSeasonStats(season: string): Promise<Record<string, StatLine>> {
+  return Object.fromEntries(normalizeStatRows(await getJson<unknown>(`${SLEEPER_STATS}/${season}?season_type=regular`)).map((r) => [r.player_id, r.stats]))
+}
 
 /* ---- players book (~5 MB): cached in IndexedDB with a 24h TTL ---- */
 

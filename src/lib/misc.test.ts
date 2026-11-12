@@ -1,7 +1,7 @@
 import { fcParamsFor } from './fantasycalc'
 import { f1, ordinal, relTime, toMillis, trunc } from './format'
 import { buildNameIndex, matchPlayers } from './news'
-import { normalizeProjections } from './sleeper'
+import { getSeasonStats, normalizeProjections } from './sleeper'
 
 describe('format', () => {
   it('f1 rounds to one decimal', () => {
@@ -78,5 +78,18 @@ describe('news → player matching', () => {
     expect(matchPlayers({ title: 'Bell sits out the ball game' }, idx)).toEqual([])
     expect(matchPlayers({ title: 'Tank Bell is back' }, idx)).toEqual(['p3']) // full name still matches
     expect(matchPlayers({ title: 'Buffalo Bills win' }, idx)).toEqual([])
+  })
+})
+
+describe('getSeasonStats', () => {
+  afterEach(() => vi.unstubAllGlobals())
+  it('reads the array of rows Sleeper actually returns (regression: season PPG was always empty)', async () => {
+    const body = [{ player_id: 'p1', stats: { rec: 40, gp: 4 }, team: 'AAA' }]
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(body), { status: 200 })))
+    expect(await getSeasonStats('2026')).toEqual({ p1: { rec: 40, gp: 4 } })
+  })
+  it('still accepts an object keyed by player id', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ p2: { rec: 1 } }), { status: 200 })))
+    expect(await getSeasonStats('2026')).toEqual({ p2: { rec: 1 } })
   })
 })

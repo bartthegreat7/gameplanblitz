@@ -8,7 +8,9 @@ import { LeagueGate } from '../components/LeagueGate'
 import { PlayerAvatar } from '../components/ui/Avatar'
 import { Pill, PosTag } from '../components/ui/Pill'
 import { EmptyState, ErrorState, ListSkeleton } from '../components/ui/states'
+import { ProjectionBreakdown } from '../components/projection/ProjectionBreakdown'
 import { useNews } from '../hooks/useNews'
+import { useProjectionEngine } from '../hooks/useProjectionEngine'
 import type { Ready } from '../hooks/useLeagueData'
 import { f1 } from '../lib/format'
 import { OUT_INJ } from '../lib/lineup'
@@ -20,6 +22,7 @@ function Detail({ data, id }: { data: Ready; id: string }) {
   const { model } = data
   const p = model.players[id]
   const news = useNews()
+  const engine = useProjectionEngine(data)
 
   // full-name matches from the aggregator (legacy responses fall back to name search for this player)
   const items = useMemo(
@@ -80,6 +83,14 @@ function Detail({ data, id }: { data: Ready; id: string }) {
           ))}
         </dl>
       </div>
+
+      <ProjectionBreakdown
+        p={engine.projectionFor(id)}
+        model={engine.model}
+        loading={engine.modelLoading || engine.historyLoading}
+        missing={engine.modelMissing || engine.modelFailed}
+        name={model.name(id)}
+      />
 
       <section className="border-line bg-card mt-5 rounded-3xl border p-5" aria-labelledby="pnews">
         <h2 id="pnews" className="mb-2 text-lg font-extrabold">

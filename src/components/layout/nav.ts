@@ -11,6 +11,7 @@ import {
   Plus,
   Radio,
   Settings,
+  Target,
   Trophy,
   Users,
   type LucideIcon,
@@ -58,6 +59,7 @@ export const NAV_TREE: NavEntry[] = [
     children: [
       { to: '/scouting', label: 'Opponent Scouting', icon: Binoculars },
       { to: '/playoffs', label: 'Playoff Simulator', icon: Medal },
+      { to: '/accuracy', label: 'Projection Accuracy', icon: Target },
     ],
   },
   { to: '/news', label: 'News & Articles', short: 'News', icon: Newspaper, primary: true },
