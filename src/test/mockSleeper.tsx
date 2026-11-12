@@ -117,7 +117,7 @@ export function mockFetch(overrides: Routes = {}) {
     ...overrides,
   }
   const fn = vi.fn(async (input: RequestInfo | URL) => {
-    const url = new URL(String(input))
+    const url = new URL(String(input), 'http://localhost') // the news file is fetched by relative URL
     // longest matching route key wins (so '/league/L1/rosters' beats '/league/L1')
     const key = Object.keys(routes)
       .filter((k) => url.pathname.endsWith(k))

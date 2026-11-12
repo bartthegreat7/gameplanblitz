@@ -2,6 +2,10 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [master]
+  # Refresh the News & Articles hub: re-fetch publisher feeds every 2 hours and redeploy.
+  # (GitHub pauses scheduled workflows after 60 days without repository activity.)
+  schedule:
+    - cron: '17 */2 * * *'
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,12 +21,19 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # Node 24 runs the TypeScript aggregator directly (type stripping), no extra tooling
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
+      - name: Aggregate news feeds (server-side; never blocks the deploy)
+        run: node scripts/news/aggregate.ts --out public/news.json
+        continue-on-error: true
+        env:
+          NEWS_MAX_AGE_DAYS: 14
+          NEWS_MAX_ITEMS: 400
       - run: npm run build
         env:
           VITE_NEWS_API: ${{ vars.VITE_NEWS_API }}

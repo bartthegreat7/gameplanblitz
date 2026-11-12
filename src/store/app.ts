@@ -32,6 +32,7 @@ interface AppState {
   toggleCollapsed: (id: string) => void
   toggleBookmark: (id: string) => void
   markRead: (id: string) => void
+  toggleRead: (id: string) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -55,6 +56,7 @@ export const useAppStore = create<AppState>()(
       markRead: (id) => {
         if (!get().read.includes(id)) set({ read: [...get().read, id].slice(-500) })
       },
+      toggleRead: (id) => set({ read: toggleIn(get().read, id).slice(-500) }),
     }),
     {
       name: 'gb-app',

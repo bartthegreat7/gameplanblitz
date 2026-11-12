@@ -20,10 +20,10 @@ export function BottomNav() {
         aria-label="Primary"
         className="border-line bg-card fixed inset-x-0 bottom-0 z-10 grid grid-cols-5 border-t pb-[env(safe-area-inset-bottom,0px)] md:hidden"
       >
-        {primary.map(({ to, label, icon: Icon }) => (
-          <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `${TAB} ${isActive ? 'text-accent' : 'text-ink-3'}`}>
-            <Icon size={22} aria-hidden />
-            {label}
+        {primary.map((item) => (
+          <NavLink key={item.to} to={item.to} end={item.to === '/'} aria-label={item.label} className={({ isActive }) => `${TAB} ${isActive ? 'text-accent' : 'text-ink-3'}`}>
+            <item.icon size={22} aria-hidden />
+            {'short' in item ? item.short : item.label}
           </NavLink>
         ))}
         <button type="button" onClick={() => setMore(true)} aria-haspopup="dialog" className={`${TAB} ${inMore ? 'text-accent' : 'text-ink-3'}`}>

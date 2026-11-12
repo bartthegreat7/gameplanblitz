@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Modal } from '../components/ui/Overlay'
 import { Segmented } from '../components/ui/Segmented'
 import { useRefreshPlayers } from '../hooks/useLeagueData'
-import { NEWS_API, newsConfigured } from '../lib/news'
+import { NEWS_API, newsSource } from '../lib/news'
 import { useAppStore, type Theme } from '../store/app'
 
 function Row({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
@@ -83,15 +83,15 @@ export default function Settings() {
         )}
       </Row>
 
-      <Row title="News feed" hint="Articles come from the project's own Cloudflare Worker; the browser never fetches publisher feeds directly.">
+      <Row title="News feed" hint="Publisher feeds are collected server-side; the browser never contacts publishers directly.">
         <p className="text-sm">
-          {newsConfigured ? (
+          {newsSource === 'worker' ? (
             <>
               Connected to <b>{newsHost}</b>
             </>
           ) : (
             <>
-              Not connected. Set <b>VITE_NEWS_API</b> at build time to enable article feeds.
+              Built in: feeds are collected every 2 hours when the site deploys. See the publisher list on the News &amp; Articles page.
             </>
           )}
         </p>

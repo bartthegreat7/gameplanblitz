@@ -90,10 +90,10 @@ describe('dashboard', () => {
     expect(useAppStore.getState().collapsed).toContain('waiver')
   })
 
-  it('explains that news feeds are not connected and still shows a roster report', async () => {
+  it('explains when the news feed is not published yet and still shows a roster report', async () => {
     renderApp()
     const card = await screen.findByRole('region', { name: 'News & Injuries' })
-    expect(within(card).getByText(/Article feeds aren't connected/)).toBeInTheDocument()
+    expect(await within(card).findByText(/news feed hasn't been published yet/)).toBeInTheDocument()
     expect(within(card).getByText('Backup Benchwood')).toBeInTheDocument() // Questionable
   })
 
@@ -191,9 +191,9 @@ describe('settings and theme', () => {
 })
 
 describe('news hub', () => {
-  it('explains the unconfigured feed', async () => {
+  it('explains when the feed has not been published yet', async () => {
     useAppStore.setState({ username: 'me' })
     renderApp('#/news')
-    expect(await screen.findByText(/news feed isn't connected yet/)).toBeInTheDocument()
+    expect(await screen.findByText(/news feed hasn't been published yet/)).toBeInTheDocument()
   })
 })

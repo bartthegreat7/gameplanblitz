@@ -2,7 +2,7 @@ import { ArrowLeft } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { NewsList, type NewsItem } from '../components/NewsList'
+import { ArticleCard } from '../components/news/ArticleCard'
 import { ProjNotice } from '../components/cards/shared'
 import { LeagueGate } from '../components/LeagueGate'
 import { PlayerAvatar } from '../components/ui/Avatar'
@@ -12,21 +12,20 @@ import { useNews } from '../hooks/useNews'
 import type { Ready } from '../hooks/useLeagueData'
 import { f1 } from '../lib/format'
 import { OUT_INJ } from '../lib/lineup'
-import { buildNameIndex, matchPlayers, newsConfigured } from '../lib/news'
+import { NewsNotPublished, playerIdsOf } from '../lib/news'
+import { newestFirst } from '../lib/newsFeed'
 import { playerValue } from '../lib/scoring'
 
 function Detail({ data, id }: { data: Ready; id: string }) {
   const { model } = data
   const p = model.players[id]
-  const news = useNews({ limit: 100 })
+  const news = useNews()
 
-  const items = useMemo<NewsItem[]>(() => {
-    const idx = buildNameIndex([id], model.players)
-    return (news.data?.articles ?? [])
-      .map((article) => ({ article, hits: matchPlayers(article, idx) }))
-      .filter((i) => i.hits.length)
-      .slice(0, 10)
-  }, [news.data, id, model.players])
+  // full-name matches from the aggregator (legacy responses fall back to name search for this player)
+  const items = useMemo(
+    () => newestFirst((news.data?.articles ?? []).filter((a) => playerIdsOf(a, [id], model.players).includes(id))).slice(0, 10),
+    [news.data, id, model.players],
+  )
 
   if (!p)
     return (
@@ -84,18 +83,27 @@ function Detail({ data, id }: { data: Ready; id: string }) {
 
       <section className="border-line bg-card mt-5 rounded-3xl border p-5" aria-labelledby="pnews">
         <h2 id="pnews" className="mb-2 text-lg font-extrabold">
-          News about {p.last_name || model.name(id)}
+          Latest expert analysis
         </h2>
-        {!newsConfigured ? (
-          <EmptyState>The news feed isn't connected yet, so there are no articles to match.</EmptyState>
-        ) : news.isPending ? (
+        <p className="text-ink-3 mb-3 text-sm">Articles from connected publishers that name {model.name(id)}. Coverage, not a recommendation.</p>
+        {news.isPending ? (
           <ListSkeleton rows={3} />
         ) : news.isError ? (
-          <ErrorState title="Couldn't load news" onRetry={() => void news.refetch()} />
+          news.error instanceof NewsNotPublished ? (
+            <EmptyState>The news feed hasn't been published yet.</EmptyState>
+          ) : (
+            <ErrorState title="Couldn't load news" onRetry={() => void news.refetch()} />
+          )
         ) : items.length === 0 ? (
-          <EmptyState>No recent articles mention {model.name(id)}.</EmptyState>
+          <EmptyState>No recent articles from connected publishers mention {model.name(id)}.</EmptyState>
         ) : (
-          <NewsList items={items} model={model} />
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {items.map((a) => (
+              <li key={a.id} className="flex">
+                <ArticleCard a={a} highlight={new Set([id])} />
+              </li>
+            ))}
+          </ul>
         )}
       </section>
     </div>

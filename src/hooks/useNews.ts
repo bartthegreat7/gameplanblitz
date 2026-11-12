@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { getNews, newsConfigured, type NewsQuery } from '../lib/news'
+import { getNews, NewsNotPublished } from '../lib/news'
 
-export function useNews(query: NewsQuery = { limit: 60 }) {
+/** The published news file. A missing file (not generated yet) is reported, not retried. */
+export function useNews() {
   return useQuery({
-    queryKey: ['news', query],
-    queryFn: () => getNews(query),
-    enabled: newsConfigured,
+    queryKey: ['news'],
+    queryFn: getNews,
     staleTime: 5 * 60_000,
-    retry: 1,
+    retry: (count, err) => !(err instanceof NewsNotPublished) && count < 1,
   })
 }
