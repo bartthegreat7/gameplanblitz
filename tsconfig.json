@@ -26,6 +26,8 @@
   "include": [
     "src",
     "scripts",
-    "vite.config.ts"
+    "vite.config.ts",
+    "worker/src/logic.ts",
+    "worker/src/logic.test.ts"
   ]
 }

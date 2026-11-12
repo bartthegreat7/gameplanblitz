@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 
+import { AskFab } from '../ai/AskFab'
 import { NavDrawer } from '../ui/Overlay'
 import { BottomNav } from './BottomNav'
 import { ConnectionBox, NavContent, Sidebar, ThemeSwitch } from './Sidebar'
@@ -35,6 +36,7 @@ export function AppShell() {
           </footer>
         </main>
       </div>
+      <AskFab />
       <BottomNav onMore={() => setNavOpen(true)} moreOpen={navOpen} />
       <NavDrawer open={navOpen} onClose={close} title="Menu">
         <div className="grid gap-4">

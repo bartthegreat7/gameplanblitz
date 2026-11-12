@@ -106,7 +106,7 @@ function Overlay({ open, onClose, title, children, variant }: OverlayProps) {
             <X size={18} aria-hidden />
           </button>
         </div>
-        <div className="overflow-y-auto px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
           {children}
         </div>
       </div>

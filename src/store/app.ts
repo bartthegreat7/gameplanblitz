@@ -28,6 +28,16 @@ interface AppState {
   keeperRules: Record<string, KeeperRules>
   /** week being viewed (null = the current NFL week); this session only, not saved */
   viewWeek: number | null
+  /** AI service: the user agreed to send league facts to it (off by default) */
+  aiConsent: boolean
+  /** optional access token for the AI Worker, entered by the user (never built into the site) */
+  aiToken: string
+  /** read AI Fantasy GM answers aloud with a device voice */
+  readAloud: boolean
+  /** preferred device voices for the two podcast hosts */
+  deviceVoices: [string | null, string | null]
+  /** Aura voices for the two hosts (AI voices) */
+  cloudVoices: [string, string]
 
   toggleTheme: () => void
   setTheme: (t: Theme) => void
@@ -42,6 +52,7 @@ interface AppState {
   markRead: (id: string) => void
   toggleRead: (id: string) => void
   setKeeperRules: (leagueId: string, rules: KeeperRules | null) => void
+  setAi: (p: Partial<Pick<AppState, 'aiConsent' | 'aiToken' | 'readAloud' | 'deviceVoices' | 'cloudVoices'>>) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -56,6 +67,11 @@ export const useAppStore = create<AppState>()(
       read: [],
       keeperRules: {},
       viewWeek: null,
+      aiConsent: false,
+      aiToken: '',
+      readAloud: false,
+      deviceVoices: [null, null],
+      cloudVoices: ['orion', 'asteria'],
 
       toggleTheme: () => set({ theme: get().theme === 'light' ? 'dark' : 'light' }),
       setTheme: (t) => set({ theme: t }),
@@ -76,6 +92,7 @@ export const useAppStore = create<AppState>()(
         else delete next[leagueId]
         set({ keeperRules: next })
       },
+      setAi: (p) => set(p),
     }),
     {
       name: 'gb-app',
@@ -88,6 +105,11 @@ export const useAppStore = create<AppState>()(
         bookmarks: s.bookmarks,
         read: s.read,
         keeperRules: s.keeperRules,
+        aiConsent: s.aiConsent,
+        aiToken: s.aiToken,
+        readAloud: s.readAloud,
+        deviceVoices: s.deviceVoices,
+        cloudVoices: s.cloudVoices,
       }),
     },
   ),

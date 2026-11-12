@@ -290,6 +290,12 @@ export function useGmBrief(data: Ready) {
     seasonDone: seasonWeeks.length === 0,
     playoffTeams,
     news,
+    trades,
+    h2h,
+    keepers,
+    keeperLeague,
+    myNews,
+    extras,
     pending,
     unavailable,
   }

@@ -40,6 +40,9 @@ multi-source fantasy news hub. Read-only — it never writes to anyone's league.
 - **Vitest + @testing-library/react** for tests.
 - **idb-keyval** for caching the large Sleeper players file in IndexedDB.
 - Avoid adding dependencies beyond these without a note here explaining why.
+- **`worker/` only:** `@anthropic-ai/sdk` 1.3.0 (official Claude SDK, required for the AI Worker; never in the app bundle) and the
+  Cloudflare Workers AI binding (Deepgram Aura voices). The app itself adds no dependency for the AI features: browser speech
+  (Web Speech API) and IndexedDB (idb-keyval) cover voices and storage.
 
 ## 4. Deploy / GitHub Pages rules (easy to get wrong)
 
@@ -125,6 +128,17 @@ multi-source fantasy news hub. Read-only — it never writes to anyone's league.
 - **Content policy:** metadata + short excerpt + publisher-supplied thumbnail + link only. No full articles, no
   paywalled content, no scraping. Every card links to the publisher. Personal, non-commercial use.
 
+### AI Worker — `worker/` (optional; `VITE_AI_API`, a GitHub Actions variable passed to the build)
+- Cloudflare Worker holding the Anthropic key as a secret: `POST /api/gm` (Claude answer, SSE), `POST /api/studio/script`
+  (Claude, JSON schema output), `POST /api/studio/tts` (`@cf/deepgram/aura-1`, mp3; 12 licensed Aura voices, allowlisted),
+  `GET /api/usage`. Model `claude-opus-5-5` (override `AI_MODEL`), effort low (answers) / medium (scripts), server-side refusal
+  fallback (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`). Deploy steps and costs: `worker/README.md`.
+- Guards: origin allowlist, optional `ACCESS_TOKEN` (user pastes it in Settings; stored in the browser, never built in),
+  strict validation (sizes, fact ids, voices), KV quotas per IP per day + per-minute rate limit + global daily cap
+  (`DEFAULT_LIMITS`), no league data stored. Pure logic in `worker/src/logic.ts` is tested by the app's test run.
+- **Not deployed by Claude Code** (needs the owner's Cloudflare account and Anthropic key). Until `VITE_AI_API` is set the app
+  uses the built-in engine and device voices. The Workers AI call shape follows Cloudflare's docs and is **unverified live**.
+
 ## 6. Core logic (port exactly from `index.html`, then keep here)
 
 - **Scoring:** `points(stats, scoring) = Σ stats[k] * (scoring[k] || 0)` over numeric keys.
@@ -156,6 +170,11 @@ src/
                       #   rolling backtest, validation gate, intervals), client (model.json + per-player breakdown)
     analytics/        # explainable models: history, volatility, usage, matchup, schedule,
                       #   lineupPlan (exact optimizer), lineupAnalysis (wires it to the model)
+    ai/               # facts (fact sheet + number checker), assistant (intent, players, follow-ups, built-in answers,
+                      #   AI-answer checker), podcast (outline, built-in writer, AI-script checker, disclosures),
+                      #   episode (timeline, transcript), storage (IndexedDB: chat, episodes, audio clips), client
+                      #   (Worker: SSE, retry, cancel), quota (per-device daily allowance), speech (Web Speech), seeds
+  worker/             # (repo root) Cloudflare Worker for AI answers, scripts and voices; see worker/README.md
   hooks/              # useState wrappers over React Query: useLeague, useRosters,
                       # useMatchups, useProjections, useSeasonStats, useFantasyCalc, useNews
   store/              # Zustand: username, leagueId, theme, collapsed sections, bookmarks/read
@@ -167,7 +186,10 @@ src/
     ui/               # Card, Pill, Avatar, Skeleton, EmptyState, ErrorState, Modal, Drawer, Chip
     cards/            # GameDay, LineupCheck, Edge, TradeMachine, WaiverWire, WaiverBids,
                       # Standings, Roster, PlayerValue, NewsHub
-  routes/             # Connect (username/league), Dashboard, News, Standings, Players, PlayerDetail, Settings
+    ai/               # GmChat (conversation), AskFab + FabChat (floating Ask Fantasy GM), FactRow, AiConsent, AiSettings
+    studio/           # EpisodePlayer, AudioStep, Library, ShareDialog, AiBadge
+  routes/             # Connect (username/league), Dashboard, News, Standings, Players, PlayerDetail, Settings,
+                      #   Ask (AI Fantasy GM), Studio (Podcast Studio), and the tool pages
   App.tsx, main.tsx, index.css
 ```
 
@@ -241,3 +263,4 @@ _Legend: [x] built + tested against mocked Sleeper/FantasyCalc responses; [~] bu
 - 2026-11-12: **Navigation fit**: with the new pages the sidebar overflowed a 900px-tall screen (scrolling, clipped connection box, horizontal scrollbar). Alert Center and Player Market moved into the Analytics group (Alert Center is also on the bell and in search), nav rows 40px, horizontal overflow hidden; the sidebar now fits at 1440x900. Browser-checked: /edge, /market, /alerts render with no overflow.
 - 2026-11-12: **Fix: weather chips overlapping projections** in the dashboard Optimal Lineup (user report). The chip (icon + high + wind) outgrew the fixed 96px Opp column. `WeatherIndicator` gained `compact` (icon + high only; wind stays in the tooltip and the amber border); the Opp cell stacks "vs PHI" over the chip; Pos/Start columns trimmed; headshots hide only when the card is under 448px (container query). Measured in the browser at 1280/1440/1920: 0 chips past their cell, 0 truncated names; Lineup Optimizer table also 0 overlaps at 1440 and 390.
 - 2026-11-12: **Approved dashboard design implemented** (reference: `design-references/gameplanbitz-dashboard.png`, compared side by side at 1672x941). Stadium photo as its own fixed layer (`DashboardBackground`: `public/images/stadium-background.webp`, "A crowded football stadium at night under bright lights" by Scott Greer on Unsplash, Unsplash License, credited in `public/images/CREDITS.md`; 1800px WebP q40, 381 KB) under a themed gradient: visible behind the greeting and bottom edge, dark through the data; translucent `bg-card/80 backdrop-blur` panels. Greeting without emoji + week picker in the dashboard header (hidden from the top bar there). Hero: Weekly Game Plan (verb-highlighted actions, View Details → GM, the lead action's Sleeper headshot in a right-hand strip; `GmAction.playerId` added) | This Week's Matchup (avatars, records, projections, win-chance pill, **Game weather** panel for a starter with flagged weather, else the first starter). Stats bar: projected points vs league avg, win probability, playoff odds, league standing, The Edge (actions count). Row 3: Optimal Lineup (one-line rows, Weather column with icon-only chips, Optimize link; the as-set toggle lives on /lineup) | **Breakout Player Radar** spotlight (top free-agent breakout: photo, projection, usage trend %, evidence, per-game usage sparkline) | Latest Fantasy News. Below: Top Waiver Targets | League Race, then Quick access. Removed from the dashboard: the season strip and the matchup's position-edge chips. Sidebar: shield logo, 272px on wide screens, nav like the design (The Edge, Fantasy GM, Start/Sit moved under Analytics). Weather art shared via `components/weather/art.ts`; `WeatherIndicator` gained `iconOnly`. Not copied: "vs last week" deltas (no history), the illustrated player render and NFL football (trademarked / not licensed). Verified: tsc, eslint, vitest 583, build; browser at 1024/1440/1672/1920 and 390 (light), no overflow, no truncated lineup names, no stray chips.
+- 2026-11-12: **AI Fantasy GM + Podcast Studio** (branch `ai-gm-studio`). *Fact sheet* (`lib/ai/facts.ts`, `useFactSheet`): every number the AI features may use, as short sentences built from the existing tools (matchup + win model, lineup slots/swaps/bench, Sleeper injury designations, The Edge's injury/weather/breakout/opening signals, engine projections with 80% ranges, waivers, trades, playoff odds, standings, keepers, roster news, last week's results, opponent scouting), each with id `F#`, Sleeper-fact vs model label, source, timestamp, players and tool link; full player names. *AI Fantasy GM* (`/ask`, sidebar; floating **Ask Fantasy GM** button with page-aware suggestions on tool pages, not the dashboard): built-in engine (no AI; intent + player detection with names masked out of intent, same-name players resolved to my roster, follow-ups "he"/"what about X", start/sit compare with the start/sit floor/ceiling lean, explicit "no designation" and missing-data notes, read-only refusal of roster actions) and an optional AI engine (Claude via the Worker, after explicit consent) whose answers are checked: unknown citations and numbers not in the cited facts are shown as "Unverified". Sources list with labels/timestamps, uncertainty line, tool links, stop/retry/"answer without AI", voice input (Web Speech; vendor processing disclosed) and read-aloud; conversation saved per league in IndexedDB, clearable. *Podcast Studio* (`/studio`): episode types (matchup preview, Sunday kickoff, weekly recap, waivers & trades), one host or two-host debate, straight or humorous, short/standard; evidence outline (untick chapters) → script (built-in writer reads facts verbatim + number-free labeled opinions/pushback/jokes, or AI writer checked line by line; flagged lines must be removed) → approve → audio (device voices, or Aura voices via the Worker with concurrency 3, progress, cancel, retry failed lines, per-device character allowance) → player (play/pause, chapter skip, seek, 0.75-2x, chapters, highlighted clickable transcript, sources) and library (history, saved, delete with confirmation, delete all in Settings). Fictional hosts Jordan and Casey; the app always adds spoken AI disclosures at both ends and a visible AI badge. Sharing: private by default (browser only); copy/save transcript, save MP3 (AI voices), or system share only after an explicit acknowledgement; no public links (nothing hosted). *Worker* (`worker/`): see §5. Not done: Worker not deployed (owner's accounts needed), Workers AI TTS call unverified live, no server-side episode storage or public share links. Verified: tsc (app + worker against the real SDK), eslint, vitest 638 (49 files; mutations on the script number check and the Worker rate limit caught), build (Ask 5 KB, Studio 48 KB chunks), headless-Edge checks of /ask, /studio (full flow to the player) and the floating panel at 1440x900 and 390 px (no horizontal overflow; sidebar fits at 900 px tall). The browser pass found and fixed: "Jalen Hurts" read as an injury question, same-name players matching many ids, bench facts missing the recommended starter, citation numbering order.

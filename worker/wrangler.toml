@@ -1,0 +1,29 @@
+# GameplanBlitz AI Worker. Deploy steps: worker/README.md
+name = "gameplanblitz-ai"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+# Workers AI: Deepgram Aura text-to-speech (licensed synthetic voices)
+[ai]
+binding = "AI"
+
+# Daily quotas and per-minute rate limits (counters only; no league data is stored)
+[[kv_namespaces]]
+binding = "USAGE"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+[vars]
+# Origins allowed to call the Worker (the GitHub Pages origin has no path)
+ALLOWED_ORIGINS = "https://bartthegreat7.github.io,http://localhost:5173"
+# Optional overrides (defaults in src/logic.ts):
+# AI_MODEL = "claude-opus-5-5"
+# LIMIT_CHAT_PER_DAY = "40"
+# LIMIT_SCRIPTS_PER_DAY = "6"
+# LIMIT_TTS_CHARS_PER_DAY = "40000"
+# LIMIT_PER_MINUTE = "20"
+# LIMIT_GLOBAL_CHAT_PER_DAY = "400"
+# LIMIT_GLOBAL_SCRIPTS_PER_DAY = "40"
+# LIMIT_GLOBAL_TTS_CHARS_PER_DAY = "300000"
+
+# Secrets (never in this file): npx wrangler secret put ANTHROPIC_API_KEY
+#                               npx wrangler secret put ACCESS_TOKEN   (optional)

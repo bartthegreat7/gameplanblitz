@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { AiSettings } from '../components/ai/AiSettings'
 import { Modal } from '../components/ui/Overlay'
 import { Segmented } from '../components/ui/Segmented'
 import { useRefreshPlayers } from '../hooks/useLeagueData'
@@ -96,6 +97,8 @@ export default function Settings() {
           )}
         </p>
       </Row>
+
+      <AiSettings />
 
       <Modal open={confirm} onClose={() => setConfirm(false)} title="Sign out?">
         <p className="text-ink-2">This forgets your Sleeper username and selected league in this browser. Your theme and saved articles are kept.</p>

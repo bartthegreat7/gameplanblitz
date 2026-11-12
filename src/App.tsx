@@ -13,6 +13,8 @@ import { applyTheme, useAppStore } from './store/app'
 // The dashboard and connect screen load up front; the analysis pages are split into their own
 // chunks so the first load stays small.
 const GM = lazy(() => import('./routes/GM'))
+const Ask = lazy(() => import('./routes/Ask'))
+const Studio = lazy(() => import('./routes/Studio'))
 const Accuracy = lazy(() => import('./routes/Accuracy'))
 const Breakouts = lazy(() => import('./routes/Breakouts'))
 const Injuries = lazy(() => import('./routes/Injuries'))
@@ -48,6 +50,8 @@ export default function App({ client = defaultClient }: { client?: QueryClient }
               <Route index element={<Dashboard />} />
               <Route path="connect" element={<Connect />} />
               <Route path="gm" element={<GM />} />
+              <Route path="ask" element={<Ask />} />
+              <Route path="studio" element={<Studio />} />
               <Route path="accuracy" element={<Accuracy />} />
               <Route path="breakouts" element={<Breakouts />} />
               <Route path="injuries" element={<Injuries />} />

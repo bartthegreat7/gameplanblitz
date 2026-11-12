@@ -10,6 +10,8 @@ import {
   ListChecks,
   Lock,
   Medal,
+  MessageSquareText,
+  Podcast,
   Newspaper,
   Plus,
   Radio,
@@ -46,6 +48,8 @@ export const isGroup = (e: NavEntry): e is NavGroup => 'children' in e
 /** Sidebar order. "My Leagues" also lists the user's Sleeper leagues (rendered by the sidebar). */
 export const NAV_TREE: NavEntry[] = [
   { to: '/', label: 'Dashboard', icon: Home, primary: true },
+  { to: '/ask', label: 'AI Fantasy GM', short: 'Ask GM', icon: MessageSquareText },
+  { to: '/studio', label: 'Podcast Studio', short: 'Studio', icon: Podcast },
   {
     id: 'leagues',
     label: 'My Leagues',
