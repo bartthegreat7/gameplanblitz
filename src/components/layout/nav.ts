@@ -4,6 +4,7 @@ import {
   Binoculars,
   Briefcase,
   HeartPulse,
+  LineChart,
   Home,
   ListChecks,
   Lock,
@@ -55,6 +56,7 @@ export const NAV_TREE: NavEntry[] = [
   { to: '/players', label: 'Players', icon: Users },
   { to: '/waivers', label: 'Waiver Wire', short: 'Waivers', icon: Plus, primary: true },
   { to: '/trades', label: 'Trades', icon: ArrowLeftRight },
+  { to: '/market', label: 'Player Market', icon: LineChart },
   { to: '/keepers', label: 'Keeper Tools', icon: Lock },
   {
     id: 'analytics',

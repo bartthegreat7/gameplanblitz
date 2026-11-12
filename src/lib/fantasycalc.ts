@@ -5,12 +5,17 @@ const FC = 'https://api.fantasycalc.com/values/current'
 export interface FcValue {
   value: number
   rank: number
+  /** FantasyCalc's value change over the last 30 days (provider history), when given */
+  trend30?: number
+  positionRank?: number
 }
 
 export interface FcRow {
   player?: { sleeperId?: string | null; name?: string; position?: string }
   value: number
   overallRank: number
+  trend30Day?: number
+  positionRank?: number
 }
 
 export interface FcParams {
@@ -57,7 +62,13 @@ export function parseFcData(rows: FcRow[]): FcData {
       continue
     }
     const sid = row.player?.sleeperId
-    if (sid) players.set(sid, { value: row.value, rank: row.overallRank })
+    if (sid)
+      players.set(sid, {
+        value: row.value,
+        rank: row.overallRank,
+        ...(typeof row.trend30Day === 'number' ? { trend30: row.trend30Day } : {}),
+        ...(typeof row.positionRank === 'number' ? { positionRank: row.positionRank } : {}),
+      })
   }
   return { players, picks }
 }
@@ -68,7 +79,11 @@ export function parseFcData(rows: FcRow[]): FcData {
  * gracefully if this throws.
  */
 export async function getFantasyCalcData(p: FcParams, dynasty: boolean): Promise<FcData> {
-  return parseFcData(await getJson<FcRow[]>(`${FC}?isDynasty=${dynasty}&numQbs=${p.qbs}&numTeams=${p.teams}&ppr=${p.ppr}`))
+  return parseFcData(
+    await getJson<FcRow[]>(
+      `${FC}?isDynasty=${dynasty}&numQbs=${p.qbs}&numTeams=${p.teams}&ppr=${p.ppr}`,
+    ),
+  )
 }
 
 /** sleeperId → {value, rank} on the redraft scale. */
