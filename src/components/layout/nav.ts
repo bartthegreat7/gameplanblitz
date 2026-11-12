@@ -1,24 +1,28 @@
 import {
   ArrowLeftRight,
-  BarChart3,
   BellRing,
   Binoculars,
+  Bot,
   Briefcase,
+  CloudSun,
+  FlaskConical,
   HeartPulse,
+  LayoutDashboard,
   LineChart,
-  Home,
   ListChecks,
+  ListOrdered,
   Lock,
   Medal,
-  MessageSquareText,
   Newspaper,
-  Plus,
+  Podcast,
   Radio,
   Scale,
   Settings,
+  Shirt,
   Target,
   Trophy,
   TrendingUp,
+  UserPlus,
   Users,
   Zap,
   type LucideIcon,
@@ -35,7 +39,7 @@ export interface NavLeaf {
 }
 
 export interface NavGroup {
-  id: 'leagues' | 'analytics'
+  id: 'leagues' | 'lab'
   label: string
   icon: LucideIcon
   children: NavLeaf[]
@@ -44,68 +48,81 @@ export interface NavGroup {
 export type NavEntry = NavLeaf | NavGroup
 export const isGroup = (e: NavEntry): e is NavGroup => 'children' in e
 
-export const GAME_DAY: NavLeaf = { to: '/gameday', label: 'Game Day Mode', icon: Radio }
+export const GAME_DAY: NavLeaf = { to: '/gameday', label: 'Game Day Live', icon: Radio }
 export const SETTINGS: NavLeaf = { to: '/settings', label: 'Settings', icon: Settings }
 
 export interface NavSection {
   id: string
-  /** short heading shown above the section in the sidebar */
-  label: string
+  /** short heading shown above the section in the sidebar (none for the top entry) */
+  label: string | null
   entries: NavEntry[]
 }
 
 /** Sidebar order, grouped under headings. "My Leagues" also lists the user's Sleeper leagues (rendered by the sidebar). */
 export const NAV_SECTIONS: NavSection[] = [
   {
-    id: 'overview',
-    label: 'Overview',
-    entries: [
-      { to: '/', label: 'Dashboard', icon: Home, primary: true },
-      { to: '/ask', label: 'AI Fantasy GM', short: 'Ask GM', icon: MessageSquareText },
-    ],
+    id: 'home',
+    label: null,
+    entries: [{ to: '/', label: 'Command Center', short: 'Home', icon: LayoutDashboard, primary: true }],
   },
   {
-    id: 'manage',
-    label: 'Manage',
+    id: 'fantasy',
+    label: 'My Fantasy',
     entries: [
       {
         id: 'leagues',
         label: 'My Leagues',
         icon: Trophy,
-        children: [{ to: '/standings', label: 'Standings', icon: Trophy }],
+        children: [{ to: '/standings', label: 'Standings', icon: ListOrdered }],
       },
+      { to: '/team', label: 'My Team', icon: Shirt },
       { to: '/lineup', label: 'Lineup Optimizer', short: 'Lineup', icon: ListChecks, primary: true },
-      { to: '/players', label: 'Players', icon: Users },
-      { to: '/waivers', label: 'Waiver Wire', short: 'Waivers', icon: Plus, primary: true },
-      { to: '/trades', label: 'Trades', icon: ArrowLeftRight },
-      { to: '/keepers', label: 'Keeper Tools', icon: Lock },
     ],
   },
   {
-    id: 'insights',
-    label: 'Insights',
+    id: 'tools',
+    label: 'Player Tools',
     entries: [
+      { to: '/players', label: 'Players & Projections', icon: Users },
+      { to: '/waivers', label: 'Waivers & Pickups', short: 'Waivers', icon: UserPlus, primary: true },
+      { to: '/trades', label: 'Trades', icon: ArrowLeftRight },
+      { to: '/keepers', label: 'Keepers & Dynasty', icon: Lock },
+    ],
+  },
+  {
+    id: 'intelligence',
+    label: 'Intelligence',
+    entries: [
+      { to: '/ask', label: 'AI Fantasy GM', short: 'Ask GM', icon: Bot },
+      { to: '/edge', label: 'The Edge (Insights)', icon: Zap },
       {
-        id: 'analytics',
-        label: 'Analytics',
-        icon: BarChart3,
+        id: 'lab',
+        label: 'Strategy Lab',
+        icon: FlaskConical,
         children: [
-          { to: '/edge', label: 'The Edge', icon: Zap },
-          { to: '/gm', label: 'Fantasy GM', icon: Briefcase },
+          { to: '/gm', label: 'Weekly GM Brief', icon: Briefcase },
           { to: '/startsit', label: 'Start/Sit', icon: Scale },
-          { to: '/alerts', label: 'Alert Center', icon: BellRing },
+          { to: '/scouting', label: 'Opponent Scouting', icon: Binoculars },
           { to: '/breakouts', label: 'Breakout Radar', icon: TrendingUp },
           { to: '/market', label: 'Player Market', icon: LineChart },
           { to: '/injuries', label: 'Injury Center', icon: HeartPulse },
-          { to: '/scouting', label: 'Opponent Scouting', icon: Binoculars },
-          { to: '/playoffs', label: 'Playoff Simulator', icon: Medal },
+          { to: '/weather', label: 'Weather Watch', icon: CloudSun },
+          { to: '/alerts', label: 'Alert Center', icon: BellRing },
           { to: '/accuracy', label: 'Projection Accuracy', icon: Target },
         ],
       },
-      { to: '/news', label: 'News & Articles', short: 'News', icon: Newspaper, primary: true },
+      { to: '/playoffs', label: 'Playoff Simulator', icon: Medal },
     ],
   },
-  { id: 'live', label: 'Live', entries: [GAME_DAY] },
+  {
+    id: 'media',
+    label: 'Media & Live',
+    entries: [
+      { to: '/studio', label: 'AI Podcast', icon: Podcast },
+      { to: '/news', label: 'News & Analysis', short: 'News', icon: Newspaper, primary: true },
+      GAME_DAY,
+    ],
+  },
 ]
 
 /** Every sidebar entry in order (without section headings). */

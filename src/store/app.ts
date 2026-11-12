@@ -34,6 +34,10 @@ interface AppState {
   aiToken: string
   /** read AI Fantasy GM answers aloud with a device voice */
   readAloud: boolean
+  /** preferred device voices for the two podcast hosts */
+  deviceVoices: [string | null, string | null]
+  /** Aura voices for the two hosts (AI voices) */
+  cloudVoices: [string, string]
 
   toggleTheme: () => void
   setTheme: (t: Theme) => void
@@ -48,7 +52,7 @@ interface AppState {
   markRead: (id: string) => void
   toggleRead: (id: string) => void
   setKeeperRules: (leagueId: string, rules: KeeperRules | null) => void
-  setAi: (p: Partial<Pick<AppState, 'aiConsent' | 'aiToken' | 'readAloud'>>) => void
+  setAi: (p: Partial<Pick<AppState, 'aiConsent' | 'aiToken' | 'readAloud' | 'deviceVoices' | 'cloudVoices'>>) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -66,6 +70,8 @@ export const useAppStore = create<AppState>()(
       aiConsent: false,
       aiToken: '',
       readAloud: false,
+      deviceVoices: [null, null],
+      cloudVoices: ['orion', 'asteria'],
 
       toggleTheme: () => set({ theme: get().theme === 'light' ? 'dark' : 'light' }),
       setTheme: (t) => set({ theme: t }),
@@ -102,6 +108,8 @@ export const useAppStore = create<AppState>()(
         aiConsent: s.aiConsent,
         aiToken: s.aiToken,
         readAloud: s.readAloud,
+        deviceVoices: s.deviceVoices,
+        cloudVoices: s.cloudVoices,
       }),
     },
   ),

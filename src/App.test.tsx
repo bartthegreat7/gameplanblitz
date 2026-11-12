@@ -85,7 +85,7 @@ describe('dashboard', () => {
   })
 
   it('shows standings with the signed-in team highlighted', async () => {
-    renderApp()
+    renderApp('#/?tab=league')
     const card = await screen.findByRole('region', { name: 'League Standings' })
     const row = within(card).getByText('Gridiron Gang').closest('tr')!
     expect(row).toHaveAttribute('aria-current', 'true')

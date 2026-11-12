@@ -298,5 +298,9 @@ export function useGmBrief(data: Ready) {
     extras,
     pending,
     unavailable,
+    /** my starters' forecasts are still loading */
+    weatherLoading: forecastQs.some((q) => q.isPending),
+    /** at least one starter has a game with a forecast to check */
+    weatherChecked: stadiums.length > 0,
   }
 }

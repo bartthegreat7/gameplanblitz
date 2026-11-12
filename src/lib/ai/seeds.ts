@@ -6,6 +6,8 @@ export function seedsFor(path: string, name: (id: string) => string, known: (id:
     return [`Should I start ${n}?`, `What does the model project for ${n}?`, `Is ${n} injured?`, `Any news on ${n}?`]
   }
   const map: Record<string, string[]> = {
+    '/team': ['Any injury concerns in my lineup?', 'Who should I start?'],
+    '/weather': ['Any weather concerns for my starters?', 'Who should I start?'],
     '/waivers': ['Who should I pick up?', 'Is anyone worth a stash?'],
     '/breakouts': ['Who should I pick up?', 'Any breakout pickups?'],
     '/trades': ['Any trade ideas?', 'What are my playoff odds?'],

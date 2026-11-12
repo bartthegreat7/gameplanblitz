@@ -46,7 +46,7 @@ describe('global search', () => {
     await user.clear(within(dialog).getByRole('textbox'))
     await user.type(within(dialog).getByRole('textbox'), 'keeper')
     await user.keyboard('{ArrowDown}')
-    expect(within(dialog).getByRole('button', { name: /Keeper Tools/ })).toHaveFocus()
+    expect(within(dialog).getByRole('button', { name: /Keepers & Dynasty/ })).toHaveFocus()
     await user.keyboard('{Enter}')
     expect(await screen.findByRole('heading', { level: 1, name: /Keeper/ })).toBeInTheDocument()
   }, 30_000)
@@ -141,7 +141,8 @@ describe('sidebar', () => {
     renderApp('#/standings')
     await ready()
     const nav = screen.getAllByRole('navigation', { name: 'Primary' })[0]
-    expect(within(nav).getByRole('link', { name: /Game Day Mode/ })).not.toHaveTextContent('Live')
+    const link = within(nav).getByRole('link', { name: /Game Day Live/ })
+    expect(within(link).queryByText('Live')).not.toBeInTheDocument() // the badge, not the label
   })
 
   it('shows the live badge when a game this week has kicked off', async () => {
@@ -161,7 +162,7 @@ describe('sidebar', () => {
     renderApp('#/standings')
     await ready()
     const nav = screen.getAllByRole('navigation', { name: 'Primary' })[0]
-    for (const name of ['Overview', 'Manage', 'Insights', 'Live'])
+    for (const name of ['My Fantasy', 'Player Tools', 'Intelligence', 'Media & Live'])
       expect(within(nav).getByRole('group', { name })).toBeInTheDocument()
     // My Leagues holds the current page, so it starts open, and can still be closed
     const leagues = within(nav).getByRole('button', { name: 'My Leagues' })
@@ -179,24 +180,24 @@ describe('sidebar', () => {
     await ready()
     const nav = screen.getAllByRole('navigation', { name: 'Primary' })[0]
     // the rail shows one icon per group, not every page
-    expect(within(nav).queryByRole('link', { name: 'Playoff Simulator' })).not.toBeInTheDocument()
-    const analytics = within(nav).getByRole('button', { name: 'Analytics' })
+    expect(within(nav).queryByRole('link', { name: 'Opponent Scouting' })).not.toBeInTheDocument()
+    const analytics = within(nav).getByRole('button', { name: 'Strategy Lab' })
     await user.click(analytics)
     expect(analytics).toHaveAttribute('aria-expanded', 'true')
-    const flyout = within(nav).getByRole('group', { name: 'Analytics' })
-    expect(within(flyout).getAllByRole('link')).toHaveLength(10)
+    const flyout = within(nav).getByRole('group', { name: 'Strategy Lab' })
+    expect(within(flyout).getAllByRole('link')).toHaveLength(9)
     await user.keyboard('{Escape}')
-    expect(within(nav).queryByRole('group', { name: 'Analytics' })).not.toBeInTheDocument()
+    expect(within(nav).queryByRole('group', { name: 'Strategy Lab' })).not.toBeInTheDocument()
     expect(analytics).toHaveFocus()
     // from the keyboard, focus moves into the panel; picking a page navigates and closes it
     await user.keyboard('{Enter}')
-    const panel = within(nav).getByRole('group', { name: 'Analytics' })
-    expect(within(panel).getByRole('link', { name: 'The Edge' })).toHaveFocus()
+    const panel = within(nav).getByRole('group', { name: 'Strategy Lab' })
+    expect(within(panel).getByRole('link', { name: 'Weekly GM Brief' })).toHaveFocus()
     await user.keyboard('{ArrowUp}')
     expect(within(panel).getByRole('link', { name: 'Projection Accuracy' })).toHaveFocus()
-    await user.click(within(panel).getByRole('link', { name: 'Playoff Simulator' }))
-    expect(await screen.findByRole('heading', { level: 1, name: /Playoff/ }, SLOW)).toBeInTheDocument()
-    expect(within(nav).queryByRole('group', { name: 'Analytics' })).not.toBeInTheDocument()
+    await user.click(within(panel).getByRole('link', { name: 'Opponent Scouting' }))
+    expect(await screen.findByRole('heading', { level: 1, name: /Scouting/ }, SLOW)).toBeInTheDocument()
+    expect(within(nav).queryByRole('group', { name: 'Strategy Lab' })).not.toBeInTheDocument()
   }, 30_000)
 
   it('opens the full menu from the phone header', async () => {
@@ -205,10 +206,10 @@ describe('sidebar', () => {
     await ready()
     await user.click(screen.getByRole('button', { name: 'Open navigation' }))
     const dialog = await screen.findByRole('dialog', { name: 'Menu' })
-    expect(within(dialog).queryByRole('link', { name: 'Playoff Simulator' })).not.toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: 'Analytics' }))
-    await user.click(within(dialog).getByRole('link', { name: 'Playoff Simulator' }))
-    expect(await screen.findByRole('heading', { level: 1, name: /Playoff/ }, SLOW)).toBeInTheDocument()
+    expect(within(dialog).queryByRole('link', { name: 'Opponent Scouting' })).not.toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: 'Strategy Lab' }))
+    await user.click(within(dialog).getByRole('link', { name: 'Opponent Scouting' }))
+    expect(await screen.findByRole('heading', { level: 1, name: /Scouting/ }, SLOW)).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   }, 30_000)
 })

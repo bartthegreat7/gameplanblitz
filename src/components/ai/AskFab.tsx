@@ -11,6 +11,8 @@ const FabChat = lazy(() => import('./FabChat'))
 /** Pages where a question to the GM is a natural next step (not the dashboard, the GM itself or settings). */
 const FAB_ROUTES = [
   '/lineup',
+  '/team',
+  '/weather',
   '/players',
   '/waivers',
   '/trades',

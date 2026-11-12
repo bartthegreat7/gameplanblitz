@@ -177,6 +177,8 @@ export function resetStore(over: Partial<ReturnType<typeof useAppStore.getState>
     aiConsent: false,
     aiToken: '',
     readAloud: false,
+    deviceVoices: [null, null],
+    cloudVoices: ['orion', 'asteria'],
     ...over,
   })
 }
@@ -188,7 +190,11 @@ export const failing =
 
 /** Open one of the original dashboard tools from Quick access; resolves to its side panel. */
 export async function openTool(label: string) {
+  const user = userEvent.setup()
+  // the original tool cards live under the dashboard's Strategy tab
+  const strategy = await screen.findByRole('tab', { name: 'Strategy' }, { timeout: 15_000 })
+  if (strategy.getAttribute('aria-selected') !== 'true') await user.click(strategy)
   const qa = await screen.findByRole('region', { name: 'Quick access' }, { timeout: 15_000 })
-  await userEvent.setup().click(within(qa).getByRole('button', { name: label }))
+  await user.click(within(qa).getByRole('button', { name: label }))
   return screen.findByRole('dialog', { name: label })
 }

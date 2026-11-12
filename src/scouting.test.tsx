@@ -81,12 +81,12 @@ describe('Opponent Scouting', () => {
     expect(screen.queryByText('No completed games yet')).not.toBeInTheDocument()
   }, 60_000)
 
-  it('is reachable from the navigation (Analytics group)', async () => {
+  it('is reachable from the navigation (Strategy Lab group)', async () => {
     const user = userEvent.setup()
     renderApp('#/standings')
     await screen.findByRole('heading', { name: 'Standings', level: 1 })
     const sidebar = screen.getAllByRole('navigation', { name: 'Primary' })[0]
-    await user.click(within(sidebar).getByRole('button', { name: 'Analytics' }))
+    await user.click(within(sidebar).getByRole('button', { name: 'Strategy Lab' }))
     await user.click(within(sidebar).getByRole('link', { name: 'Opponent Scouting' }))
     expect(await screen.findByRole('heading', { level: 1, name: /Scouting/ })).toBeInTheDocument()
   })

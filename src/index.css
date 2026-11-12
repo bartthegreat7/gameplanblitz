@@ -6,33 +6,36 @@
    Text/background pairs are checked against WCAG AA in src/theme.contrast.test.ts. */
 :root {
   color-scheme: dark;
-  --bg: #080f20;
-  --glow: #0f1d3a;
+  --bg: #07111f;
+  --glow: #0b2342;
   /* navigation layers: sidebar sits a step above the page, raised = hover, active = selected */
-  --sidebar: #0b1427;
-  --raised: #141f37;
-  --card: #151e31;
-  --card-2: #1b2740;
-  --active: #1c3158;
-  --line: #2a3650;
-  --panel: #0e1628;
-  --ink: #f8fafc;
-  --ink-2: #94a3b8;
-  --ink-3: #8b9ab0;
-  --accent: #60a5fa;
-  --accent-deep: #3b82f6;
-  --accent-ink: #06122a;
+  --sidebar: #091625;
+  --raised: #102740;
+  --card: #0d2135;
+  --card-2: #112b46;
+  --active: #153b63;
+  --line: #244362;
+  --panel: #0a1a2c;
+  --ink: #f6f9ff;
+  --ink-2: #a5bad3;
+  --ink-3: #91a8c4;
+  --accent: #65b8ff;
+  --accent-deep: #1688ff;
+  --accent-ink: #04111f;
+  /* solid selection (the current page in navigation, active tab) */
+  --select: #1468d1;
+  --select-ink: #ffffff;
   --purple: #a78bfa;
-  --logo-from: #60a5fa;
-  --logo-to: #3b82f6;
-  --logo-ink: #06122a;
-  --plan-from: #17305f;
-  --plan-to: #2a2766;
-  --plan-line: #3d54a3;
-  --amber: #f2c66d;
+  --logo-from: #65b8ff;
+  --logo-to: #1688ff;
+  --logo-ink: #04111f;
+  --plan-from: #12345e;
+  --plan-to: #1d2c66;
+  --plan-line: #2d5a8f;
+  --amber: #f6b73c;
   --coral: #fb7185;
   --blue: #93c5fd;
-  --good: #34d399;
+  --good: #27d69a;
   --bad: #f87171;
   --bad-ink: #2a0606;
 }
@@ -42,6 +45,8 @@
   --glow: #dfe8fb;
   --sidebar: #ffffff;
   --raised: #eef3fa;
+  --select: #1d5fe0;
+  --select-ink: #ffffff;
   --card: #ffffff;
   --card-2: #f6f8fc;
   --active: #dce8fd;
@@ -76,6 +81,8 @@
   --color-card-2: var(--card-2);
   --color-sidebar: var(--sidebar);
   --color-raised: var(--raised);
+  --color-select: var(--select);
+  --color-select-ink: var(--select-ink);
   --color-active: var(--active);
   --color-purple: var(--purple);
   --color-plan-from: var(--plan-from);

@@ -16,7 +16,7 @@ import {
 import { AiError, aiConfigured, streamGm, withRetry } from '../../lib/ai/client'
 import type { Fact } from '../../lib/ai/facts'
 import { canSpend, record, remainingToday } from '../../lib/ai/quota'
-import { recognitionCtor, speakLine, speechSupported } from '../../lib/ai/speech'
+import { deviceVoices, recognitionCtor, speakLine, speechSupported } from '../../lib/ai/speech'
 import { clearChat, loadChat, newId, saveChat, type ChatMessage } from '../../lib/ai/storage'
 import { relTime } from '../../lib/format'
 import { useAppStore } from '../../store/app'
@@ -136,7 +136,7 @@ function AnswerCard({ msg, compact, onRetry, onBuiltIn }: { msg: ChatMessage; co
  */
 export function GmChat({ data, sheet, compact = false, seeds }: { data: Ready; sheet: FactSheet; compact?: boolean; seeds?: string[] }) {
   const { model: m, league } = data
-  const { aiConsent, aiToken, readAloud, setAi } = useAppStore()
+  const { aiConsent, aiToken, readAloud, deviceVoices: voicePrefs, setAi } = useAppStore()
   const configured = aiConfigured()
   const [engine, setEngine] = useState<'built-in' | 'ai'>(configured && aiConsent ? 'ai' : 'built-in')
   const [askConsent, setAskConsent] = useState(false)
@@ -150,6 +150,7 @@ export function GmChat({ data, sheet, compact = false, seeds }: { data: Ready; s
   const abortRef = useRef<AbortController | null>(null)
   const stopSpeech = useRef<(() => void) | null>(null)
   const endRef = useRef<HTMLDivElement>(null)
+  const logRef = useRef<HTMLDivElement>(null)
   const Recognition = recognitionCtor()
 
   useEffect(() => {
@@ -170,8 +171,12 @@ export function GmChat({ data, sheet, compact = false, seeds }: { data: Ready; s
     if (loaded) void saveChat(league.league_id, messages)
   }, [loaded, messages, league.league_id])
   useEffect(() => {
-    endRef.current?.scrollIntoView?.({ block: 'end' })
-  }, [messages.length])
+    // in a panel, scroll only the conversation (never the page around it)
+    if (compact) {
+      const log = logRef.current
+      if (log) log.scrollTop = log.scrollHeight
+    } else endRef.current?.scrollIntoView?.({ block: 'end' })
+  }, [messages.length, compact])
 
   const update = (id: string, patch: Partial<ChatMessage>) =>
     setMessages((ms) => ms.map((x) => (x.id === id ? { ...x, ...patch } : x)))
@@ -180,9 +185,10 @@ export function GmChat({ data, sheet, compact = false, seeds }: { data: Ready; s
     (a: Answer) => {
       if (!readAloud || !speechSupported()) return
       stopSpeech.current?.()
-      stopSpeech.current = speakLine(partsText(a), { voice: null, rate: 1, onEnd: () => (stopSpeech.current = null) })
+      const v = deviceVoices().find((x) => x.name === voicePrefs[0]) ?? null
+      stopSpeech.current = speakLine(partsText(a), { voice: v, rate: 1, onEnd: () => (stopSpeech.current = null) })
     },
-    [readAloud],
+    [readAloud, voicePrefs],
   )
 
   const builtIn = (q: string, at = stamp()): ChatMessage => {
@@ -349,7 +355,7 @@ export function GmChat({ data, sheet, compact = false, seeds }: { data: Ready; s
         />
       )}
 
-      <div role="log" aria-label="Conversation" className={`grid min-h-0 content-start gap-3 ${compact ? 'flex-1 overflow-y-auto pr-1' : ''}`}>
+      <div ref={logRef} role="log" aria-label="Conversation" className={`grid min-h-0 content-start gap-3 ${compact ? 'flex-1 overflow-y-auto pr-1' : ''}`}>
         {messages.length === 0 && (
           <div className="text-ink-2 text-sm">
             <p className="mb-2">

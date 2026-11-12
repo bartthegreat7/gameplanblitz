@@ -1,31 +1,83 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { ArrowRight, FileText } from 'lucide-react'
+import { useCallback, useMemo } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 
+import { GameDayCard } from '../components/cards/GameDayCard'
+import { LineupCheckCard } from '../components/cards/LineupCheckCard'
+import { StandingsCard } from '../components/cards/RosterCards'
 import { ProjNotice } from '../components/cards/shared'
-import { BreakoutSpotlight } from '../components/dashboard/BreakoutSpotlight'
+import { ActionItems } from '../components/command/ActionItems'
+import { BreakoutRadar } from '../components/command/BreakoutRadar'
+import { CommandHeader } from '../components/command/CommandHeader'
+import { GameDayStrip } from '../components/command/GameDayStrip'
+import { GmPanel } from '../components/command/GmPanel'
+import { MyTeam } from '../components/command/MyTeam'
+import { PodcastPanel } from '../components/command/PodcastPanel'
+import { isTab, type TabId } from '../components/command/tabs'
+import { WeatherWatch } from '../components/command/WeatherWatch'
+import { Welcome } from '../components/command/Welcome'
 import { DashboardBackground } from '../components/dashboard/DashboardBackground'
 import { FantasyNews, OptimalLineup, WaiverTargets } from '../components/dashboard/Insights'
 import { LeagueRace } from '../components/dashboard/LeagueRace'
 import { MatchupHero } from '../components/dashboard/Matchup'
 import { QuickAccess } from '../components/dashboard/QuickAccess'
-import { StatsBar } from '../components/dashboard/StatsBar'
+import { CARD } from '../components/dashboard/styles'
 import { WeeklyGamePlan } from '../components/dashboard/WeeklyGamePlan'
-import { WeekSelect } from '../components/layout/Menus'
+import { WeeklyReport } from '../components/gm/WeeklyReport'
 import { LeagueGate } from '../components/LeagueGate'
 import { useGmBrief } from '../hooks/useGmBrief'
 import type { Ready } from '../hooks/useLeagueData'
+import { useOddsHistory } from '../hooks/useOddsHistory'
 import { useProjectionEngine } from '../hooks/useProjectionEngine'
 import { useSession } from '../hooks/useSession'
 import { useUsageBook } from '../hooks/useUsageBook'
+import { actionItems, teamHealth } from '../lib/analytics/command'
 import { breakouts } from '../lib/analytics/opportunity'
 import { findMyMatchup, gameDay } from '../lib/insights'
-import { lineupTotal } from '../lib/lineup'
 import { getUser } from '../lib/sleeper'
-import { useAppStore } from '../store/app'
 
-function Header({ data }: { data: Ready }) {
-  const { username, leagues, leagueId } = useSession()
-  const setLeagueId = useAppStore((s) => s.setLeagueId)
+const LINKS: [string, string][] = [
+  ['/scouting', 'Opponent Scouting'],
+  ['/gameday', 'Game Day Live'],
+  ['/startsit', 'Start/Sit Simulator'],
+  ['/weather', 'Weather Watch'],
+]
+
+function MoreLinks({ links }: { links: [string, string][] }) {
+  return (
+    <nav aria-label="Related tools" className="flex flex-wrap gap-2">
+      {links.map(([to, label]) => (
+        <Link
+          key={to}
+          to={to}
+          className="border-line/70 bg-card/80 hover:border-accent/50 inline-flex min-h-10 items-center gap-1.5 rounded-xl border px-3.5 text-sm font-bold backdrop-blur-md transition-colors"
+        >
+          {label} <ArrowRight size={14} aria-hidden className="text-accent" />
+        </Link>
+      ))}
+    </nav>
+  )
+}
+
+/*
+ * Command Center layout (desktop, top to bottom):
+ *   center column: title + view tabs, then the selected view
+ *     Overview: greeting + 4 stat cards | This Week's Matchup + Top Action Items |
+ *               Optimal Lineup + Breakout Radar + Fantasy News
+ *   right column (xl+): AI Fantasy GM chat, AI Podcast
+ *   bottom (Overview): Game Day Dashboard strip + Weather Watch
+ * Below xl the right column follows the main content. The other tabs hold every earlier
+ * dashboard panel and tool card, so nothing was removed.
+ */
+function DashboardView({ data }: { data: Ready }) {
+  const { model: m, matchups, week, league } = data
+  const [params, setParams] = useSearchParams()
+  const raw = params.get('tab')
+  const tab: TabId = isTab(raw) ? raw : 'overview'
+  const setTab = (t: TabId) => setParams(t === 'overview' ? {} : { tab: t })
+
+  const { username } = useSession()
   const userQ = useQuery({
     queryKey: ['user', username],
     queryFn: () => getUser(username!),
@@ -33,128 +85,188 @@ function Header({ data }: { data: Ready }) {
     staleTime: Infinity,
   })
   const name = userQ.data?.display_name || username || 'Coach'
-  return (
-    <header className="flex flex-wrap items-end gap-x-4 gap-y-3">
-      <div className="min-w-0 flex-1">
-        <h1 className="text-3xl font-extrabold tracking-tight md:text-[2.25rem] md:leading-tight">
-          Welcome back, {name}
-        </h1>
-        <p className="text-ink-2 mt-0.5 text-lg">
-          Your command center for <b className="text-ink">{data.league.name}</b>
-        </p>
-        <span aria-hidden className="bg-accent mt-2.5 block h-1 w-20 rounded-full" />
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {leagues.length > 1 && (
-          <label className="border-line bg-card/80 flex h-11 items-center gap-2 rounded-xl border pl-3 backdrop-blur-md">
-            <span className="text-ink-3 text-sm font-semibold">League</span>
-            <select
-              id="league-select"
-              value={leagueId ?? ''}
-              onChange={(e) => setLeagueId(e.target.value)}
-              className="h-full max-w-56 rounded-xl bg-transparent pr-2 font-bold outline-none"
-            >
-              {leagues.map((l) => (
-                <option key={l.league_id} value={l.league_id} className="bg-card">
-                  {l.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <WeekSelect className="bg-card/80 backdrop-blur-md" />
-      </div>
-    </header>
-  )
-}
 
-/*
- * Layout (matches design-references/gameplanbitz-dashboard.png), top to bottom:
- *  1. greeting + week picker, over the stadium photo
- *  2. Weekly Game Plan | This Week's Matchup (with the key game's weather)
- *  3. stats bar: projected points, win probability, playoff odds, standing, The Edge
- *  4. Optimal Lineup | Breakout Player Radar | Latest Fantasy News (news full width below 1600px)
- *  5. Top Waiver Targets | League Race (standings + playoff race)
- *  6. Quick access to the original tools
- */
-function DashboardView({ data }: { data: Ready }) {
-  const { model: m, matchups, week, league } = data
   const gm = useGmBrief(data)
   const engine = useProjectionEngine(data)
   const { book, loading: usageLoading } = useUsageBook(data)
   const gd = useMemo(() => gameDay(m, matchups), [m, matchups])
-  const leagueAvg = useMemo(() => {
-    const totals = m.rosters.map((r) => lineupTotal(m.optimal(r.players ?? [])))
-    return totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : null
-  }, [m])
+  const plan = gm.lineup?.plan ?? null
+  const health = useMemo(() => (plan ? teamHealth(plan) : null), [plan])
+  const oddsChange = useOddsHistory(league.league_id, week, gm.playoff?.playoffPct ?? null)
   const radar = useMemo(() => breakouts(book, m.pos), [book, m])
-  // the game whose weather matters most: a starter with flagged weather, else my first starter (the QB)
+  const projOf = useCallback((id: string) => engine.projectionFor(id).value, [engine])
+  const weatherFlags = gm.allActions.filter((a) => a.area === 'weather').length
+  const items = useMemo(
+    () =>
+      actionItems({
+        plan,
+        health,
+        waivers: gm.waivers
+          ? {
+              upgrades: gm.waivers.candidates
+                .filter((c) => c.kind === 'upgrade')
+                .map((c) => ({ name: c.name, gain: c.gainPerWeek })),
+            }
+          : null,
+        trades: gm.trades ? { mutual: gm.trades.mutual.length } : null,
+        weatherFlags: gm.weatherLoading ? null : weatherFlags,
+        weatherChecked: gm.weatherChecked,
+      }),
+    [plan, health, gm.waivers, gm.trades, gm.weatherLoading, gm.weatherChecked, weatherFlags],
+  )
+  // the game whose weather the Matchup view shows: a starter with flagged weather, else my first starter
   const weatherPlayer = useMemo(() => {
     const flagged = gm.allActions.find((a) => a.area === 'weather' && a.playerId)?.playerId
-    const first = (findMyMatchup(matchups, m.myRosterId)?.starters ?? []).find(
-      (id) => id && id !== '0',
-    )
+    const first = (findMyMatchup(matchups, m.myRosterId)?.starters ?? []).find((id) => id && id !== '0')
     return flagged ?? first ?? null
   }, [gm.allActions, matchups, m.myRosterId])
 
   return (
     <>
       <DashboardBackground />
-      <div className="grid grid-cols-1 gap-4">
-        <Header data={data} />
-        <ProjNotice data={data} />
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_21rem] 2xl:grid-cols-[minmax(0,1fr)_23.5rem] 3xl:grid-cols-[minmax(0,1fr)_26rem]">
+        <div className="@container/main grid min-w-0 content-start gap-5">
+          <CommandHeader tab={tab} onTab={setTab} />
+          <ProjNotice data={data} />
+          <div
+            role="tabpanel"
+            id={`cc-panel-${tab}`}
+            aria-labelledby={`cc-tab-${tab}`}
+            className="grid min-w-0 gap-5"
+          >
+            {tab === 'overview' && (
+              <>
+                <Welcome
+                  name={name}
+                  week={week}
+                  leagueName={league.name}
+                  gd={gd}
+                  health={health}
+                  odds={gm.playoff}
+                  oddsLoading={gm.playoffLoading}
+                  oddsChange={oddsChange}
+                  seasonDone={gm.seasonDone}
+                />
+                <div className="grid grid-cols-1 gap-5 @[46rem]/main:grid-cols-2">
+                  <MatchupHero
+                    m={m}
+                    matchups={matchups}
+                    gd={gd}
+                    week={week}
+                    weatherPlayer={null}
+                    analysisTo="/?tab=matchup"
+                  />
+                  <ActionItems items={items} />
+                </div>
+                <div className="grid grid-cols-1 gap-5 @[46rem]/main:grid-cols-2 @[68rem]/main:grid-cols-3">
+                  <OptimalLineup analysis={gm.lineup} week={week} projOf={projOf} />
+                  <BreakoutRadar
+                    m={m}
+                    list={radar}
+                    book={book}
+                    projOf={projOf}
+                    loading={usageLoading}
+                  />
+                  <FantasyNews
+                    news={gm.news}
+                    className="@[46rem]/main:col-span-2 @[68rem]/main:col-span-1"
+                  />
+                </div>
+              </>
+            )}
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-          <WeeklyGamePlan
-            actions={gm.brief.actions}
-            week={week}
-            pending={gm.pending.length > 0}
-            players={m.players}
-          />
-          <MatchupHero
-            m={m}
-            matchups={matchups}
-            gd={gd}
-            week={week}
-            weatherPlayer={weatherPlayer}
-          />
+            {tab === 'team' && <MyTeam data={data} gm={gm} projOf={projOf} />}
+
+            {tab === 'matchup' && (
+              <>
+                <MatchupHero
+                  m={m}
+                  matchups={matchups}
+                  gd={gd}
+                  week={week}
+                  weatherPlayer={weatherPlayer}
+                />
+                <div className="grid grid-cols-1 items-start gap-5 @[52rem]/main:grid-cols-2">
+                  <GameDayCard data={data} />
+                  <LineupCheckCard data={data} />
+                </div>
+                <MoreLinks links={LINKS} />
+              </>
+            )}
+
+            {tab === 'league' && (
+              <>
+                <LeagueRace
+                  m={m}
+                  leagueName={league.name}
+                  playoffTeams={gm.playoffTeams}
+                  odds={gm.playoff}
+                  loading={gm.playoffLoading}
+                  seasonDone={gm.seasonDone}
+                  divisions={league.settings.divisions ?? 0}
+                />
+                <StandingsCard data={data} />
+                <MoreLinks
+                  links={[
+                    ['/playoffs', 'Playoff Simulator'],
+                    ['/standings', 'Full standings'],
+                    ['/scouting', 'Scout any team'],
+                  ]}
+                />
+              </>
+            )}
+
+            {tab === 'strategy' && (
+              <>
+                <div className="grid grid-cols-1 gap-5 @[52rem]/main:grid-cols-2">
+                  <WeeklyGamePlan
+                    actions={gm.brief.actions}
+                    week={week}
+                    pending={gm.pending.length > 0}
+                    players={m.players}
+                  />
+                  <WaiverTargets m={m} report={gm.waivers} loading={gm.waiversLoading} />
+                </div>
+                <QuickAccess data={data} />
+              </>
+            )}
+
+            {tab === 'reports' && (
+              <section aria-label="Reports" className={`${CARD} grid gap-4 p-5 sm:p-6`}>
+                <div className="flex items-start gap-3">
+                  <span className="bg-accent/12 text-accent grid size-10 shrink-0 place-items-center rounded-xl">
+                    <FileText size={20} aria-hidden />
+                  </span>
+                  <p className="text-ink-2 text-sm">
+                    The Fantasy GM&apos;s rules-based weekly report, built from the same tools as the
+                    rest of the app. It adds no numbers of its own.
+                  </p>
+                </div>
+                <WeeklyReport data={data} gm={gm} />
+                <MoreLinks
+                  links={[
+                    ['/gm', 'Weekly GM Brief'],
+                    ['/accuracy', 'Projection Accuracy'],
+                    ['/alerts', 'Alert Center'],
+                    ['/studio?view=library', 'Podcast episodes'],
+                  ]}
+                />
+              </section>
+            )}
+          </div>
         </div>
 
-        <StatsBar
-          m={m}
-          gd={gd}
-          leagueAvg={leagueAvg}
-          odds={gm.playoff}
-          oddsLoading={gm.playoffLoading}
-          actions={gm.allActions.filter((a) => a.priority <= 2).length}
-        />
+        <aside aria-label="AI Fantasy GM and podcast" className="grid min-w-0 content-start gap-5">
+          <GmPanel data={data} />
+          <PodcastPanel leagueId={league.league_id} />
+        </aside>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 3xl:grid-cols-3">
-          <OptimalLineup analysis={gm.lineup} week={week} />
-          <BreakoutSpotlight
-            m={m}
-            list={radar}
-            games={(id) => book.games.get(id) ?? []}
-            projOf={(id) => engine.projectionFor(id).value}
-            loading={usageLoading}
-          />
-          <FantasyNews news={gm.news} className="lg:col-span-2 3xl:col-span-1" />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-          <WaiverTargets m={m} report={gm.waivers} loading={gm.waiversLoading} />
-          <LeagueRace
-            m={m}
-            leagueName={league.name}
-            playoffTeams={gm.playoffTeams}
-            odds={gm.playoff}
-            loading={gm.playoffLoading}
-            seasonDone={gm.seasonDone}
-            divisions={league.settings.divisions ?? 0}
-          />
-        </div>
-
-        <QuickAccess data={data} />
+        {tab === 'overview' && (
+          <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_19rem] xl:col-span-2">
+            <GameDayStrip data={data} />
+            <WeatherWatch week={week} />
+          </div>
+        )}
       </div>
     </>
   )

@@ -94,6 +94,38 @@ function GameWeather({ m, playerId, week }: { m: Model; playerId: string | null;
   )
 }
 
+/** Slot-by-slot projected edge (best lineups, the same battles behind the headline projection). */
+function PositionEdge({ gd }: { gd: GameDay }) {
+  const by = new Map<string, number>()
+  for (const b of gd.battles) by.set(b.slot, (by.get(b.slot) ?? 0) + b.me.pj - b.opp.pj)
+  const rows = [...by]
+  const max = Math.max(1, ...rows.map(([, d]) => Math.abs(d)))
+  return (
+    <div className="mt-4">
+      <h3 className="text-ink-3 mb-2 text-xs font-extrabold tracking-wide uppercase">
+        Projected edge by position
+      </h3>
+      <ul className="grid gap-1.5">
+        {rows.map(([slot, d]) => (
+          <li key={slot} className="grid grid-cols-[3rem_minmax(0,1fr)_4.5rem] items-center gap-2 text-sm">
+            <span className="text-ink-2 font-bold">{slot}</span>
+            <span aria-hidden className="bg-line/50 relative h-2 rounded-full">
+              <span
+                className={`absolute inset-y-0 rounded-full ${d >= 0 ? 'bg-good left-1/2' : 'bg-bad right-1/2'}`}
+                style={{ width: `${(Math.abs(d) / max) * 50}%` }}
+              />
+            </span>
+            <span className={`text-right font-bold tabular-nums ${d >= 0.05 ? 'text-good' : d <= -0.05 ? 'text-bad' : 'text-ink-3'}`}>
+              {d >= 0 ? '+' : '−'}
+              {f1(Math.abs(d))}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 /** Primary focal card: both teams, projected (or live) scores, the win chance and the key game's weather. */
 export function MatchupHero({
   m,
@@ -101,14 +133,17 @@ export function MatchupHero({
   gd,
   week,
   weatherPlayer,
+  analysisTo,
   className = '',
 }: {
   m: Model
   matchups: SleeperMatchup[]
   gd: GameDay | null
   week: number
-  /** whose game to show the weather for (a starter with flagged weather, else the QB) */
+  /** whose game to show the weather for (a starter with flagged weather, else the QB); null hides it */
   weatherPlayer: string | null
+  /** link for a "Full Analysis" button (replaces the Game Day / Scout links) */
+  analysisTo?: string
   className?: string
 }) {
   const mine = findMyMatchup(matchups, m.myRosterId)
@@ -128,7 +163,14 @@ export function MatchupHero({
           <h2 className="text-xl font-extrabold tracking-tight">This Week&apos;s Matchup</h2>
           <p className="text-ink-2">{started ? 'Live now' : `Week ${week} · get the edge`}</p>
         </div>
-        {gd && (
+        {analysisTo ? (
+          <Link
+            to={analysisTo}
+            className="bg-accent text-accent-ink hover:bg-accent-deep inline-flex min-h-9 shrink-0 items-center rounded-full px-4 text-sm font-extrabold transition-colors"
+          >
+            Full Analysis
+          </Link>
+        ) : gd && (
           <div className="flex shrink-0 flex-col items-end gap-1 text-sm font-bold">
             <Link to="/gameday" className="text-accent hover:underline">
               Game Day
@@ -144,7 +186,9 @@ export function MatchupHero({
       {!gd || !mine ? (
         <EmptyState>No Week {week} matchup is posted for your team yet.</EmptyState>
       ) : (
-        <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
+        <div
+          className={`grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto] ${analysisTo ? '' : 'flex-1'}`}
+        >
           <div className="border-line/60 bg-bg/40 flex flex-col justify-center rounded-xl border px-4 py-3">
             <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
               <Team
@@ -186,6 +230,7 @@ export function MatchupHero({
           <GameWeather m={m} playerId={weatherPlayer} week={week} />
         </div>
       )}
+      {analysisTo && gd && hasOpp && gd.battles.length > 0 && <PositionEdge gd={gd} />}
     </section>
   )
 }

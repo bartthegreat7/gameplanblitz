@@ -92,3 +92,58 @@ describe('AI Fantasy GM with the AI service', () => {
     expect(b).toHaveTextContent(/No, Backup Benchwood isn't in your best projected lineup\./)
   }, 60_000)
 })
+
+describe('Podcast Studio with the AI service', () => {
+  it('flags unverifiable AI lines, then makes AI-voice audio and retries a failed line', async () => {
+    resetStore({ username: 'me', aiConsent: true })
+    let failOnce = true
+    withWorker({
+      '/api/studio/script': {
+        lines: [
+          { speaker: 'A', kind: 'fact', chapter: 'matchup', text: 'You draw Rival this week.', cite: ['F1'] },
+          { speaker: 'B', kind: 'opinion', chapter: 'matchup', text: 'They will score 140, trust me.', cite: [] },
+          { speaker: 'B', kind: 'banter', chapter: 'matchup', text: 'Big week for the Gang.', cite: [] },
+        ],
+      },
+      '/api/studio/tts': () => {
+        if (failOnce) {
+          failOnce = false
+          return new Response(JSON.stringify({ error: 'bad_request', message: 'text is too long' }), { status: 400 })
+        }
+        return new Response('ID3-mp3-bytes', { headers: { 'content-type': 'audio/mpeg' } })
+      },
+    })
+    renderApp('#/studio')
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'AI (Claude)' }, SLOW))
+    await user.click(screen.getByRole('button', { name: 'Build outline' }))
+    await user.click(await screen.findByRole('button', { name: 'Write the script' }, SLOW))
+
+    const script = await screen.findByRole('region', { name: 'Review the script' }, SLOW)
+    expect(script).toHaveTextContent('Written by AI (Claude) and checked against your facts.')
+    expect(script).toHaveTextContent("Couldn't verify 140 against the cited facts.")
+    // the app adds the disclosures itself
+    expect(within(script).getAllByText('disclosure')).toHaveLength(2)
+    const approve = within(script).getByRole('button', { name: 'Approve script' })
+    expect(approve).toBeDisabled()
+    await user.click(within(script).getByRole('button', { name: 'Remove all flagged' }))
+    expect(approve).toBeEnabled()
+    const req = calls.find((c) => c.url.endsWith('/api/studio/script'))!
+    expect(req.body).toMatchObject({ type: 'preview', format: 'debate', hosts: ['Jordan', 'Casey'], targetLines: 34 })
+    await user.click(approve)
+
+    const audio = await screen.findByRole('region', { name: 'Create audio' }, SLOW)
+    expect(within(audio).getByRole('combobox', { name: "Jordan's voice" })).toHaveValue('orion')
+    await user.click(within(audio).getByRole('button', { name: 'Create AI audio' }))
+    expect(await within(audio).findByText('1 line failed.', {}, SLOW)).toBeInTheDocument()
+    await user.click(within(audio).getByRole('button', { name: 'Retry 1 failed line' }))
+
+    const player = await screen.findByRole('region', { name: 'Episode player' }, SLOW)
+    await within(player).findByText(/AI-generated hosts · AI voices \(Deepgram Aura\) · AI-written script/, {}, SLOW)
+    const tts = calls.filter((c) => c.url.endsWith('/api/studio/tts'))
+    expect(tts).toHaveLength(5) // 4 lines + 1 retry
+    expect(tts.map((c) => c.body!.voice).sort()).toEqual(['asteria', 'orion', 'orion', 'orion', 'orion'])
+    expect(String(tts[0].body!.text)).toMatch(/^Welcome to The War Room/)
+    expect(within(screen.getByRole('region', { name: 'Episode library' })).getByText(/AI voices/)).toBeInTheDocument()
+  }, 90_000)
+})

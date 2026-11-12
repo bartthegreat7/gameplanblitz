@@ -43,7 +43,7 @@ jobs:
       - run: npm run build
         env:
           VITE_NEWS_API: ${{ vars.VITE_NEWS_API }}
-          # the GameplanBlitz AI Worker (worker/README.md); empty = built-in answers only
+          # the GameplanBlitz AI Worker (worker/README.md); empty = built-in answers and device voices only
           VITE_AI_API: ${{ vars.VITE_AI_API }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

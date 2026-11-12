@@ -26,12 +26,13 @@ import { GAME_DAY, isGroup, NAV_SECTIONS, SETTINGS, type NavGroup, type NavLeaf 
    Surfaces: sidebar < raised (hover) < active (selected, with an accent bar and accent icon). */
 const ROW =
   'group/row relative flex items-center gap-3 rounded-lg transition-colors duration-150 focus-visible:-outline-offset-2'
-const TOP = `${ROW} min-h-10 px-3 text-[14.5px]`
+const TOP = `${ROW} min-h-[38px] px-3 text-[14.5px]`
 const RAIL = `${ROW} mx-auto size-11 justify-center`
 const idle = 'text-ink-2 font-medium hover:bg-raised hover:text-ink'
-const selected = 'bg-active text-ink font-semibold'
-const iconCls = (on: boolean) =>
-  `shrink-0 transition-colors ${on ? 'text-accent' : 'text-ink-3 group-hover/row:text-ink-2'}`
+/* the current page: a solid blue row (white text and icon) */
+const selected = 'bg-select text-select-ink font-semibold shadow-[0_6px_16px_-8px_var(--select)]'
+const iconCls = (on: boolean, solid = true) =>
+  `shrink-0 transition-colors ${on ? (solid ? 'text-select-ink' : 'text-accent') : 'text-ink-3 group-hover/row:text-ink-2'}`
 
 const inGroup = (g: NavGroup, pathname: string) =>
   g.children.some((c) => pathname === c.to || pathname.startsWith(`${c.to}/`))
@@ -45,9 +46,9 @@ export function Logo({ collapsed = false }: { collapsed?: boolean }) {
       </span>
       {!collapsed && (
         <div className="min-w-0 leading-tight">
-          <div className="truncate text-lg font-extrabold tracking-tight">GameplanBlitz</div>
+          <div className="truncate text-lg font-extrabold tracking-tight">GamePlanBitz</div>
           <div className="text-ink-3 truncate text-[10px] font-bold tracking-[0.12em] uppercase">
-            Command center
+            Fantasy football HQ
           </div>
         </div>
       )}
@@ -78,9 +79,6 @@ function Leaf({
     >
       {({ isActive }) => (
         <>
-          {isActive && !collapsed && (
-            <span aria-hidden className="bg-accent absolute inset-y-2 left-0 w-[3px] rounded-r-full" />
-          )}
           <Icon size={collapsed ? 20 : 18} aria-hidden className={iconCls(isActive)} />
           {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
           {live &&
@@ -187,7 +185,7 @@ function TreeGroup({ group, onNavigate }: { group: NavGroup; onNavigate?: () => 
         onClick={() => setOpen(!open)}
         className={`${TOP} w-full text-left ${holdsActive ? 'text-ink hover:bg-raised font-semibold' : idle}`}
       >
-        <Icon size={18} aria-hidden className={iconCls(holdsActive)} />
+        <Icon size={18} aria-hidden className={iconCls(holdsActive, false)} />
         <span className="min-w-0 flex-1 truncate">{group.label}</span>
         {holdsActive && !open && <span aria-hidden className="bg-accent size-1.5 rounded-full" />}
         <ChevronDown
@@ -306,7 +304,7 @@ function RailGroup({ group, onNavigate }: { group: NavGroup; onNavigate?: () => 
         aria-controls={open ? panelId : undefined}
         className={`${RAIL} ${open ? 'bg-raised text-ink' : holdsActive ? 'text-ink hover:bg-raised' : idle}`}
       >
-        <Icon size={20} aria-hidden className={iconCls(holdsActive)} />
+        <Icon size={20} aria-hidden className={iconCls(holdsActive, false)} />
         <ChevronRight
           size={11}
           strokeWidth={3}
@@ -370,22 +368,23 @@ export function NavContent({
     <nav aria-label={inDrawer ? 'All pages' : 'Primary'} className="flex flex-col">
       {NAV_SECTIONS.map((sec, i) => {
         const headingId = `${baseId}-${sec.id}`
+        const label = sec.label
         return (
           <div
             key={sec.id}
-            role="group"
-            aria-labelledby={collapsed ? undefined : headingId}
-            aria-label={collapsed ? sec.label : undefined}
-            className={`grid gap-0.5 ${i === 0 ? '' : collapsed ? 'mt-1' : 'mt-5'}`}
+            role={label ? 'group' : undefined}
+            aria-labelledby={label && !collapsed ? headingId : undefined}
+            aria-label={label && collapsed ? label : undefined}
+            className={`grid gap-0.5 ${i === 0 ? '' : collapsed ? 'mt-1' : 'mt-4'}`}
           >
-            {collapsed ? (
+            {collapsed || !label ? (
               i > 0 && <div aria-hidden className="bg-line/50 mx-auto mb-2 h-px w-6" />
             ) : (
               <div
                 id={headingId}
-                className="text-ink-3 px-3 pb-2 text-[11px] font-semibold tracking-[0.14em] uppercase"
+                className="text-ink-3 px-3 pb-1.5 text-[11px] font-bold tracking-[0.14em] uppercase"
               >
-                {sec.label}
+                {label}
               </div>
             )}
             {sec.entries.map((e) =>

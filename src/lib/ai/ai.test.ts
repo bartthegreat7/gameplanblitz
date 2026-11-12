@@ -15,6 +15,7 @@ import {
   type NameEntry,
 } from './assistant'
 import { buildFacts, numbersIn, unsupportedNumbers, type Fact, type FactInput } from './facts'
+import { buildOutline, checkScript, HOSTS, speakable, writeScript } from './podcast'
 import { canSpend, LOCAL_LIMITS, record, remainingToday } from './quota'
 
 /* League: my RBs Rusher Runnerson (8, Questionable) and Backup Benchwood (3), WR Wideout
@@ -287,6 +288,70 @@ describe('checking AI answers', () => {
     expect(p.flags).toEqual(["Cites facts that don't exist (F999).", "Couldn't verify 14.5 against the cited facts."])
     const [q] = checkAiAnswer('He scores 30 points.', facts)
     expect(q.flags).toEqual(["Couldn't verify 30 against any cited fact."])
+  })
+})
+
+describe('podcast', () => {
+  const facts = buildFacts(input())
+  const opts = { type: 'preview' as const, format: 'debate' as const, tone: 'humor' as const, leagueName: 'Test League', week: 5, seed: 7 }
+
+  it('outlines only chapters the tools have facts for', () => {
+    const o = buildOutline('preview', facts)
+    expect(o.chapters.map((c) => c.id)).toEqual(['matchup', 'lineup', 'risk', 'race'])
+    expect(o.skipped).toEqual(['Scouting the opponent'])
+    const recap = buildOutline('recap', facts)
+    expect(recap.chapters[0]).toMatchObject({ id: 'result', title: 'Last week’s result' })
+    expect(buildOutline('moves', facts).chapters).toEqual([])
+  })
+
+  it('opens and closes with the AI disclosure and reads facts verbatim with citations', () => {
+    const lines = writeScript(buildOutline('preview', facts).chapters, facts, opts)
+    expect(lines[0]).toMatchObject({ kind: 'disclosure' })
+    expect(lines[0].text).toContain('fictional hosts with AI-generated voices')
+    expect(lines.at(-1)!.text).toContain('the hosts and voices are AI-generated, nothing here changes your roster')
+    const byId = new Map(facts.map((f) => [f.id, f]))
+    for (const l of lines.filter((l) => l.kind === 'fact')) {
+      expect(l.cite).toHaveLength(1)
+      expect(l.text.endsWith(byId.get(l.cite[0])!.text)).toBe(true)
+    }
+  })
+
+  it('keeps opinions and banter free of numbers and alternates hosts in a debate', () => {
+    const lines = writeScript(buildOutline('preview', facts).chapters, facts, opts)
+    for (const l of lines.filter((l) => l.kind === 'opinion' || l.kind === 'banter'))
+      expect([l.text, unsupportedNumbers(l.text, [])]).toEqual([l.text, []])
+    expect(new Set(lines.map((l) => l.speaker))).toEqual(new Set([0, 1]))
+    expect(lines.some((l) => l.speaker === 1 && l.kind === 'opinion')).toBe(true)
+    // deterministic for the same seed; solo uses one host
+    expect(writeScript(buildOutline('preview', facts).chapters, facts, opts)).toEqual(lines)
+    expect(new Set(writeScript(buildOutline('preview', facts).chapters, facts, { ...opts, format: 'solo' }).map((l) => l.speaker))).toEqual(new Set([0]))
+  })
+
+  it('leaves out chapters the user unticked', () => {
+    const chapters = buildOutline('preview', facts).chapters.map((c) => ({ ...c, include: c.id !== 'lineup' }))
+    expect(writeScript(chapters, facts, opts).some((l) => l.chapter === 'lineup')).toBe(false)
+  })
+
+  it('checks AI-written lines against the facts', () => {
+    const proj = facts.find((f) => f.topic === 'projection')!
+    const lines = checkScript(
+      [
+        { speaker: 'A', kind: 'fact', chapter: 'matchup', text: 'Runnerson projects 8.4.', cite: [proj.id] },
+        { speaker: 'B', kind: 'fact', chapter: 'matchup', text: 'He will score 40.', cite: [] },
+        { speaker: 'B', kind: 'banter', chapter: 'matchup', text: 'Big week!', cite: ['F999'] },
+      ],
+      facts,
+      { hosts: HOSTS, format: 'debate', leagueName: 'L', week: 5 },
+    )
+    expect(lines[0].kind).toBe('disclosure')
+    expect(lines.at(-1)!.kind).toBe('disclosure')
+    expect(lines[1].flags).toBeUndefined()
+    expect(lines[2]).toMatchObject({ speaker: 1, flags: ['Stated as fact without a citation.', "Couldn't verify 40 against the cited facts."] })
+    expect(lines[3].flags).toEqual(["Cites facts that don't exist (F999)."])
+  })
+
+  it('makes text speakable without changing the transcript', () => {
+    expect(speakable('+3.0 pts vs CCC; −1.5 per wk')).toBe('plus 3.0 points versus CCC, minus 1.5 per week')
   })
 })
 

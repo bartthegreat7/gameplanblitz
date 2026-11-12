@@ -31,7 +31,7 @@ multi-source fantasy news hub. Read-only — it never writes to anyone's league.
 ## 3. Tech stack (chosen — all free)
 
 - **React 18 + Vite + TypeScript** (static build).
-- **Tailwind CSS v4** + CSS variables for theming (deep-navy command-center palette: bg #080F20, sidebar #070D1C, cards #151E31/#1B2740, active #1C3158, accent blue #60A5FA, purple #A78BFA, positive #34D399; matching light theme; every text/background pair is checked by `theme.contrast.test.ts`).
+- **Tailwind CSS v4** + CSS variables for theming (deep-navy command-center palette: bg #07111F, sidebar #091625, cards #0D2135/#112B46, raised #102740, active #153B63, select #1468D1 (solid nav/tab selection), light blue #65B8FF, primary blue #1688FF, amber #F6B73C, positive #27D69A, text #F6F9FF/#A5BAD3, borders #244362; matching light theme; every text/background pair is checked by `theme.contrast.test.ts`).
 - **TanStack Query (React Query)** for all server data (caching, refetch, states).
 - **React Router `HashRouter`** — required for GitHub Pages project sites (avoids 404 on refresh/deep-link).
 - **Zustand** for app state (username, selected leagueId, theme). Persist to localStorage.
@@ -40,9 +40,9 @@ multi-source fantasy news hub. Read-only — it never writes to anyone's league.
 - **Vitest + @testing-library/react** for tests.
 - **idb-keyval** for caching the large Sleeper players file in IndexedDB.
 - Avoid adding dependencies beyond these without a note here explaining why.
-- **`worker/` only:** `@anthropic-ai/sdk` 1.3.0 (official Claude SDK, required for the AI Worker; never in the app bundle). The
-  app itself adds no dependency for the AI Fantasy GM: browser speech (Web Speech API) covers voice input and read-aloud, and
-  IndexedDB (idb-keyval) stores the conversation.
+- **`worker/` only:** `@anthropic-ai/sdk` 1.3.0 (official Claude SDK, required for the AI Worker; never in the app bundle) and the
+  Cloudflare Workers AI binding (Deepgram Aura voices for the podcast). The app itself adds no dependency for the AI features:
+  browser speech (Web Speech API) and IndexedDB (idb-keyval) cover voices, the conversation and podcast episodes.
 
 ## 4. Deploy / GitHub Pages rules (easy to get wrong)
 
@@ -129,14 +129,15 @@ multi-source fantasy news hub. Read-only — it never writes to anyone's league.
   paywalled content, no scraping. Every card links to the publisher. Personal, non-commercial use.
 
 ### AI Worker — `worker/` (optional; `VITE_AI_API`, a GitHub Actions variable passed to the build)
-- Cloudflare Worker holding the Anthropic key as a secret: `POST /api/gm` (Claude answer, SSE) and `GET /api/usage`.
-  Model `claude-opus-5-5` (override `AI_MODEL`), effort low, server-side refusal
+- Cloudflare Worker holding the Anthropic key as a secret: `POST /api/gm` (Claude answer, SSE), `POST /api/studio/script`
+  (Claude, JSON schema output), `POST /api/studio/tts` (`@cf/deepgram/aura-1`, mp3; 12 licensed Aura voices, allowlisted),
+  `GET /api/usage`. Model `claude-opus-5-5` (override `AI_MODEL`), effort low (answers) / medium (scripts), server-side refusal
   fallback (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`). Deploy steps and costs: `worker/README.md`.
 - Guards: origin allowlist, optional `ACCESS_TOKEN` (user pastes it in Settings; stored in the browser, never built in),
-  strict validation (sizes, fact ids, history), KV quotas per IP per day + per-minute rate limit + global daily cap
+  strict validation (sizes, fact ids, history, voices), KV quotas per IP per day + per-minute rate limit + global daily cap
   (`DEFAULT_LIMITS`), no league data stored. Pure logic in `worker/src/logic.ts` is tested by the app's test run.
 - **Not deployed by Claude Code** (needs the owner's Cloudflare account and Anthropic key). Until `VITE_AI_API` is set the app
-  uses the built-in answer engine.
+  uses the built-in answer engine and device voices. The Workers AI call shape follows Cloudflare's docs and is **unverified live**.
 
 ## 6. Core logic (port exactly from `index.html`, then keep here)
 
@@ -170,9 +171,10 @@ src/
     analytics/        # explainable models: history, volatility, usage, matchup, schedule,
                       #   lineupPlan (exact optimizer), lineupAnalysis (wires it to the model)
     ai/               # facts (fact sheet + number checker), assistant (intent, players, follow-ups, built-in answers,
-                      #   AI-answer checker), storage (IndexedDB: conversation), client
+                      #   AI-answer checker), podcast (outline, built-in writer, AI-script checker, disclosures),
+                      #   episode (timeline, transcript), storage (IndexedDB: chat, episodes, audio clips), client
                       #   (Worker: SSE, retry, cancel), quota (per-device daily allowance), speech (Web Speech), seeds
-  worker/             # (repo root) Cloudflare Worker for AI Fantasy GM answers; see worker/README.md
+  worker/             # (repo root) Cloudflare Worker for AI answers, podcast scripts and voices; see worker/README.md
   hooks/              # useState wrappers over React Query: useLeague, useRosters,
                       # useMatchups, useProjections, useSeasonStats, useFantasyCalc, useNews
   store/              # Zustand: username, leagueId, theme, collapsed sections, bookmarks/read
@@ -180,6 +182,12 @@ src/
     layout/           # AppShell, Sidebar (headed nav sections from nav.ts NAV_SECTIONS: accordion groups, rail
                       #   flyouts when collapsed; connection box + theme), TopNav (search, week,
                       #   refresh, notifications, account), SearchPalette (Ctrl/Cmd+K), Menus, BottomNav, nav.ts
+    command/          # Command Center (the dashboard): CommandHeader (title + URL tabs), Welcome (greeting + 4 stat
+                      #   cards), ActionItems, BreakoutRadar (+ lazy RadarChartView), GmPanel, PodcastPanel,
+                      #   GameDayStrip, WeatherWatch, MyTeam (also /team), tabs.ts; logic in lib/analytics/command.ts
+    studio/           # Podcast Studio: EpisodePlayer, usePlayback (shared with the dashboard mini-player),
+                      #   AudioStep, Library, ShareDialog, AiBadge
+    gm/               # WeeklyReport (GM page + Reports tab)
     dashboard/        # DashboardCard, WeeklyGamePlan, Matchup (hero), SeasonStrip, LeagueRace (standings +
                       #   playoff race), Insights (Optimal Lineup, Waiver Targets, Fantasy News), QuickAccess
     ui/               # Card, Pill, Avatar, Skeleton, EmptyState, ErrorState, Modal, Drawer, Chip
@@ -187,7 +195,7 @@ src/
                       # Standings, Roster, PlayerValue, NewsHub
     ai/               # GmChat (conversation), AskFab + FabChat (floating Ask Fantasy GM), FactRow, AiConsent, AiSettings
   routes/             # Connect (username/league), Dashboard, News, Standings, Players, PlayerDetail, Settings,
-                      #   Ask (AI Fantasy GM), and the tool pages
+                      #   Ask (AI Fantasy GM), Studio (AI Podcast), Team (My Team), Weather (Weather Watch), and the tool pages
   App.tsx, main.tsx, index.css
 ```
 
@@ -264,3 +272,4 @@ _Legend: [x] built + tested against mocked Sleeper/FantasyCalc responses; [~] bu
 - 2026-11-12: **AI Fantasy GM + Podcast Studio** (branch `ai-gm-studio`). *Fact sheet* (`lib/ai/facts.ts`, `useFactSheet`): every number the AI features may use, as short sentences built from the existing tools (matchup + win model, lineup slots/swaps/bench, Sleeper injury designations, The Edge's injury/weather/breakout/opening signals, engine projections with 80% ranges, waivers, trades, playoff odds, standings, keepers, roster news, last week's results, opponent scouting), each with id `F#`, Sleeper-fact vs model label, source, timestamp, players and tool link; full player names. *AI Fantasy GM* (`/ask`, sidebar; floating **Ask Fantasy GM** button with page-aware suggestions on tool pages, not the dashboard): built-in engine (no AI; intent + player detection with names masked out of intent, same-name players resolved to my roster, follow-ups "he"/"what about X", start/sit compare with the start/sit floor/ceiling lean, explicit "no designation" and missing-data notes, read-only refusal of roster actions) and an optional AI engine (Claude via the Worker, after explicit consent) whose answers are checked: unknown citations and numbers not in the cited facts are shown as "Unverified". Sources list with labels/timestamps, uncertainty line, tool links, stop/retry/"answer without AI", voice input (Web Speech; vendor processing disclosed) and read-aloud; conversation saved per league in IndexedDB, clearable. *Podcast Studio* (`/studio`): episode types (matchup preview, Sunday kickoff, weekly recap, waivers & trades), one host or two-host debate, straight or humorous, short/standard; evidence outline (untick chapters) → script (built-in writer reads facts verbatim + number-free labeled opinions/pushback/jokes, or AI writer checked line by line; flagged lines must be removed) → approve → audio (device voices, or Aura voices via the Worker with concurrency 3, progress, cancel, retry failed lines, per-device character allowance) → player (play/pause, chapter skip, seek, 0.75-2x, chapters, highlighted clickable transcript, sources) and library (history, saved, delete with confirmation, delete all in Settings). Fictional hosts Jordan and Casey; the app always adds spoken AI disclosures at both ends and a visible AI badge. Sharing: private by default (browser only); copy/save transcript, save MP3 (AI voices), or system share only after an explicit acknowledgement; no public links (nothing hosted). *Worker* (`worker/`): see §5. Not done: Worker not deployed (owner's accounts needed), Workers AI TTS call unverified live, no server-side episode storage or public share links. Verified: tsc (app + worker against the real SDK), eslint, vitest 638 (49 files; mutations on the script number check and the Worker rate limit caught), build (Ask 5 KB, Studio 48 KB chunks), headless-Edge checks of /ask, /studio (full flow to the player) and the floating panel at 1440x900 and 390 px (no horizontal overflow; sidebar fits at 900 px tall). The browser pass found and fixed: "Jalen Hurts" read as an injury question, same-name players matching many ids, bench facts missing the recommended starter, citation numbering order.
 - 2026-11-12: **Podcast Studio removed** (user decision). Deleted `/studio`, `components/studio/`, `lib/ai/podcast.ts` and `lib/ai/episode.ts`, the Worker's `/api/studio/script` and `/api/studio/tts` routes (and its Workers AI binding, script/speech validation, prompts and quotas), the podcast voice settings in the store, and the episode storage (the old `gb-studio` IndexedDB database is deleted on load, best effort). The AI Fantasy GM, its fact sheet, the floating Ask Fantasy GM button and the Worker's `/api/gm` are unchanged.
 - 2026-11-12: **Navigation redesign** (user request: sidebar and flyout felt cramped). Pages are grouped under section headings (Overview, Manage, Insights, Live; `NAV_SECTIONS` in `nav.ts`, `NAV_TREE` derived). Three visible levels: small-caps headings, top-level rows (40px, 14.5px, 18px icons), submenu rows on a soft guide line (13.5px). Selected = `bg-active` + accent bar + accent icon; hover = new `--raised` token; the sidebar is now its own tonal layer (`--sidebar` #0b1427 dark, above the page instead of nearly identical). Groups are real accordions everywhere (they open when you land on one of their pages and can be closed; the phone drawer no longer forces every group open). Collapsed icon rail: one icon per group opening a 288px flyout beside the rail (click or keyboard; arrow keys, Escape returns focus, closes on navigation, scroll, resize or tabbing away); the sidebar sits at `z-[35]` so the flyout clears page content. Header and footer pinned, only the nav scrolls; the desktop footer is the connection card with theme + settings buttons (the drawer keeps the Light/Dark switch). Divider lines removed except one soft footer rule; drawer 360px wide on the sidebar surface. Sidebar 264px (280px at xl), rail 80px. Verified: tsc, eslint, vitest (new tests: section headings, closable open group, rail flyout keyboard/Escape/navigation), build, browser at 1024/1280/1440/1920 dark+light and 390 (drawer): no horizontal overflow, nav fits at 900px tall with groups closed.
+- 2026-11-12: **Command Center dashboard + AI Podcast restored** (branch `command-center`; user spec "Exact Dashboard Recreation"; no new screenshot was attached, so the written spec was followed). *Podcast:* `git revert` of the removal (Studio, player, script checker, Worker script/TTS routes); the playback engine now lives in `studio/usePlayback.ts`. *Tokens:* spec palette (see §3) + `--select`/`--select-ink` for solid selection. *Navigation* (`NAV_SECTIONS`): Command Center; My Fantasy (My Leagues group, My Team, Lineup Optimizer); Player Tools (Players & Projections, Waivers & Pickups, Trades, Keepers & Dynasty); Intelligence (AI Fantasy GM, The Edge (Insights), Strategy Lab group = Weekly GM Brief, Start/Sit, Scouting, Breakout Radar, Player Market, Injury Center, Weather Watch, Alert Center, Projection Accuracy; Playoff Simulator); Media & Live (AI Podcast, News & Analysis, Game Day Live). Brand text in the sidebar is "GamePlanBitz" (user's spelling). *Dashboard:* title "Fantasy Football Command Center" + tabs in the URL (`#/?tab=team|matchup|league|strategy|reports`, ARIA tablist, arrow keys). Overview = greeting (local time of day, Sleeper display name) + 4 cards (win probability with ring/margin/opponent; projected points both teams; **Team Health** = lineup as set vs Sleeper designations and byes, questionable never assumed out; playoff odds with change vs this browser's earlier daily snapshot, `gb-odds-<league>` in localStorage), This Week's Matchup (Full Analysis → Matchup tab; projected edge by position), **Top Action Items** (lineup, injuries, questionable, waivers, trades, weather; green only when the data shows it resolved, never on click), Optimal Lineup (Optimized / As set toggle, engine projection + Sleeper baseline column, injury tags), **Breakout Radar** (Recharts radar, lazy; each spoke = last-2-game average as a percentile among same-position players: snaps, targets, touches, red-zone chances, expected points, usage growth; candidate picker; breakdown table), Latest Fantasy News (+ player named). Right column (xl+): AI Fantasy GM chat (dashboard seeds; scrolls only its log) and AI Podcast mini-player (latest episode: drawn artwork, line-length waveform, seek, chapters, status; New Episode / Episode Library → `/studio?view=library`). Bottom: **Game Day Dashboard** strip (games with my or my opponent's starters, scheduled/live/final, net projected stake; polls like Game Day) + **Weather Watch** (count of flagged forecasts → new `/weather` page: every game's stadium, roof, temps, wind, gusts, precipitation/snow, concerns and players involved). Other tabs hold everything that left the overview: Team (= new `/team` page), Matchup (hero with weather, position battles, lineup check), League (playoff race, standings), Strategy (weekly game plan, waiver targets, Quick access tools), Reports (weekly report, moved to `components/gm/WeeklyReport`). Limits: no kickoff times (Sleeper), Draft Sharks/Footballguys still unavailable, lineup optimizer still runs on Sleeper projections (engine shown alongside), AI voices need the Worker. Verified: tsc, eslint, vitest 678 (new `command.test.ts`, rewritten `dashboard.test.tsx`), build, browser at 1920/1440/1024/390: no horizontal overflow on any tab or new page.

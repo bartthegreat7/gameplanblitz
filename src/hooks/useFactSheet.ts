@@ -11,7 +11,7 @@ import { useLineupInputs } from './useLineupInputs'
 import { useProjectionEngine } from './useProjectionEngine'
 
 /**
- * The fact sheet for this league and week: the AI Fantasy GM may use these
+ * The fact sheet for this league and week: the AI Fantasy GM and the Podcast Studio may use these
  * facts and nothing else. Built from the same hooks the tool pages use, so every number matches.
  */
 export function useFactSheet(data: Ready) {

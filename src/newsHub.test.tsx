@@ -176,9 +176,9 @@ describe('news elsewhere in the app', () => {
     expect(within(card).getByText('Players to Buy Low and Sell High')).toBeInTheDocument()
   })
 
-  it('names the section "News & Articles" in the navigation', async () => {
+  it('names the section "News & Analysis" in the navigation', async () => {
     renderApp('#/standings')
     await screen.findByRole('heading', { name: 'Standings', level: 1 })
-    expect(screen.getAllByRole('link', { name: 'News & Articles' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('link', { name: 'News & Analysis' }).length).toBeGreaterThan(0)
   })
 })

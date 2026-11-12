@@ -137,7 +137,7 @@ describe('phone navigation', () => {
     expect(within(bottom).queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument()
     await user.click(within(bottom).getByRole('button', { name: 'More' }))
     const dialog = await screen.findByRole('dialog')
-    for (const name of ['Standings', 'Players', 'Settings']) expect(within(dialog).getByRole('link', { name })).toBeInTheDocument()
+    for (const name of ['Standings', 'Players & Projections', 'Settings']) expect(within(dialog).getByRole('link', { name })).toBeInTheDocument()
     await user.click(within(dialog).getByRole('link', { name: 'Settings' }))
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument() // sheet closes on navigation

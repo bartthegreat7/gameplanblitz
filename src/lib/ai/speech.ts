@@ -1,11 +1,27 @@
-/* Device speech: the browser's own text-to-speech voice for reading answers aloud (nothing is
-   uploaded by GameplanBlitz) and, where available, speech recognition for asking questions by voice.
-   Chrome and Edge process recognition on the vendor's servers; the UI says so. */
+/* Device speech: the browser's own text-to-speech voices (licensed with the operating system or
+   browser; nothing is uploaded by GameplanBlitz) and, where available, speech recognition for asking
+   questions by voice. Chrome and Edge process recognition on the vendor's servers; the UI says so. */
 
 export const speechSupported = () =>
   typeof window !== 'undefined' && 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined'
 
-/** Speaks a text. Returns a function that stops it. */
+/** English voices first, then the rest. */
+export function deviceVoices(): SpeechSynthesisVoice[] {
+  if (!speechSupported()) return []
+  const all = window.speechSynthesis.getVoices()
+  const en = all.filter((v) => /^en\b|^en-/i.test(v.lang))
+  return [...en, ...all.filter((v) => !en.includes(v))]
+}
+
+/** Two different voices for two hosts when the device has them. */
+export function pickHostVoices(voices: SpeechSynthesisVoice[], wanted: (string | null)[]): (SpeechSynthesisVoice | null)[] {
+  const byName = (n: string | null) => (n ? voices.find((v) => v.name === n) ?? null : null)
+  const a = byName(wanted[0]) ?? voices[0] ?? null
+  const b = byName(wanted[1]) ?? voices.find((v) => v !== a) ?? a
+  return [a, b]
+}
+
+/** Speaks one line. Returns a function that stops it. */
 export function speakLine(
   text: string,
   opts: { voice: SpeechSynthesisVoice | null; rate: number; onEnd: () => void; onError?: (e: string) => void },

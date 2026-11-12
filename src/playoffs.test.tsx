@@ -85,12 +85,11 @@ describe('Playoff Simulator', () => {
     expect(await screen.findByText(/The regular season is over/)).toBeInTheDocument()
   })
 
-  it('is reachable from the navigation (Analytics group)', async () => {
+  it('is reachable from the navigation (Intelligence section)', async () => {
     const user = userEvent.setup()
     renderApp('#/standings')
     await screen.findByRole('heading', { name: 'Standings', level: 1 })
     const sidebar = screen.getAllByRole('navigation', { name: 'Primary' })[0]
-    await user.click(within(sidebar).getByRole('button', { name: 'Analytics' }))
     await user.click(within(sidebar).getByRole('link', { name: 'Playoff Simulator' }))
     expect(await screen.findByRole('heading', { level: 1, name: /Playoff/ })).toBeInTheDocument()
   })
