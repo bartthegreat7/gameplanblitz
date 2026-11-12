@@ -77,7 +77,7 @@ export default function Settings() {
             Sign out
           </button>
         ) : (
-          <button type="button" onClick={() => navigate('/connect')} className="bg-mint text-mint-ink rounded-xl px-4 py-2.5 font-extrabold">
+          <button type="button" onClick={() => navigate('/connect')} className="bg-accent text-accent-ink rounded-xl px-4 py-2.5 font-extrabold">
             Connect Sleeper
           </button>
         )}
@@ -110,7 +110,7 @@ export default function Settings() {
               setConfirm(false)
               navigate('/connect')
             }}
-            className="bg-bad flex-1 rounded-xl py-2.5 font-extrabold text-white"
+            className="bg-bad text-bad-ink flex-1 rounded-xl py-2.5 font-extrabold"
           >
             Sign out
           </button>

@@ -6,7 +6,7 @@ const TONE: Record<PillTone, string> = {
   warn: 'bg-bad/15 text-bad',
   caution: 'bg-amber/15 text-amber',
   info: 'bg-blue/15 text-blue',
-  prio: 'bg-mint/12 text-mint border border-mint/40',
+  prio: 'bg-accent/12 text-accent border border-accent/40',
   neutral: 'bg-line text-ink-2',
 }
 

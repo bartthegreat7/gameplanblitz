@@ -1,5 +1,5 @@
-import { createModel } from './model'
-import type { PlayerMap, SleeperRoster, SleeperUser, StatLine } from './sleeper'
+import { createModel } from '../lib/model'
+import type { PlayerMap, SleeperRoster, SleeperUser, StatLine } from '../lib/sleeper'
 
 /** Scoring `{ pts: 1 }` lets a fixture projection `{ pts: X }` equal exactly X points. */
 export const SCORING = { pts: 1 }

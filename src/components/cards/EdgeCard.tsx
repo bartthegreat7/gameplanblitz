@@ -30,7 +30,7 @@ export function EdgeCard({ data }: CardProps) {
           <div className="text-ink-2 mt-2 max-w-56 text-sm">projected points sitting on waivers for you</div>
         </div>
         <div className="text-ink-2 min-w-24 text-right text-sm">
-          <b className="text-mint">{e.upgrades.length}</b> upgrade{e.upgrades.length !== 1 && 's'}
+          <b className="text-accent">{e.upgrades.length}</b> upgrade{e.upgrades.length !== 1 && 's'}
           <br />
           <b className="text-coral">{e.busts.length}</b> bust risk{e.busts.length !== 1 && 's'}
         </div>
@@ -38,15 +38,15 @@ export function EdgeCard({ data }: CardProps) {
 
       {e.upgrades.length > 0 ? (
         <>
-          <h3 className="text-mint mt-4 mb-2.5 text-base font-extrabold">Upgrades available</h3>
+          <h3 className="text-accent mt-4 mb-2.5 text-base font-extrabold">Upgrades available</h3>
           <ul>
             {e.upgrades.slice(0, 4).map((u) => (
-              <li key={u.to} className="border-mint mb-3.5 flex gap-3.5 border-l-4 pl-4">
+              <li key={u.to} className="border-accent mb-3.5 flex gap-3.5 border-l-4 pl-4">
                 <PlayerAvatar player={model.players[u.to]} className="size-12" />
                 <div className="min-w-0">
                   <div className="mb-1 text-lg font-bold">
                     {model.shortName(u.to)}
-                    <span className="text-mint ml-1.5">+{f1(u.gain)}</span>
+                    <span className="text-accent ml-1.5">+{f1(u.gain)}</span>
                   </div>
                   <Pill tone="prio">free agent</Pill>
                   <div className="text-ink-3 mt-1.5 text-sm">

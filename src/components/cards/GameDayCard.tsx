@@ -37,7 +37,7 @@ export function GameDayCard({ data }: CardProps) {
         aria-valuemax={100}
         className="bg-line my-5 mb-2 h-3 overflow-hidden rounded-full"
       >
-        <span className="from-mint-deep to-mint block h-full rounded-full bg-gradient-to-r" style={{ width: `${clamp(gd.winPct, 3, 97)}%` }} />
+        <span className="from-accent-deep to-accent block h-full rounded-full bg-gradient-to-r" style={{ width: `${clamp(gd.winPct, 3, 97)}%` }} />
       </div>
       <div className="text-ink-3 flex justify-between text-sm">
         <span>
@@ -61,12 +61,12 @@ export function GameDayCard({ data }: CardProps) {
               {gd.battles.length === 0 && <EmptyState>No projections to compare.</EmptyState>}
               {gd.battles.map((b, i) => (
                 <li key={i} className="border-line bg-panel grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-xl border px-3 py-2.5 text-sm">
-                  <span className={`min-w-0 ${b.meWin ? 'text-mint' : ''}`}>
+                  <span className={`min-w-0 ${b.meWin ? 'text-accent' : ''}`}>
                     <span className="block truncate font-semibold">{b.me.name}</span>
                     <span className="text-ink-3 text-xs">{f1(b.me.pj)}</span>
                   </span>
                   <span className="text-ink-3 text-center text-xs font-bold">{b.slot}</span>
-                  <span className={`min-w-0 text-right ${!b.meWin ? 'text-mint' : ''}`}>
+                  <span className={`min-w-0 text-right ${!b.meWin ? 'text-accent' : ''}`}>
                     <span className="block truncate font-semibold">{b.opp.name}</span>
                     <span className="text-ink-3 text-xs">{f1(b.opp.pj)}</span>
                   </span>
@@ -82,12 +82,12 @@ export function GameDayCard({ data }: CardProps) {
 
 function Team({ name, pts, user, me }: { name: string; pts: number; user: Parameters<typeof TeamAvatar>[0]['user']; me?: boolean }) {
   return (
-    <div className={`bg-panel rounded-2xl border px-3.5 py-5 text-center ${me ? 'border-mint/35' : 'border-line'}`}>
+    <div className={`bg-panel rounded-2xl border px-3.5 py-5 text-center ${me ? 'border-accent/35' : 'border-line'}`}>
       <div className="mb-3 flex justify-center">
-        <TeamAvatar user={user} className={`size-16 text-xl ${me ? 'border-mint border-2' : ''}`} />
+        <TeamAvatar user={user} className={`size-16 text-xl ${me ? 'border-accent border-2' : ''}`} />
       </div>
       <div className="mb-1.5 text-base font-bold sm:text-lg">{trunc(name)}</div>
-      <div className={`text-4xl font-extrabold tracking-tight sm:text-5xl ${me ? 'text-mint' : ''}`}>{f1(pts)}</div>
+      <div className={`text-4xl font-extrabold tracking-tight sm:text-5xl ${me ? 'text-accent' : ''}`}>{f1(pts)}</div>
       <div className="text-ink-3 mt-1 text-sm">projected</div>
     </div>
   )

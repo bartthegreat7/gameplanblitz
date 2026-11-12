@@ -3,10 +3,10 @@ import { useId, type ReactNode } from 'react'
 
 import { useAppStore } from '../../store/app'
 
-export type Tone = 'mint' | 'orange' | 'blue' | 'green' | 'gold'
+export type Tone = 'accent' | 'orange' | 'blue' | 'green' | 'gold'
 
 const TONE: Record<Tone, string> = {
-  mint: 'bg-mint/12 border-mint/30 text-mint',
+  accent: 'bg-accent/12 border-accent/30 text-accent',
   orange: 'bg-coral/12 border-coral/30 text-coral',
   blue: 'bg-blue/12 border-blue/30 text-blue',
   green: 'bg-good/12 border-good/30 text-good',
@@ -24,7 +24,7 @@ interface CardProps {
 }
 
 /** Collapsible dashboard card. The header is a real button (keyboard + screen-reader friendly). */
-export function Card({ id, title, context, icon: Icon, tone = 'mint', children }: CardProps) {
+export function Card({ id, title, context, icon: Icon, tone = 'accent', children }: CardProps) {
   const closed = useAppStore((s) => s.collapsed.includes(id))
   const toggle = useAppStore((s) => s.toggleCollapsed)
   const bodyId = useId()

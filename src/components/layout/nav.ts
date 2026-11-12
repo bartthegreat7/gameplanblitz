@@ -1,7 +1,8 @@
-import { LayoutDashboard, Newspaper, Settings, Trophy, Users } from 'lucide-react'
+import { LayoutDashboard, ListChecks, Newspaper, Settings, Trophy, Users } from 'lucide-react'
 
 export const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/lineup', label: 'Lineup', icon: ListChecks },
   { to: '/news', label: 'News', icon: Newspaper },
   { to: '/standings', label: 'Standings', icon: Trophy },
   { to: '/players', label: 'Players', icon: Users },

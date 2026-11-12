@@ -9,10 +9,11 @@ import {
   getLeague,
   getLeagueUsers,
   getMatchups,
-  getProjections,
+  getProjectionRows,
   getRosters,
   getSeasonStats,
   loadPlayers,
+  statRowsToMap,
   type SleeperLeague,
   type SleeperMatchup,
 } from '../lib/sleeper'
@@ -68,7 +69,14 @@ export function useLeagueData(): LeagueData {
   const [matchupsQ, projQ, statsQ, fcQ] = useQueries({
     queries: [
       { queryKey: ['matchups', leagueId, week], queryFn: () => getMatchups(leagueId!, week), enabled: on },
-      { queryKey: ['projections', season, week], queryFn: () => getProjections(season!, week), enabled: !!season, retry: 1 },
+      // cache holds the full rows (opponent, provider) shared with the Lineup page; the dashboard selects the map
+      {
+        queryKey: ['projections', season, week],
+        queryFn: () => getProjectionRows(season!, week),
+        select: statRowsToMap,
+        enabled: !!season,
+        retry: 1,
+      },
       { queryKey: ['seasonStats', season], queryFn: () => getSeasonStats(season!), enabled: !!season, retry: 1, staleTime: 10 * 60_000 },
       {
         queryKey: ['fantasycalc', leagueId, league?.scoring_settings?.rec, league?.roster_positions?.join()],

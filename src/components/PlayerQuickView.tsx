@@ -40,7 +40,7 @@ export function PlayerQuickView({ model, id }: { model: Model; id: string }) {
       {(p?.injury_body_part || p?.injury_notes) && (
         <p className="text-ink-2 mt-3 text-sm">{[p.injury_body_part, p.injury_notes].filter(Boolean).join(' — ')}</p>
       )}
-      <Link to={`/players/${id}`} className="bg-mint text-mint-ink mt-4 block rounded-xl py-3 text-center font-extrabold">
+      <Link to={`/players/${id}`} className="bg-accent text-accent-ink mt-4 block rounded-xl py-3 text-center font-extrabold">
         Full player details
       </Link>
     </div>

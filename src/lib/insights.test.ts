@@ -1,6 +1,6 @@
 import { bids, edge, findTrades, gameDay, lineupCheck, standings, topFreeAgents, valueRows } from './insights'
 import type { SleeperLeague, SleeperMatchup } from './sleeper'
-import { buildModel, player, roster } from './testFixtures'
+import { buildModel, player, roster } from '../test/fixtures'
 
 const matchup = (roster_id: number, matchup_id: number, starters: string[]): SleeperMatchup => ({
   roster_id,

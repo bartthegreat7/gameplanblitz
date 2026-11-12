@@ -37,7 +37,7 @@ export function NewsList({ items, model, bookmarks = false }: { items: NewsItem[
               className="group flex min-w-0 flex-1 gap-3"
             >
               <div className="min-w-0 flex-1">
-                <div className={`group-hover:text-mint text-base leading-snug font-bold ${isRead ? 'text-ink-3' : ''}`}>
+                <div className={`group-hover:text-accent text-base leading-snug font-bold ${isRead ? 'text-ink-3' : ''}`}>
                   {a.title || 'Untitled'}
                 </div>
                 <div className="text-ink-3 mt-1 flex flex-wrap items-center gap-2 text-xs">
@@ -67,9 +67,9 @@ export function NewsList({ items, model, bookmarks = false }: { items: NewsItem[
                 onClick={() => toggleBookmark(a.id)}
                 aria-pressed={isSaved}
                 aria-label={isSaved ? 'Remove bookmark' : 'Save article'}
-                className="text-ink-3 hover:text-mint grid size-9 shrink-0 place-items-center"
+                className="text-ink-3 hover:text-accent grid size-9 shrink-0 place-items-center"
               >
-                {isSaved ? <BookmarkCheck size={20} className="text-mint" aria-hidden /> : <Bookmark size={20} aria-hidden />}
+                {isSaved ? <BookmarkCheck size={20} className="text-accent" aria-hidden /> : <Bookmark size={20} aria-hidden />}
               </button>
             )}
           </li>

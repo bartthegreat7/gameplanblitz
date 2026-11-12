@@ -17,11 +17,14 @@ interface AppState {
   leagueId: string | null
   /** ids of dashboard cards the user collapsed */
   collapsed: string[]
+  /** desktop sidebar shows icons only */
+  sidebarCollapsed: boolean
   /** saved / read news article ids */
   bookmarks: string[]
   read: string[]
 
   toggleTheme: () => void
+  toggleSidebar: () => void
   setUsername: (u: string) => void
   setLeagueId: (id: string) => void
   /** forget the user and league (theme and local reading state are kept) */
@@ -38,10 +41,12 @@ export const useAppStore = create<AppState>()(
       username: null,
       leagueId: null,
       collapsed: [],
+      sidebarCollapsed: false,
       bookmarks: [],
       read: [],
 
       toggleTheme: () => set({ theme: get().theme === 'light' ? 'dark' : 'light' }),
+      toggleSidebar: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
       setUsername: (u) => set({ username: u.trim().replace(/^@/, ''), leagueId: null }),
       setLeagueId: (id) => set({ leagueId: id }),
       signOut: () => set({ username: null, leagueId: null }),
@@ -58,6 +63,7 @@ export const useAppStore = create<AppState>()(
         username: s.username,
         leagueId: s.leagueId,
         collapsed: s.collapsed,
+        sidebarCollapsed: s.sidebarCollapsed,
         bookmarks: s.bookmarks,
         read: s.read,
       }),

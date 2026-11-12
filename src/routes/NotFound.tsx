@@ -6,7 +6,7 @@ export default function NotFound() {
   return (
     <EmptyState>
       That page doesn't exist.{' '}
-      <Link to="/" className="text-mint font-bold">
+      <Link to="/" className="text-accent font-bold">
         Back to the dashboard
       </Link>
     </EmptyState>

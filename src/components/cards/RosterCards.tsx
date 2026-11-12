@@ -36,7 +36,7 @@ export function StandingsCard({ data }: CardProps) {
                   <tr
                     key={r.rosterId}
                     aria-current={r.me ? 'true' : undefined}
-                    className={`${r.me ? 'text-mint' : ''} ${i === playoffN - 1 ? 'border-mint/30 border-b-2 border-dashed' : 'border-line/50 border-b'}`}
+                    className={`${r.me ? 'text-accent' : ''} ${i === playoffN - 1 ? 'border-accent/30 border-b-2 border-dashed' : 'border-line/50 border-b'}`}
                   >
                     <td className="px-1.5 py-2.5 text-left font-semibold">
                       <span className="text-ink-3 mr-1 inline-block w-5 font-extrabold">{i + 1}</span>

@@ -57,7 +57,7 @@ export default function Connect() {
           aria-describedby={error ? 'username-error' : undefined}
           className="border-line bg-card min-w-44 flex-1 rounded-2xl border px-4 py-4 text-lg"
         />
-        <button type="submit" disabled={busy} className="bg-mint text-mint-ink rounded-2xl px-6 py-4 font-extrabold disabled:opacity-60">
+        <button type="submit" disabled={busy} className="bg-accent text-accent-ink rounded-2xl px-6 py-4 font-extrabold disabled:opacity-60">
           {busy ? 'Checking…' : 'Blitz it'}
         </button>
       </form>

@@ -90,7 +90,7 @@ function Deal({ deal: d, model }: { deal: TradeDeal; model: Model }) {
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <div className="flex flex-col gap-1.5">
-          <span className="text-mint text-xs font-extrabold tracking-wide">YOU GET</span>
+          <span className="text-accent text-xs font-extrabold tracking-wide">YOU GET</span>
           <Chip model={model} id={d.get} side="get" />
         </div>
         <ArrowLeftRight size={20} className="text-ink-2" aria-hidden />
@@ -104,7 +104,7 @@ function Deal({ deal: d, model }: { deal: TradeDeal; model: Model }) {
       <div
         role="img"
         aria-label={`${d.fair}% fair`}
-        className="relative mt-4 mb-1.5 h-2 rounded-full bg-gradient-to-r from-bad via-amber to-mint-deep"
+        className="relative mt-4 mb-1.5 h-2 rounded-full bg-gradient-to-r from-bad via-amber to-accent-deep"
       >
         <span className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(10,15,29,0.6)]" style={{ left: `${clamp(d.fair, 5, 97)}%` }} />
       </div>
@@ -114,7 +114,7 @@ function Deal({ deal: d, model }: { deal: TradeDeal; model: Model }) {
         <span>You win</span>
       </div>
       <p className="text-ink-2 mt-2.5 text-sm">Lifts your starting lineup by {f1(d.you)} points a week.</p>
-      <button type="button" onClick={copy} className="bg-mint text-mint-ink mt-3 w-full rounded-xl py-3 font-extrabold">
+      <button type="button" onClick={copy} className="bg-accent text-accent-ink mt-3 w-full rounded-xl py-3 font-extrabold">
         <span aria-live="polite">{copied ? 'Copied ✓' : 'Copy offer'}</span>
       </button>
     </article>

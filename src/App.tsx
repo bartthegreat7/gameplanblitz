@@ -6,6 +6,7 @@ import { AppShell } from './components/layout/AppShell'
 import { createQueryClient } from './lib/queryClient'
 import Connect from './routes/Connect'
 import Dashboard from './routes/Dashboard'
+import Lineup from './routes/Lineup'
 import News from './routes/News'
 import NotFound from './routes/NotFound'
 import PlayerDetail from './routes/PlayerDetail'
@@ -27,6 +28,7 @@ export default function App({ client = defaultClient }: { client?: QueryClient }
           <Route element={<AppShell />}>
             <Route index element={<Dashboard />} />
             <Route path="connect" element={<Connect />} />
+            <Route path="lineup" element={<Lineup />} />
             <Route path="news" element={<News />} />
             <Route path="standings" element={<Standings />} />
             <Route path="players" element={<Players />} />

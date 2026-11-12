@@ -121,25 +121,81 @@ export const getLeagueUsers = (id: string) => getJson<SleeperUser[]>(`${SLEEPER}
 export const getMatchups = (id: string, week: number) =>
   getJson<SleeperMatchup[]>(`${SLEEPER}/league/${id}/matchups/${week}`)
 
-/** Projections come back either as an array of {player_id, stats} or an object keyed by id. */
-export function normalizeProjections(raw: unknown): Map<string, StatLine> {
-  const map = new Map<string, StatLine>()
-  if (!raw) return map
-  if (Array.isArray(raw)) {
-    for (const r of raw as Array<{ player_id?: string; stats?: StatLine }>) {
-      if (r && r.player_id) map.set(r.player_id, r.stats ?? (r as unknown as StatLine))
-    }
-  } else if (typeof raw === 'object') {
-    for (const [k, v] of Object.entries(raw as Record<string, { stats?: StatLine }>)) {
-      map.set(k, v?.stats ?? (v as unknown as StatLine))
-    }
+/** One player's stat line for a week (projection or actual), with the matchup Sleeper attaches. */
+export interface StatRow {
+  player_id: string
+  stats: StatLine
+  team?: string | null
+  opponent?: string | null
+  week?: number
+  /** data provider named by Sleeper on the row (source attribution) */
+  company?: string | null
+  last_modified?: number | string | null
+}
+
+interface RawRow {
+  player_id?: string
+  stats?: StatLine
+  team?: string | null
+  opponent?: string | null
+  week?: number
+  company?: string | null
+  last_modified?: number | string | null
+}
+
+/** Projection/stat endpoints return an array of rows or an object keyed by player id. */
+export function normalizeStatRows(raw: unknown): StatRow[] {
+  const out: StatRow[] = []
+  const push = (id: string | undefined, r: RawRow, fallbackStats: StatLine) => {
+    if (!id) return
+    out.push({
+      player_id: id,
+      stats: r.stats ?? fallbackStats,
+      team: r.team,
+      opponent: r.opponent,
+      week: r.week,
+      company: r.company,
+      last_modified: r.last_modified,
+    })
   }
-  return map
+  if (Array.isArray(raw)) {
+    for (const r of raw as RawRow[]) if (r) push(r.player_id, r, r as unknown as StatLine)
+  } else if (raw && typeof raw === 'object') {
+    for (const [k, v] of Object.entries(raw as Record<string, RawRow>)) if (v) push(k, v, v as unknown as StatLine)
+  }
+  return out
+}
+
+export const statRowsToMap = (rows: StatRow[]) => new Map(rows.map((r) => [r.player_id, r.stats] as const))
+
+/** Projections as player id → stat line. */
+export const normalizeProjections = (raw: unknown) => statRowsToMap(normalizeStatRows(raw))
+
+export async function getProjectionRows(season: string, week: number) {
+  return normalizeStatRows(await getJson<unknown>(`${SLEEPER_PROJ}/${season}/${week}?season_type=regular`))
 }
 
 export async function getProjections(season: string, week: number) {
-  return normalizeProjections(await getJson<unknown>(`${SLEEPER_PROJ}/${season}/${week}?season_type=regular`))
+  return statRowsToMap(await getProjectionRows(season, week))
 }
+
+/** Actual stats for one completed week (immutable once final). */
+export async function getWeeklyStatRows(season: string, week: number) {
+  return normalizeStatRows(await getJson<unknown>(`${SLEEPER_STATS}/${season}/${week}?season_type=regular`))
+}
+
+export interface ScheduleGame {
+  game_id: string
+  week: number
+  /** observed values: "pre_game" | "complete" (anything else is treated as started) */
+  status: string
+  date: string
+  home: string
+  away: string
+}
+
+export const getSchedule = (season: string) =>
+  getJson<ScheduleGame[]>(`https://api.sleeper.app/schedule/nfl/regular/${season}`)
 
 export const getSeasonStats = (season: string) =>
   getJson<Record<string, StatLine>>(`${SLEEPER_STATS}/${season}?season_type=regular`)

@@ -1,49 +1,56 @@
 @import 'tailwindcss';
 
-/* Theme tokens. Dark is the default; light overrides under [data-theme='light'].
-   Palette ported from legacy/index.html. Components use the semantic utilities below, never hex. */
+/* Theme tokens: navy / charcoal / white with an electric-blue accent.
+   Dark is the default; light overrides under [data-theme='light'].
+   Components use the semantic utilities below, never hex.
+   Text/background pairs are checked against WCAG AA in src/theme.contrast.test.ts. */
 :root {
   color-scheme: dark;
   --bg: #0a0f1d;
-  --glow: #13203c;
-  --card: #131b2e;
-  --card-2: #161f36;
-  --line: #243049;
-  --panel: #0f1728;
-  --ink: #f2f5fb;
-  --ink-2: #aeb9d1;
-  --ink-3: #71809d;
-  --mint: #5eead4;
-  --mint-deep: #2dd4bf;
-  --mint-ink: #062b26;
-  --logo-from: #7ff0dc;
-  --logo-to: #22c3ae;
-  --logo-ink: #05201c;
+  --glow: #11203f;
+  --card: #151a24;
+  --card-2: #1a202c;
+  --line: #2a3140;
+  --panel: #0f131c;
+  --ink: #f4f6fb;
+  --ink-2: #b4bed2;
+  --ink-3: #8591a8;
+  --accent: #4f9bff;
+  --accent-deep: #2f7df0;
+  --accent-ink: #04122b;
+  --logo-from: #6aaeff;
+  --logo-to: #2f7df0;
+  --logo-ink: #04122b;
   --amber: #f2c66d;
   --coral: #ff7a7a;
-  --blue: #6aa8ff;
+  --blue: #8ab4ff;
   --good: #56d9b3;
   --bad: #ff6b6b;
+  --bad-ink: #2a0606;
 }
 :root[data-theme='light'] {
   color-scheme: light;
-  --bg: #f3f6fb;
-  --glow: #dbe7fb;
+  --bg: #f3f5f9;
+  --glow: #dfe8fb;
   --card: #ffffff;
-  --card-2: #f8fafd;
-  --line: #d7dfec;
-  --panel: #f1f5fb;
-  --ink: #0f1a2e;
-  --ink-2: #45546f;
-  --ink-3: #6b7a94;
-  --mint: #0d9488;
-  --mint-deep: #0f9f8f;
-  --mint-ink: #ffffff;
-  --amber: #a16207;
-  --coral: #e5484d;
-  --blue: #2563eb;
-  --good: #0f8f6b;
-  --bad: #d93a3a;
+  --card-2: #f8f9fc;
+  --line: #d6dbe6;
+  --panel: #f0f2f7;
+  --ink: #0b1220;
+  --ink-2: #44506a;
+  --ink-3: #5a6780;
+  --accent: #1d5fe0;
+  --accent-deep: #1b53c4;
+  --accent-ink: #ffffff;
+  --logo-from: #4f9bff;
+  --logo-to: #1d5fe0;
+  --logo-ink: #ffffff;
+  --amber: #8f5500;
+  --coral: #c8363b;
+  --blue: #1d4fd0;
+  --good: #0b7a58;
+  --bad: #c62d2d;
+  --bad-ink: #ffffff;
 }
 
 @theme inline {
@@ -55,9 +62,9 @@
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
-  --color-mint: var(--mint);
-  --color-mint-deep: var(--mint-deep);
-  --color-mint-ink: var(--mint-ink);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-ink: var(--accent-ink);
   --color-logo-from: var(--logo-from);
   --color-logo-to: var(--logo-to);
   --color-logo-ink: var(--logo-ink);
@@ -66,6 +73,7 @@
   --color-blue: var(--blue);
   --color-good: var(--good);
   --color-bad: var(--bad);
+  --color-bad-ink: var(--bad-ink);
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     system-ui, sans-serif;
 }
@@ -84,7 +92,7 @@ body {
   line-height: 1.45;
 }
 :focus-visible {
-  outline: 2px solid var(--mint);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 @media (prefers-reduced-motion: reduce) {

@@ -10,7 +10,7 @@ export function AppShell() {
     <div className="flex min-h-dvh">
       <a
         href="#main"
-        className="bg-mint text-mint-ink sr-only z-50 rounded-lg px-3 py-2 font-bold focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+        className="bg-accent text-accent-ink sr-only z-50 rounded-lg px-3 py-2 font-bold focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
       >
         Skip to content
       </a>

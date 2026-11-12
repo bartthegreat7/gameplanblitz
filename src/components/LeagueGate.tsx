@@ -37,7 +37,7 @@ export function LeagueGate({ children }: { children: (data: Ready) => ReactNode 
     return (
       <div className="mx-auto max-w-md">
         <ErrorState title={`Couldn't find “${session.username}” on Sleeper`} message="Check the spelling and try again." />
-        <Link to="/connect" onClick={signOut} className="bg-mint text-mint-ink mt-4 block rounded-xl py-3 text-center font-extrabold">
+        <Link to="/connect" onClick={signOut} className="bg-accent text-accent-ink mt-4 block rounded-xl py-3 text-center font-extrabold">
           Try another username
         </Link>
       </div>
@@ -52,7 +52,7 @@ export function LeagueGate({ children }: { children: (data: Ready) => ReactNode 
   if (session.noLeagues)
     return (
       <EmptyState>
-        “{session.username}” has no NFL leagues on Sleeper for {session.season}. <Link to="/connect" onClick={signOut} className="text-mint font-bold">Try another username</Link>
+        “{session.username}” has no NFL leagues on Sleeper for {session.season}. <Link to="/connect" onClick={signOut} className="text-accent font-bold">Try another username</Link>
       </EmptyState>
     )
 

@@ -1,6 +1,9 @@
 export const f1 = (n: number | null | undefined) => (Math.round((+(n ?? 0) || 0) * 10) / 10).toFixed(1)
 
-export const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n))
+/** One-decimal number with an explicit sign (and a true minus sign for negatives). */
+export const signed = (n: number) => (n < -0.049 ? `−${f1(-n)}` : `+${f1(Math.max(n, 0))}`)
+
+export const clamp =(n: number, a: number, b: number) => Math.max(a, Math.min(b, n))
 
 export function ordinal(n: number): string {
   const s = ['th', 'st', 'nd', 'rd']

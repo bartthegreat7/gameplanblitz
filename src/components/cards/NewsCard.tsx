@@ -103,7 +103,7 @@ export function NewsCard({ data }: CardProps) {
             ]}
           />
           {shown.length === 0 ? <EmptyState>Nothing about your players in the latest articles.</EmptyState> : <NewsList items={shown} model={model} />}
-          <Link to="/news" className="text-mint mt-2 inline-block text-sm font-bold">
+          <Link to="/news" className="text-accent mt-2 inline-block text-sm font-bold">
             Open the news hub →
           </Link>
           <div className="mt-4">{report}</div>
