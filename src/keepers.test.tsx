@@ -101,6 +101,6 @@ describe('Keeper Intelligence', () => {
   it('is reachable from the navigation', async () => {
     renderApp('#/standings')
     await screen.findByRole('heading', { name: 'Standings', level: 1 })
-    expect(screen.getAllByRole('link', { name: 'Keepers' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('link', { name: 'Keeper Tools' }).length).toBeGreaterThan(0)
   })
 })

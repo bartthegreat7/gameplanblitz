@@ -33,7 +33,8 @@ describe('Game Day', () => {
     renderApp('#/gameday')
     const mine = await screen.findByRole('region', { name: 'Your starters' })
     expect(within(within(mine).getByRole('row', { name: /R\. Runnerson/ })).getByText('Live')).toBeInTheDocument()
-    expect(within(within(mine).getByRole('row', { name: /W\. Catchwell/ })).getByText('Not started')).toBeInTheDocument()
+    // the state comes from the schedule, which loads independently of the scores
+    await vi.waitFor(() => expect(within(within(mine).getByRole('row', { name: /W\. Catchwell/ })).getByText('Not started')).toBeInTheDocument())
   })
 
   it('suggests a swap only between players whose games have not started', async () => {

@@ -74,7 +74,7 @@ describe('dashboard', () => {
 
   it('shows standings with the signed-in team highlighted', async () => {
     renderApp()
-    const card = await screen.findByRole('region', { name: 'Standings' })
+    const card = await screen.findByRole('region', { name: 'League Standings' })
     const row = within(card).getByText('Gridiron Gang').closest('tr')!
     expect(row).toHaveAttribute('aria-current', 'true')
   })
@@ -173,7 +173,7 @@ describe('settings and theme', () => {
     const user = userEvent.setup()
     renderApp('#/settings')
     await screen.findByRole('heading', { name: 'Settings', level: 1 })
-    await user.click(screen.getAllByRole('button', { name: 'Switch to light theme' })[0])
+    await user.click(screen.getAllByRole('button', { name: 'Light' })[0])
     expect(document.documentElement).toHaveAttribute('data-theme', 'light')
   })
 

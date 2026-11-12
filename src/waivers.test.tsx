@@ -16,6 +16,16 @@ async function firstCard() {
   return el!.querySelector('li') as HTMLElement
 }
 
+/** the first card once it shows `text` (inputs such as schedule and trending load independently) */
+async function firstCardWith(text: string | RegExp) {
+  let card!: HTMLElement
+  await vi.waitFor(async () => {
+    card = await firstCard()
+    expect(within(card).getByText(text)).toBeInTheDocument()
+  }, SLOW)
+  return card
+}
+
 beforeEach(() => {
   resetStore({ username: 'me' })
   mockFetch()
@@ -25,7 +35,7 @@ afterEach(() => vi.unstubAllGlobals())
 describe('Waiver Wire Sniper page', () => {
   it('recommends the free agent, valued over the next three weeks, with the best drop', async () => {
     renderApp('#/waivers')
-    const card = await firstCard()
+    const card = await firstCardWith('+12.0')
     expect(within(card).getByText('Free Agentson')).toBeInTheDocument()
     expect(within(card).getByText('+12.0')).toBeInTheDocument() // +4 a week for 3 weeks
     expect(within(card).getByText('+4.0/wk lineup gain')).toBeInTheDocument()
@@ -39,7 +49,7 @@ describe('Waiver Wire Sniper page', () => {
     renderApp('#/waivers')
     expect(await screen.findByText(/3 of 3 spots used/)).toBeInTheDocument()
     expect(screen.getByText(/Full: every add needs a drop/)).toBeInTheDocument()
-    expect(screen.getByText(/\$100 of \$100 left \(4 winning bids seen this season\)/)).toBeInTheDocument()
+    expect(await screen.findByText(/\$100 of \$100 left \(4 winning bids seen this season\)/, {}, SLOW)).toBeInTheDocument()
     // a priority add (+4/wk) bids at the 75th percentile (16.25 -> 16) up to the max (20)
     expect(await screen.findByText(/FAAB \$16/)).toBeInTheDocument()
   })
@@ -57,8 +67,8 @@ describe('Waiver Wire Sniper page', () => {
 
   it('shows opportunity signals: trending adds', async () => {
     renderApp('#/waivers')
-    const card = await firstCard()
-    expect(within(card).getByText('Trending #1')).toBeInTheDocument() // also listed in the table, so scope to the card
+    const card = await firstCardWith('Trending #1')
+    expect(card).toBeInTheDocument() // also listed in the table, so scope to the card
   })
 
   it('describes a priority-waiver league without FAAB bids', async () => {

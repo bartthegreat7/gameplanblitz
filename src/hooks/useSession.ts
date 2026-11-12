@@ -7,6 +7,7 @@ import { useAppStore } from '../store/app'
 export function useSession() {
   const username = useAppStore((s) => s.username)
   const storedLeagueId = useAppStore((s) => s.leagueId)
+  const viewWeek = useAppStore((s) => s.viewWeek)
 
   const stateQ = useQuery({ queryKey: ['nflState'], queryFn: getNflState, staleTime: 5 * 60_000 })
   const userQ = useQuery({
@@ -28,6 +29,7 @@ export function useSession() {
   const leagues = leaguesQ.data?.leagues ?? []
   const leagueId = leagues.some((l) => l.league_id === storedLeagueId) ? storedLeagueId : (leagues[0]?.league_id ?? null)
   const state = stateQ.data
+  const currentWeek = state ? Math.max(1, state.week || state.display_week || 1) : 1
 
   const queries = [stateQ, userQ, leaguesQ]
   return {
@@ -36,7 +38,9 @@ export function useSession() {
     leagues,
     leagueId,
     season: leaguesQ.data?.season ?? stateSeason,
-    week: state ? Math.max(1, state.week || state.display_week || 1) : 1,
+    /** the week every page shows: the user's pick (weeks 1..current) or the current NFL week */
+    week: viewWeek !== null && viewWeek >= 1 && viewWeek <= currentWeek ? viewWeek : currentWeek,
+    currentWeek,
     isLoading: !!username && queries.some((q) => q.isPending && q.fetchStatus !== 'idle'),
     error: (queries.find((q) => q.error)?.error as Error | undefined) ?? null,
     /** signed in but Sleeper doesn't know this username */

@@ -69,7 +69,7 @@ describe('Opponent Scouting', () => {
     const user = userEvent.setup()
     renderApp('#/scouting')
     const results = await screen.findByRole('region', { name: 'Results this season' })
-    await user.click(within(results).getByText('Results as a table'))
+    await user.click(await within(results).findByText('Results as a table'))
     expect(within(results).getByText(/Week 4: 140\.0 vs 100\.0 \(Gridiron Gang\)/)).toBeInTheDocument()
   })
 
@@ -81,9 +81,13 @@ describe('Opponent Scouting', () => {
     expect(screen.queryByText('No completed games yet')).not.toBeInTheDocument()
   }, 15_000)
 
-  it('is reachable from the navigation', async () => {
+  it('is reachable from the navigation (Analytics group)', async () => {
+    const user = userEvent.setup()
     renderApp('#/standings')
     await screen.findByRole('heading', { name: 'Standings', level: 1 })
-    expect(screen.getAllByRole('link', { name: 'Scouting' }).length).toBeGreaterThan(0)
+    const sidebar = screen.getAllByRole('navigation', { name: 'Primary' })[0]
+    await user.click(within(sidebar).getByRole('button', { name: 'Analytics' }))
+    await user.click(within(sidebar).getByRole('link', { name: 'Opponent Scouting' }))
+    expect(await screen.findByRole('heading', { level: 1, name: /Scouting/ })).toBeInTheDocument()
   })
 })

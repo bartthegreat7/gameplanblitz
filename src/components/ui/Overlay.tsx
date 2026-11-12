@@ -10,8 +10,8 @@ interface OverlayProps {
   onClose: () => void
   title: string
   children: ReactNode
-  /** modal = centered dialog; drawer = right panel on desktop, bottom sheet on phones */
-  variant: 'modal' | 'drawer'
+  /** modal = centered dialog; drawer = right panel on desktop, bottom sheet on phones; nav = left panel; palette = wide, near the top */
+  variant: 'modal' | 'drawer' | 'nav' | 'palette'
 }
 
 /** Accessible dialog base: portal, focus trap, Esc to close, scroll lock, focus restore. */
@@ -58,14 +58,18 @@ function Overlay({ open, onClose, title, children, variant }: OverlayProps) {
   }, [open])
 
   if (!open) return null
-  const pos =
-    variant === 'modal'
-      ? 'items-center justify-center p-4'
-      : 'items-end justify-center md:items-stretch md:justify-end'
-  const size =
-    variant === 'modal'
-      ? 'max-w-md rounded-3xl'
-      : 'max-h-[85dvh] rounded-t-3xl md:max-h-none md:max-w-md md:rounded-t-none md:rounded-l-3xl'
+  const pos = {
+    modal: 'items-center justify-center p-4',
+    drawer: 'items-end justify-center md:items-stretch md:justify-end',
+    nav: 'items-stretch justify-start',
+    palette: 'items-start justify-center px-4 pt-[8vh]',
+  }[variant]
+  const size = {
+    modal: 'max-w-md rounded-3xl',
+    drawer: 'max-h-[85dvh] rounded-t-3xl md:max-h-none md:max-w-md md:rounded-t-none md:rounded-l-3xl',
+    nav: 'max-w-[320px] rounded-r-3xl',
+    palette: 'max-h-[80dvh] max-w-xl rounded-2xl',
+  }[variant]
 
   return createPortal(
     <div className={`fixed inset-0 z-50 flex ${pos}`}>
@@ -100,3 +104,5 @@ function Overlay({ open, onClose, title, children, variant }: OverlayProps) {
 
 export const Modal = (p: Omit<OverlayProps, 'variant'>) => <Overlay {...p} variant="modal" />
 export const Drawer = (p: Omit<OverlayProps, 'variant'>) => <Overlay {...p} variant="drawer" />
+export const NavDrawer = (p: Omit<OverlayProps, 'variant'>) => <Overlay {...p} variant="nav" />
+export const Palette = (p: Omit<OverlayProps, 'variant'>) => <Overlay {...p} variant="palette" />

@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 
+import { NavDrawer } from '../ui/Overlay'
 import { BottomNav } from './BottomNav'
-import { LeagueBar } from './LeagueBar'
-import { Sidebar } from './Sidebar'
-import { ThemeToggle } from './ThemeToggle'
+import { ConnectionBox, NavContent, Sidebar, ThemeSwitch } from './Sidebar'
+import { TopNav } from './TopNav'
 
 export function AppShell() {
+  const [navOpen, setNavOpen] = useState(false)
+  const close = () => setNavOpen(false)
   return (
     <div className="flex min-h-dvh">
       <a
@@ -15,22 +18,31 @@ export function AppShell() {
         Skip to content
       </a>
       <Sidebar />
-      <div className="min-w-0 flex-1">
-        <header className="flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top,0px),0.75rem)] pb-1 md:hidden">
-          <span className="text-2xl font-extrabold tracking-tight">GameplanBlitz</span>
-          <ThemeToggle />
-        </header>
-        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl px-4 pt-4 pb-28 outline-none md:px-8 md:pb-10">
-          <LeagueBar />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <TopNav onOpenNav={() => setNavOpen(true)} />
+        <main
+          id="main"
+          tabIndex={-1}
+          className="mx-auto w-full max-w-[1440px] flex-1 px-4 pt-5 pb-28 outline-none md:px-6 md:pb-10 xl:px-8"
+        >
           <Outlet />
           <footer className="text-ink-3 mt-8 text-center text-xs leading-relaxed">
-            Live rosters, lineups, injuries, standings &amp; projections from the Sleeper API · trade values from FantasyCalc.
+            Live rosters, lineups, injuries, standings &amp; projections from the Sleeper API ·
+            trade values from FantasyCalc.
             <br />
-            Read-only — GameplanBlitz never posts to your league. Username &amp; layout saved in this browser only.
+            Read-only — GameplanBlitz never posts to your league. Username &amp; layout saved in
+            this browser only.
           </footer>
         </main>
       </div>
-      <BottomNav />
+      <BottomNav onMore={() => setNavOpen(true)} moreOpen={navOpen} />
+      <NavDrawer open={navOpen} onClose={close} title="Menu">
+        <div className="grid gap-4">
+          <NavContent inDrawer onNavigate={close} />
+          <ConnectionBox onNavigate={close} />
+          <ThemeSwitch />
+        </div>
+      </NavDrawer>
     </div>
   )
 }

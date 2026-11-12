@@ -31,7 +31,7 @@ export function Card({ id, title, context, icon: Icon, tone = 'accent', children
   return (
     <section
       aria-label={title}
-      className="border-line from-card-2 to-card mb-5 break-inside-avoid overflow-hidden rounded-3xl border bg-gradient-to-b shadow-[0_20px_40px_-32px_rgba(0,0,0,0.5)]"
+      className="border-line bg-card hover:border-plan-line mb-4 break-inside-avoid overflow-hidden rounded-2xl border shadow-[0_16px_36px_-28px_rgba(0,0,0,0.65)] transition-colors"
     >
       <h2 className="m-0">
         <button
@@ -39,13 +39,13 @@ export function Card({ id, title, context, icon: Icon, tone = 'accent', children
           aria-expanded={!closed}
           aria-controls={bodyId}
           onClick={() => toggle(id)}
-          className="flex w-full cursor-pointer items-center gap-3.5 px-5 pt-5 pb-1 text-left"
+          className="flex w-full cursor-pointer items-center gap-3 px-4 pt-4 pb-1 text-left"
         >
-          <span className={`grid size-12 shrink-0 place-items-center rounded-2xl border ${TONE[tone]}`}>
-            <Icon size={24} aria-hidden />
+          <span className={`grid size-10 shrink-0 place-items-center rounded-xl border ${TONE[tone]}`}>
+            <Icon size={20} aria-hidden />
           </span>
           <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-2xl font-extrabold tracking-tight">{title}</span>
+            <span className="text-lg font-extrabold tracking-tight">{title}</span>
             {context && <span className="text-ink-3 truncate text-sm font-medium">{context}</span>}
           </span>
           <span className="border-line bg-card text-ink-3 grid size-8 shrink-0 place-items-center rounded-full border">
@@ -53,7 +53,7 @@ export function Card({ id, title, context, icon: Icon, tone = 'accent', children
           </span>
         </button>
       </h2>
-      <div id={bodyId} hidden={closed} className="px-5 pt-4 pb-5">
+      <div id={bodyId} hidden={closed} className="px-4 pt-3 pb-4">
         {children}
       </div>
     </section>

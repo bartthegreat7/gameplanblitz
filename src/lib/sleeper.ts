@@ -32,6 +32,8 @@ export interface SleeperLeagueSettings {
   type?: number
   draft_rounds?: number
   max_keepers?: number
+  /** number of divisions (0 or absent = none); per Sleeper docs, unverified on a real league */
+  divisions?: number
 }
 
 export interface SleeperLeague {
@@ -97,6 +99,8 @@ export interface SleeperPlayer {
   depth_chart_position?: string | null
   age?: number | null
   years_exp?: number | null
+  /** Sleeper's popularity rank (lower = more searched); used to order search results */
+  search_rank?: number | null
 }
 
 export type PlayerMap = Record<string, SleeperPlayer>

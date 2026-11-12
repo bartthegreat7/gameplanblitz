@@ -1,5 +1,6 @@
 import {
   bracketOrder,
+  byeCount,
   gamesFrom,
   MIN_SD,
   mulberry32,
@@ -164,5 +165,11 @@ describe('schedule helpers', () => {
     expect(s.games).toBe(2)
     expect(s.vsAvg).toBeCloseTo(125 - 110) // opponents average 125; league average 110
     expect(remainingSOS(4, games, [team(1, 100)])).toEqual({ games: 0, vsAvg: 0 })
+  })
+})
+
+describe('byeCount', () => {
+  it('gives byes to fill the bracket to a power of two', () => {
+    expect([1, 2, 4, 6, 7, 8, 10, 12].map(byeCount)).toEqual([0, 0, 0, 2, 1, 0, 6, 4])
   })
 })

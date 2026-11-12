@@ -297,3 +297,6 @@ export function prepareSeason(opts: {
   )
   return { teams, standings, remaining, missingWeeks }
 }
+
+/** Teams that skip round one in a fixed bracket of `n` playoff teams. */
+export const byeCount = (n: number) => (n <= 1 ? 0 : 2 ** Math.ceil(Math.log2(n)) - n)

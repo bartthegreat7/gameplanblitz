@@ -145,6 +145,7 @@ export function resetStore(over: Partial<ReturnType<typeof useAppStore.getState>
     bookmarks: [],
     read: [],
     keeperRules: {},
+    viewWeek: null,
     theme: 'dark',
     ...over,
   })

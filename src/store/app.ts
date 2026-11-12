@@ -26,8 +26,12 @@ interface AppState {
   read: string[]
   /** keeper rules per league id (Sleeper does not store keeper costs) */
   keeperRules: Record<string, KeeperRules>
+  /** week being viewed (null = the current NFL week); this session only, not saved */
+  viewWeek: number | null
 
   toggleTheme: () => void
+  setTheme: (t: Theme) => void
+  setViewWeek: (week: number | null) => void
   toggleSidebar: () => void
   setUsername: (u: string) => void
   setLeagueId: (id: string) => void
@@ -51,12 +55,15 @@ export const useAppStore = create<AppState>()(
       bookmarks: [],
       read: [],
       keeperRules: {},
+      viewWeek: null,
 
       toggleTheme: () => set({ theme: get().theme === 'light' ? 'dark' : 'light' }),
+      setTheme: (t) => set({ theme: t }),
+      setViewWeek: (week) => set({ viewWeek: week }),
       toggleSidebar: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
       setUsername: (u) => set({ username: u.trim().replace(/^@/, ''), leagueId: null }),
-      setLeagueId: (id) => set({ leagueId: id }),
-      signOut: () => set({ username: null, leagueId: null }),
+      setLeagueId: (id) => set({ leagueId: id, viewWeek: null }),
+      signOut: () => set({ username: null, leagueId: null, viewWeek: null }),
       toggleCollapsed: (id) => set({ collapsed: toggleIn(get().collapsed, id) }),
       toggleBookmark: (id) => set({ bookmarks: toggleIn(get().bookmarks, id) }),
       markRead: (id) => {

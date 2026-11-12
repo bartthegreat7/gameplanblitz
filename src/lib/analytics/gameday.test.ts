@@ -1,6 +1,6 @@
 import { buildModel, player, roster } from '../../test/fixtures'
 import type { SleeperMatchup } from '../sleeper'
-import { gameState, IDLE_POLL_MS, isLive, KICKOFF_SPREAD, lineupAlerts, LIVE_POLL_MS, liveSide, liveWinProbability, pollInterval, remainingFor, type LiveSide } from './gameday'
+import { gameState, IDLE_POLL_MS, isLive, KICKOFF_SPREAD, lineupAlerts, LIVE_POLL_MS, liveSide, liveWinProbability, pollInterval, remainingFor, weekIsLive, type LiveSide } from './gameday'
 import { weekContext } from './schedule'
 
 const games = (statuses: Record<string, string>) =>
@@ -121,5 +121,17 @@ describe('pollInterval', () => {
     expect(pollInterval(scored, [g(5, 'complete')], 5)).toBe(IDLE_POLL_MS) // all final
     expect(pollInterval(scored, undefined, 5)).toBe(LIVE_POLL_MS) // no schedule: points decide
     expect(pollInterval(none, undefined, 5)).toBe(IDLE_POLL_MS)
+  })
+})
+
+describe('weekIsLive', () => {
+  const g = (week: number, status: string) => ({ game_id: `${week}${status}${Math.random()}`, week, status, date: '', home: 'A', away: 'B' })
+  it('is live only between the first kickoff and the last final whistle of the week', () => {
+    expect(weekIsLive([g(5, 'pre_game'), g(5, 'pre_game')], 5)).toBe(false)
+    expect(weekIsLive([g(5, 'in_progress'), g(5, 'pre_game')], 5)).toBe(true)
+    expect(weekIsLive([g(5, 'complete'), g(5, 'pre_game')], 5)).toBe(true)
+    expect(weekIsLive([g(5, 'complete'), g(5, 'complete')], 5)).toBe(false)
+    expect(weekIsLive([g(4, 'in_progress')], 5)).toBe(false)
+    expect(weekIsLive(undefined, 5)).toBe(false)
   })
 })

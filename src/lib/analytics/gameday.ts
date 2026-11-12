@@ -162,3 +162,9 @@ export function pollInterval(matchups: SleeperMatchup[] | undefined, schedule: S
   const unfinished = thisWeek.some((g) => g.status !== 'complete')
   return started && unfinished ? LIVE_POLL_MS : IDLE_POLL_MS
 }
+
+/** NFL games are underway this week by the schedule alone: one has started and one isn't final. */
+export function weekIsLive(schedule: ScheduleGame[] | undefined | null, week: number): boolean {
+  const g = (schedule ?? []).filter((x) => x.week === week)
+  return g.some((x) => x.status !== 'pre_game') && g.some((x) => x.status !== 'complete')
+}

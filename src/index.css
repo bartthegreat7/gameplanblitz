@@ -1,50 +1,62 @@
 @import 'tailwindcss';
 
-/* Theme tokens: navy / charcoal / white with an electric-blue accent.
+/* Theme tokens: deep navy command-center palette with a blue (and purple) accent.
    Dark is the default; light overrides under [data-theme='light'].
    Components use the semantic utilities below, never hex.
    Text/background pairs are checked against WCAG AA in src/theme.contrast.test.ts. */
 :root {
   color-scheme: dark;
-  --bg: #0a0f1d;
-  --glow: #11203f;
-  --card: #151a24;
-  --card-2: #1a202c;
-  --line: #2a3140;
-  --panel: #0f131c;
-  --ink: #f4f6fb;
-  --ink-2: #b4bed2;
-  --ink-3: #8591a8;
-  --accent: #4f9bff;
-  --accent-deep: #2f7df0;
-  --accent-ink: #04122b;
-  --logo-from: #6aaeff;
-  --logo-to: #2f7df0;
-  --logo-ink: #04122b;
+  --bg: #080f20;
+  --glow: #0f1d3a;
+  --sidebar: #070d1c;
+  --card: #151e31;
+  --card-2: #1b2740;
+  --active: #1c3158;
+  --line: #2a3650;
+  --panel: #0e1628;
+  --ink: #f8fafc;
+  --ink-2: #94a3b8;
+  --ink-3: #8b9ab0;
+  --accent: #60a5fa;
+  --accent-deep: #3b82f6;
+  --accent-ink: #06122a;
+  --purple: #a78bfa;
+  --logo-from: #60a5fa;
+  --logo-to: #3b82f6;
+  --logo-ink: #06122a;
+  --plan-from: #17305f;
+  --plan-to: #2a2766;
+  --plan-line: #3d54a3;
   --amber: #f2c66d;
-  --coral: #ff7a7a;
-  --blue: #8ab4ff;
-  --good: #56d9b3;
-  --bad: #ff6b6b;
+  --coral: #fb7185;
+  --blue: #93c5fd;
+  --good: #34d399;
+  --bad: #f87171;
   --bad-ink: #2a0606;
 }
 :root[data-theme='light'] {
   color-scheme: light;
-  --bg: #f3f5f9;
+  --bg: #f1f5fb;
   --glow: #dfe8fb;
+  --sidebar: #ffffff;
   --card: #ffffff;
-  --card-2: #f8f9fc;
-  --line: #d6dbe6;
-  --panel: #f0f2f7;
+  --card-2: #f6f8fc;
+  --active: #dce8fd;
+  --line: #d9e0ec;
+  --panel: #eef2f8;
   --ink: #0b1220;
-  --ink-2: #44506a;
-  --ink-3: #5a6780;
+  --ink-2: #475569;
+  --ink-3: #56657c;
   --accent: #1d5fe0;
   --accent-deep: #1b53c4;
   --accent-ink: #ffffff;
+  --purple: #6b46d6;
   --logo-from: #4f9bff;
   --logo-to: #1d5fe0;
   --logo-ink: #ffffff;
+  --plan-from: #e3ecff;
+  --plan-to: #ece6ff;
+  --plan-line: #c3d0f2;
   --amber: #8f5500;
   --coral: #c8363b;
   --blue: #1d4fd0;
@@ -57,6 +69,12 @@
   --color-bg: var(--bg);
   --color-card: var(--card);
   --color-card-2: var(--card-2);
+  --color-sidebar: var(--sidebar);
+  --color-active: var(--active);
+  --color-purple: var(--purple);
+  --color-plan-from: var(--plan-from);
+  --color-plan-to: var(--plan-to);
+  --color-plan-line: var(--plan-line);
   --color-line: var(--line);
   --color-panel: var(--panel);
   --color-ink: var(--ink);
