@@ -1128,7 +1128,7 @@ function tradeCard(){
       `<div class="lead">Every deal is fair by FantasyCalc market value and raises your starting lineup.</div>
        <div class="empty">No clearly fair upgrade turned up right now. Add players to your trade block in Sleeper and refresh.</div>`);
   }
-  const body = `<div class="lead">Each deal is fair by FantasyCalc market value and makes your starting lineup score more. The weekly change shows how hard the sell is.</div>
+  const body = `${projNotice()}<div class="lead">Each deal is fair by FantasyCalc market value and makes your starting lineup score more. The weekly change shows how hard the sell is.</div>
     ${deals.map((d,i)=>tradeHTML(d,i)).join("")}`;
   return card("trade","blue",icon,"Trade Machine","Fair deals priced by FantasyCalc",body);
 }
@@ -1285,10 +1285,10 @@ function bidsCard(){
 
   if(!usesFAAB){
     return card("bids","gold",icon,"Waiver Priority","Rolling waivers",
-      `<div class="lead">Your league uses rolling waiver priority, not FAAB.</div>
+      `${projNotice()}<div class="lead">Your league uses rolling waiver priority, not FAAB.</div>
        <div class="subhead" style="color:var(--amber)">Top targets</div>${rows||'<div class="empty">No clear targets right now.</div>'}`);
   }
-  const budgetBox=`<div class="budget">
+  const budgetBox=`${projNotice()}<div class="budget">
       <div class="coin">$${left}</div>
       <div><div class="t">left to spend</div><div class="d">${ordinal(place)} most in the league. Rivals can bid up to $${maxOther}.</div></div>
     </div>
@@ -1350,7 +1350,7 @@ function valueCard(){
     items.push({id:pid, pos:pos(pid), v, ppg, pj, fc:fcVal(pid)});
   }
   items.sort((a,b)=>b.v-a.v);
-  const body=`<div class="lead">Blends this season's points per game with this week's projection, in your league's scoring — so a hot streak or soft week moves the number.</div>
+  const body=`${projNotice()}<div class="lead">Blends this season's points per game with this week's projection, in your league's scoring — so a hot streak or soft week moves the number.</div>
     ${items.map((p,i)=>`<div class="prow">
       <div class="rank">${i+1}</div>${avatarHTML(p.id,"av")}
       <div class="mid"><div class="nm">${esc(pname(p.id))}</div>
