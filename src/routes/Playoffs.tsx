@@ -10,8 +10,7 @@ import { EmptyState, ListSkeleton, Notice } from '../components/ui/states'
 import type { Ready } from '../hooks/useLeagueData'
 import { useLeagueMatchups } from '../hooks/useLeagueMatchups'
 import { f1, ordinal, signed } from '../lib/format'
-import { gamesFrom, MIN_SD, remainingSOS, simulate, teamModels, type StrengthBasis, type TeamOdds } from '../lib/analytics/playoffs'
-import { projectedLineup, scoreHistory } from '../lib/analytics/scouting'
+import { DEFAULT_SEED, MIN_SD, prepareSeason, remainingSOS, simulate, type StrengthBasis, type TeamOdds } from '../lib/analytics/playoffs'
 
 const pct = (x: number) => (x >= 99.95 ? '100%' : x > 0 && x < 0.05 ? '<0.1%' : `${x.toFixed(1)}%`)
 
@@ -45,26 +44,9 @@ function PlayoffsView({ data }: { data: Ready }) {
 
   const [basis, setBasis] = useState<StrengthBasis>('blend')
   const [sims, setSims] = useState<'1000' | '5000' | '10000'>('5000')
-  const [seed, setSeed] = useState(20261111)
+  const [seed, setSeed] = useState(DEFAULT_SEED)
 
-  const prepared = useMemo(() => {
-    const done = sched.weeks.filter((w) => w.week < week)
-    const left = sched.weeks.filter((w) => w.week >= week && w.week <= lastRegular)
-    const ids = m.rosters.map((r) => r.roster_id)
-    const scores = new Map(ids.map((id) => [id, scoreHistory(done, id).map((h) => h.points)]))
-    const projected = new Map(ids.map((id) => [id, projectedLineup(m, id).reduce((a, s) => a + s.proj, 0)]))
-    const teams = teamModels({ rosterIds: ids, scores, projected, basis })
-    const standings = m.rosters.map((r) => ({
-      rosterId: r.roster_id,
-      wins: r.settings?.wins ?? 0,
-      losses: r.settings?.losses ?? 0,
-      ties: r.settings?.ties ?? 0,
-      pf: (r.settings?.fpts ?? 0) + (r.settings?.fpts_decimal ?? 0) / 100,
-    }))
-    const remaining = gamesFrom(left)
-    const missingWeeks = Array.from({ length: Math.max(0, lastRegular - week + 1) }, (_, i) => week + i).filter((w) => !left.some((x) => x.week === w && x.matchups.some((mm) => mm.matchup_id !== null)))
-    return { teams, standings, remaining, missingWeeks }
-  }, [sched.weeks, week, lastRegular, m, basis])
+  const prepared = useMemo(() => prepareSeason({ m, weeks: sched.weeks, week, lastRegular, basis }), [sched.weeks, week, lastRegular, m, basis])
 
   const result = useMemo(() => {
     const base = { teams: prepared.teams, standings: prepared.standings, remaining: prepared.remaining, playoffTeams, sims: Number(sims), seed }

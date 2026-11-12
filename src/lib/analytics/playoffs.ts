@@ -1,3 +1,7 @@
+import type { Model } from '../model'
+import type { SleeperMatchup } from '../sleeper'
+import { projectedLineup, scoreHistory } from './scouting'
+
 /* Playoff simulator: seeded, reproducible Monte Carlo over the schedule Sleeper publishes.
    Every assumption is explicit and configurable; the same inputs and seed always give the same odds. */
 
@@ -255,4 +259,41 @@ export function remainingSOS(rosterId: number, games: Game[], teams: TeamModel[]
   const opps = games.flatMap((g) => (g.home === rosterId ? [g.away] : g.away === rosterId ? [g.home] : []))
   if (opps.length === 0) return { games: 0, vsAvg: 0 }
   return { games: opps.length, vsAvg: opps.reduce((a, o) => a + (mean.get(o) ?? leagueAvg), 0) / opps.length - leagueAvg }
+}
+
+/* ---------- season setup shared by the Playoff Simulator and the GM ---------- */
+
+export const DEFAULT_SEED = 20261111
+export const DEFAULT_SIMS = 5000
+
+/**
+ * Simulator inputs from the league: team strength models (past scores + best projected lineup),
+ * current standings, the remaining regular-season games, and regular-season weeks Sleeper hasn't posted.
+ */
+export function prepareSeason(opts: {
+  m: Model
+  weeks: { week: number; matchups: SleeperMatchup[] }[]
+  week: number
+  lastRegular: number
+  basis: StrengthBasis
+}) {
+  const { m, weeks, week, lastRegular, basis } = opts
+  const done = weeks.filter((w) => w.week < week)
+  const left = weeks.filter((w) => w.week >= week && w.week <= lastRegular)
+  const ids = m.rosters.map((r) => r.roster_id)
+  const scores = new Map(ids.map((id) => [id, scoreHistory(done, id).map((h) => h.points)]))
+  const projected = new Map(ids.map((id) => [id, projectedLineup(m, id).reduce((a, s) => a + s.proj, 0)]))
+  const teams = teamModels({ rosterIds: ids, scores, projected, basis })
+  const standings: StandingRow[] = m.rosters.map((r) => ({
+    rosterId: r.roster_id,
+    wins: r.settings?.wins ?? 0,
+    losses: r.settings?.losses ?? 0,
+    ties: r.settings?.ties ?? 0,
+    pf: (r.settings?.fpts ?? 0) + (r.settings?.fpts_decimal ?? 0) / 100,
+  }))
+  const remaining = gamesFrom(left)
+  const missingWeeks = Array.from({ length: Math.max(0, lastRegular - week + 1) }, (_, i) => week + i).filter(
+    (w) => !left.some((x) => x.week === w && x.matchups.some((mm) => mm.matchup_id !== null)),
+  )
+  return { teams, standings, remaining, missingWeeks }
 }

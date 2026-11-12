@@ -36,10 +36,12 @@ async function loadHistory(league: SleeperLeague): Promise<DraftHistory> {
   return { current, seasons, gaps }
 }
 
-export function useKeeperInputs(league: SleeperLeague, rosterCount: number) {
+/** `enabled: false` skips the draft-history and dynasty-value requests (e.g. the GM in a redraft league). */
+export function useKeeperInputs(league: SleeperLeague, rosterCount: number, enabled = true) {
   const historyQ = useQuery({
     queryKey: ['keeperHistory', league.league_id, league.draft_id, league.previous_league_id],
     queryFn: () => loadHistory(league),
+    enabled,
     staleTime: 30 * 60_000,
     retry: 1,
   })
@@ -53,6 +55,7 @@ export function useKeeperInputs(league: SleeperLeague, rosterCount: number) {
   const fcQ = useQuery({
     queryKey: ['fantasycalc-trades', league.league_id, 'dynasty', params],
     queryFn: () => getFantasyCalcData(params, true),
+    enabled,
     staleTime: 30 * 60_000,
     retry: 1,
   })

@@ -8,7 +8,7 @@ import { Pill, PosTag } from '../components/ui/Pill'
 import { EmptyState, ListSkeleton, Notice } from '../components/ui/states'
 import type { Ready } from '../hooks/useLeagueData'
 import { useKeeperInputs } from '../hooks/useKeeperInputs'
-import { defaultRules, draftRounds, evaluateKeepers, yearsKept, type KeeperCandidate, type KeeperRules } from '../lib/analytics/keepers'
+import { defaultRules, myKeepers, type KeeperCandidate, type KeeperRules } from '../lib/analytics/keepers'
 import { f1, ordinal } from '../lib/format'
 import { useAppStore } from '../store/app'
 
@@ -100,30 +100,8 @@ function KeepersView({ data }: { data: Ready }) {
   const [open, setOpen] = useState<KeeperCandidate | null>(null)
   const teams = league.settings.num_teams || m.rosters.length
 
-  const dynasty = k.dynasty
-  const thisDraft = k.history?.current ?? null
-  const draftSeasons = k.history?.seasons ?? null
-  const historyLoading = k.historyLoading
-  const candidates = useMemo(() => {
-    if (!dynasty || historyLoading) return null
-    const rounds = draftRounds(thisDraft ?? [])
-    const seasons = draftSeasons ?? []
-    const ids = (m.myRoster()?.players ?? []).filter((id) => m.pos(id) !== 'DEF')
-    return evaluateKeepers(
-      ids.map((id) => ({
-        id,
-        name: m.name(id),
-        pos: m.pos(id),
-        draftedRound: rounds.get(id) ?? null,
-        yearsKept: yearsKept(seasons, id),
-        dynastyRank: dynasty.get(id)?.rank ?? null,
-        dynastyValue: dynasty.get(id)?.value ?? null,
-        ppg: m.ppg(id),
-      })),
-      rules,
-      teams,
-    )
-  }, [dynasty, historyLoading, thisDraft, draftSeasons, m, rules, teams])
+  const { dynasty, history, historyLoading } = k
+  const candidates = useMemo(() => (!dynasty || historyLoading ? null : myKeepers(m, history, dynasty, rules, teams)), [dynasty, history, historyLoading, m, rules, teams])
 
   const columns = useMemo(() => COLUMNS(setOpen), [])
   const keep = candidates?.filter((c) => c.recommended) ?? []

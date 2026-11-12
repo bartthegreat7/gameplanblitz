@@ -1,5 +1,6 @@
 import type { Evidence } from '../evidence'
 import { ordinal } from '../format'
+import type { Model } from '../model'
 
 /* Keeper intelligence: what each player would cost to keep under your league's rules, and how
    that compares with where the market would draft him next year. Rules are user-configured:
@@ -138,4 +139,31 @@ export function evaluateKeepers(players: KeeperInput[], rules: KeeperRules, team
   for (const c of pool.slice(0, rules.maxKeepers)) c.recommended = true
 
   return cands.sort((a, b) => Number(b.recommended) - Number(a.recommended) || score(b) - score(a) || (a.dynastyRank ?? Infinity) - (b.dynastyRank ?? Infinity))
+}
+
+/** Evaluate my roster (team defenses excluded) from draft history and dynasty ranks among players. */
+export function myKeepers(
+  m: Model,
+  history: { current: DraftPickLite[] | null; seasons: DraftPickLite[][] } | null,
+  dynasty: Map<string, { rank: number; value: number }>,
+  rules: KeeperRules,
+  teams: number,
+): KeeperCandidate[] {
+  const rounds = draftRounds(history?.current ?? [])
+  const seasons = history?.seasons ?? []
+  const ids = (m.myRoster()?.players ?? []).filter((id) => m.pos(id) !== 'DEF')
+  return evaluateKeepers(
+    ids.map((id) => ({
+      id,
+      name: m.name(id),
+      pos: m.pos(id),
+      draftedRound: rounds.get(id) ?? null,
+      yearsKept: yearsKept(seasons, id),
+      dynastyRank: dynasty.get(id)?.rank ?? null,
+      dynastyValue: dynasty.get(id)?.value ?? null,
+      ppg: m.ppg(id),
+    })),
+    rules,
+    teams,
+  )
 }
