@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { useAppStore } from './store/app'
-import { failing, mockFetch, renderApp, resetStore } from './test/mockSleeper'
+import { failing, mockFetch, openTool, renderApp, resetStore } from './test/mockSleeper'
 
 /* A news file as the aggregator publishes it (test fixture only; never shipped). Times are
    relative to "now" so recency rules (breaking = last 24h, trending = last 3 days) apply. */
@@ -171,7 +171,7 @@ describe('news elsewhere in the app', () => {
 
   it('puts news about my players on the dashboard', async () => {
     renderApp('#/')
-    const card = await screen.findByRole('region', { name: 'News & Injuries' })
+    const card = within(await openTool('News & Injuries')).getByRole('region', { name: 'News & Injuries' })
     expect(await within(card).findByText('About your players')).toBeInTheDocument()
     expect(within(card).getByText('Players to Buy Low and Sell High')).toBeInTheDocument()
   })

@@ -1,7 +1,8 @@
 import { ChevronDown, type LucideIcon } from 'lucide-react'
-import { useId, type ReactNode } from 'react'
+import { useContext, useId, type ReactNode } from 'react'
 
 import { useAppStore } from '../../store/app'
+import { CardBare } from './cardContext'
 
 export type Tone = 'accent' | 'orange' | 'blue' | 'green' | 'gold'
 
@@ -28,6 +29,14 @@ export function Card({ id, title, context, icon: Icon, tone = 'accent', children
   const closed = useAppStore((s) => s.collapsed.includes(id))
   const toggle = useAppStore((s) => s.toggleCollapsed)
   const bodyId = useId()
+  const bare = useContext(CardBare)
+  if (bare)
+    return (
+      <section aria-label={title}>
+        {context && <p className="text-ink-3 mb-4 text-sm font-medium">{context}</p>}
+        {children}
+      </section>
+    )
   return (
     <section
       aria-label={title}
@@ -41,7 +50,9 @@ export function Card({ id, title, context, icon: Icon, tone = 'accent', children
           onClick={() => toggle(id)}
           className="flex w-full cursor-pointer items-center gap-3 px-4 pt-4 pb-1 text-left"
         >
-          <span className={`grid size-10 shrink-0 place-items-center rounded-xl border ${TONE[tone]}`}>
+          <span
+            className={`grid size-10 shrink-0 place-items-center rounded-xl border ${TONE[tone]}`}
+          >
             <Icon size={20} aria-hidden />
           </span>
           <span className="flex min-w-0 flex-1 flex-col">
@@ -49,7 +60,11 @@ export function Card({ id, title, context, icon: Icon, tone = 'accent', children
             {context && <span className="text-ink-3 truncate text-sm font-medium">{context}</span>}
           </span>
           <span className="border-line bg-card text-ink-3 grid size-8 shrink-0 place-items-center rounded-full border">
-            <ChevronDown size={18} aria-hidden className={`transition-transform ${closed ? '-rotate-90' : ''}`} />
+            <ChevronDown
+              size={18}
+              aria-hidden
+              className={`transition-transform ${closed ? '-rotate-90' : ''}`}
+            />
           </span>
         </button>
       </h2>

@@ -2,6 +2,9 @@ import { X } from 'lucide-react'
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
+/** Open overlays, newest last: only the topmost handles Escape and the focus trap (e.g. a player view over a tool panel). */
+const openStack: symbol[] = []
+
 const FOCUSABLE =
   'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
 
@@ -11,7 +14,7 @@ interface OverlayProps {
   title: string
   children: ReactNode
   /** modal = centered dialog; drawer = right panel on desktop, bottom sheet on phones; nav = left panel; palette = wide, near the top */
-  variant: 'modal' | 'drawer' | 'nav' | 'palette'
+  variant: 'modal' | 'drawer' | 'panel' | 'nav' | 'palette'
 }
 
 /** Accessible dialog base: portal, focus trap, Esc to close, scroll lock, focus restore. */
@@ -25,6 +28,8 @@ function Overlay({ open, onClose, title, children, variant }: OverlayProps) {
 
   useEffect(() => {
     if (!open) return
+    const me = Symbol('overlay')
+    openStack.push(me)
     const prev = document.activeElement as HTMLElement | null
     const overflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -32,6 +37,7 @@ function Overlay({ open, onClose, title, children, variant }: OverlayProps) {
     ;(el?.querySelector<HTMLElement>(FOCUSABLE) ?? el)?.focus()
 
     const onKey = (e: KeyboardEvent) => {
+      if (openStack[openStack.length - 1] !== me) return
       if (e.key === 'Escape') {
         e.stopPropagation()
         onCloseRef.current()
@@ -52,6 +58,7 @@ function Overlay({ open, onClose, title, children, variant }: OverlayProps) {
     document.addEventListener('keydown', onKey)
     return () => {
       document.removeEventListener('keydown', onKey)
+      openStack.splice(openStack.indexOf(me), 1)
       document.body.style.overflow = overflow
       prev?.focus?.()
     }
@@ -61,12 +68,16 @@ function Overlay({ open, onClose, title, children, variant }: OverlayProps) {
   const pos = {
     modal: 'items-center justify-center p-4',
     drawer: 'items-end justify-center md:items-stretch md:justify-end',
+    panel: 'items-end justify-center md:items-stretch md:justify-end',
     nav: 'items-stretch justify-start',
     palette: 'items-start justify-center px-4 pt-[8vh]',
   }[variant]
   const size = {
     modal: 'max-w-md rounded-3xl',
-    drawer: 'max-h-[85dvh] rounded-t-3xl md:max-h-none md:max-w-md md:rounded-t-none md:rounded-l-3xl',
+    drawer:
+      'max-h-[85dvh] rounded-t-3xl md:max-h-none md:max-w-md md:rounded-t-none md:rounded-l-3xl',
+    panel:
+      'max-h-[88dvh] rounded-t-3xl md:max-h-none md:max-w-xl md:rounded-t-none md:rounded-l-3xl',
     nav: 'max-w-[320px] rounded-r-3xl',
     palette: 'max-h-[80dvh] max-w-xl rounded-2xl',
   }[variant]
@@ -95,7 +106,9 @@ function Overlay({ open, onClose, title, children, variant }: OverlayProps) {
             <X size={18} aria-hidden />
           </button>
         </div>
-        <div className="overflow-y-auto px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">{children}</div>
+        <div className="overflow-y-auto px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
+          {children}
+        </div>
       </div>
     </div>,
     document.body,
@@ -106,3 +119,5 @@ export const Modal = (p: Omit<OverlayProps, 'variant'>) => <Overlay {...p} varia
 export const Drawer = (p: Omit<OverlayProps, 'variant'>) => <Overlay {...p} variant="drawer" />
 export const NavDrawer = (p: Omit<OverlayProps, 'variant'>) => <Overlay {...p} variant="nav" />
 export const Palette = (p: Omit<OverlayProps, 'variant'>) => <Overlay {...p} variant="palette" />
+/** wide side panel (bottom sheet on phones) for a full tool */
+export const Panel = (p: Omit<OverlayProps, 'variant'>) => <Overlay {...p} variant="panel" />

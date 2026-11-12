@@ -163,7 +163,7 @@ describe('sidebar', () => {
     await user.click(screen.getByRole('button', { name: 'Open navigation' }))
     const dialog = await screen.findByRole('dialog', { name: 'Menu' })
     await user.click(within(dialog).getByRole('link', { name: 'Playoff Simulator' }))
-    expect(await screen.findByRole('heading', { level: 1, name: /Playoff/ })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /Playoff/ }, SLOW)).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   }, 30_000)
 })

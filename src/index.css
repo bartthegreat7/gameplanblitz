@@ -66,6 +66,8 @@
 }
 
 @theme inline {
+  /* wide desktop: three-column dashboard rows */
+  --breakpoint-3xl: 100rem;
   --color-bg: var(--bg);
   --color-card: var(--card);
   --color-card-2: var(--card-2);
@@ -98,6 +100,8 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* keep anchored/focused content clear of the sticky top bar */
+  scroll-padding-top: 6rem;
 }
 body {
   margin: 0;

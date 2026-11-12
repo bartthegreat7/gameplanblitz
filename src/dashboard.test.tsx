@@ -65,29 +65,44 @@ describe('dashboard', () => {
     expect(within(plan).getByRole('link', { name: /Fantasy GM/ })).toHaveAttribute('href', '#/gm')
   }, 30_000)
 
-  it('shows projected score vs the league average, win probability and playoff odds', async () => {
+  it('shows four season facts once each: points, projection vs league, roster health, waiver budget', async () => {
     renderApp()
-    const proj = await screen.findByRole('region', { name: 'Projected Score' }, SLOW)
-    expect(within(proj).getByText('18.0')).toBeInTheDocument()
-    expect(within(proj).getByText(/\+6\.0/)).toBeInTheDocument() // league average (18 + 6) / 2 = 12
-    const win = screen.getByRole('region', { name: 'Win Probability' })
-    const p = Math.round(100 * winProbability(18, 6))
-    expect(within(win).getByText(`${p}%`)).toBeInTheDocument()
-    expect(within(win).getByRole('progressbar')).toHaveAttribute('aria-valuenow', String(p))
-    const odds = screen.getByRole('region', { name: 'Playoff Odds' })
-    expect(await within(odds).findByText('100%', {}, SLOW)).toBeInTheDocument() // 3-1 vs 1-3, one game left, one spot
+    const strip = await screen.findByRole('region', { name: 'Season at a glance' }, SLOW)
+    const cell = (name: string) => within(strip).getByRole('link', { name })
+    expect(cell('Season points')).toHaveTextContent('400.0') // fpts from Sleeper
+    expect(cell('Season points')).toHaveTextContent('1st of 2 · 100.0 per game') // 3-1 = 4 games
+    expect(cell('Projection vs league')).toHaveTextContent('+6.0') // 18 vs average of (18 + 6) / 2 = 12
+    expect(cell('Projection vs league')).toHaveTextContent('18.0 vs 12.0 league average')
+    expect(cell('Roster health')).toHaveTextContent('1 Questionable') // rb2
+    expect(cell('Waiver budget')).toHaveTextContent('$100')
+    expect(cell('Waiver budget')).toHaveAttribute('href', '#/waivers')
+    // the old duplicate stat cards are gone
+    expect(screen.queryByRole('region', { name: 'Projected Score' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Win Probability' })).not.toBeInTheDocument()
   }, 30_000)
 
-  it('shows the matchup with records, projections and the win chance', async () => {
+  it('shows the matchup with records, projections, the win chance and the edge by position', async () => {
     renderApp()
     const card = await screen.findByRole('region', { name: "This Week's Matchup" }, SLOW)
     expect(within(card).getByText('Gridiron Gang')).toBeInTheDocument()
     expect(within(card).getByText('3-1 (1st)')).toBeInTheDocument()
     expect(within(card).getByText('1-3 (2nd)')).toBeInTheDocument()
     expect(within(card).getByText('Proj. 18.0')).toBeInTheDocument()
-    expect(
-      within(card).getByText(`${Math.round(100 * winProbability(18, 6))}% Win Chance`),
-    ).toBeInTheDocument()
+    const p = Math.round(100 * winProbability(18, 6))
+    expect(within(card).getByText(`${p}%`)).toBeInTheDocument()
+    expect(within(card).getByRole('progressbar', { name: 'Win probability' })).toHaveAttribute(
+      'aria-valuenow',
+      String(p),
+    )
+    // slot battles: RB 8 vs 6, WR 10 vs nobody
+    const edges = within(card)
+      .getAllByRole('listitem')
+      .map((li) => li.textContent)
+    expect(edges).toEqual(['RB+2.0', 'WR+10.0'])
+    expect(within(card).getByRole('link', { name: /Scout Rival/ })).toHaveAttribute(
+      'href',
+      '#/scouting',
+    )
   }, 30_000)
 
   it('shows the playoff race without bye or division rows the league does not have', async () => {
@@ -153,6 +168,7 @@ describe('dashboard', () => {
       'https://www.pub.com/newest',
       'https://www.pub.com/second',
       'https://www.pub.com/mid',
+      'https://www.pub.com/old',
     ])
     expect(links[0]).toHaveAttribute('target', '_blank')
     expect(
@@ -166,17 +182,33 @@ describe('dashboard', () => {
     expect(await within(card).findByText(/hasn't been published yet/, {}, SLOW)).toBeInTheDocument()
   }, 30_000)
 
-  it('keeps the original tools below', async () => {
+  it('keeps every original tool one click away in Quick access, with live summaries', async () => {
+    const user = userEvent.setup()
     renderApp()
-    const more = await screen.findByRole('region', { name: 'More tools' }, SLOW)
-    for (const name of [
-      'Game Day',
-      'The Edge',
-      'Trade Machine',
-      'Waiver Bids',
-      'My Roster',
-      'Player Value',
-    ])
-      expect(within(more).getByRole('region', { name })).toBeInTheDocument()
+    const qa = await screen.findByRole('region', { name: 'Quick access' }, SLOW)
+    expect(within(qa).getByRole('button', { name: 'Waiver Bids' })).toHaveAccessibleDescription(
+      '$100 of $100 left · bid sheet',
+    )
+    expect(within(qa).getByRole('button', { name: 'The Edge' })).toHaveAccessibleDescription(
+      /1 free-agent upgrade/,
+    )
+    const tools: [string, string][] = [
+      ['Position Battles', 'Game Day'],
+      ['Lineup Check', 'Lineup Check'],
+      ['The Edge', 'The Edge'],
+      ['Trade Machine', 'Trade Machine'],
+      ['Waiver Wire', 'Waiver Wire'],
+      ['Waiver Bids', 'Waiver Bids'],
+      ['News & Injuries', 'News & Injuries'],
+      ['My Roster', 'My Roster'],
+      ['Player Value', 'Player Value'],
+    ]
+    for (const [label, region] of tools) {
+      await user.click(within(qa).getByRole('button', { name: label }))
+      const panel = await screen.findByRole('dialog', { name: label })
+      expect(within(panel).getByRole('region', { name: region })).toBeInTheDocument()
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    }
   }, 30_000)
 })

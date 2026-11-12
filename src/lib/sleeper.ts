@@ -69,6 +69,8 @@ export interface SleeperRoster {
     fpts_against?: number
     fpts_against_decimal?: number
     waiver_budget_used?: number
+    /** waiver priority order (1 = first); per Sleeper docs */
+    waiver_position?: number
   }
 }
 
