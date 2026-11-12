@@ -3,31 +3,36 @@ import { useEffect } from 'react'
 import { HashRouter, Route, Routes } from 'react-router-dom'
 
 import { AppShell } from './components/layout/AppShell'
+import { createQueryClient } from './lib/queryClient'
+import Connect from './routes/Connect'
 import Dashboard from './routes/Dashboard'
 import News from './routes/News'
+import NotFound from './routes/NotFound'
+import PlayerDetail from './routes/PlayerDetail'
 import Players from './routes/Players'
 import Settings from './routes/Settings'
 import Standings from './routes/Standings'
 import { applyTheme, useAppStore } from './store/app'
 
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 60_000, refetchOnWindowFocus: false, retry: 1 } },
-})
+const defaultClient = createQueryClient()
 
-export default function App() {
+export default function App({ client = defaultClient }: { client?: QueryClient }) {
   const theme = useAppStore((s) => s.theme)
   useEffect(() => applyTheme(theme), [theme])
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={client}>
       <HashRouter>
         <Routes>
           <Route element={<AppShell />}>
             <Route index element={<Dashboard />} />
+            <Route path="connect" element={<Connect />} />
             <Route path="news" element={<News />} />
             <Route path="standings" element={<Standings />} />
             <Route path="players" element={<Players />} />
+            <Route path="players/:id" element={<PlayerDetail />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </HashRouter>

@@ -143,18 +143,21 @@ src/
 
 ## 8. Feature parity checklist (Phase 1 — port these)
 
-- [ ] Connect flow: Sleeper username → league picker, persisted (Zustand+localStorage).
-- [ ] Game Day: matchup, projected scores, win probability, position battles.
-- [ ] Lineup Check: empty slots, injured/out starters, bench-over-starter upgrades.
-- [ ] The Edge: starters vs best free agents; upgrades + bust watch.
-- [ ] Trade Machine: FantasyCalc-fair deals that raise weekly starters; copy offer.
-- [ ] Waiver Wire: top free agents by projection.
-- [ ] Waiver Bids: FAAB budget + suggested bids (handle rolling-waiver leagues too).
-- [ ] Standings: W-L, PF, PA, playoff cut line.
-- [ ] Roster: your players, starters, injuries, projections.
-- [ ] Player Value: blended ranking.
-- [ ] News & Analysis hub: Worker-backed, filters (category/publisher/search/my-roster/saved), bookmarks, mark-read, states.
-- [ ] Settings: theme, refresh, sign out, news endpoint note.
+- [x] Connect flow: Sleeper username → league picker, persisted (Zustand+localStorage).
+- [x] Game Day: matchup, projected scores, win probability, position battles.
+- [x] Lineup Check: empty slots, injured/out starters, bench-over-starter upgrades.
+- [x] The Edge: starters vs best free agents; upgrades + bust watch.
+- [x] Trade Machine: FantasyCalc-fair deals that raise weekly starters; copy offer.
+- [x] Waiver Wire: top free agents by projection.
+- [x] Waiver Bids: FAAB budget + suggested bids (handle rolling-waiver leagues too).
+- [x] Standings: W-L, PF, PA, playoff cut line.
+- [x] Roster: your players, starters, injuries, projections.
+- [x] Player Value: blended ranking.
+- [~] News & Analysis hub: Worker-backed, filters (category/publisher/search/my-roster/saved), bookmarks, mark-read, states.
+- [x] Settings: theme, refresh, sign out, news endpoint note.
+
+
+_Legend: [x] built + tested against mocked Sleeper/FantasyCalc responses; [~] built against the §5 contract but **unverified against the real Worker** (`worker.js` is not in the repo, `VITE_NEWS_API` unset). Nothing has been checked against a live Sleeper league by a human yet._
 
 ## 9. Conventions
 
@@ -178,3 +181,4 @@ src/
 - 2026-11-11: Repo baseline = single-file `index.html` prototype + `worker.js` news backend. Starting React/Vite migration, Phase 1.
 - 2026-11-11: Working in the prototype `index.html` directly (React migration paused: no npm on dev machine, `worker.js` not in repo). Added light/dark theme toggle (CSS variable tokens, `data-theme`, saved in `huddle.theme`), two-column desktop layout, keyboard-accessible card headers, IndexedDB cache for the Sleeper players file (24h TTL), projection-missing/failed notices, and a News & Injuries card (roster injury report from Sleeper; article feed activates when `NEWS_API` is set — news work is on hold). Fixed header double-escaping and sped up Trade Machine lineup math.
 - 2026-11-11: **Phase 1 step 1 (scaffold) done on branch `react-scaffold`.** Vite 8 + React 18 + TS + Tailwind v4 + TanStack Query + HashRouter + Zustand; AppShell (desktop sidebar / mobile bottom nav), light/dark tokens in `src/index.css`, placeholder routes, Vitest smoke test, `.github/workflows/deploy.yml` (triggers on `master`). Prototype moved to `legacy/index.html`. `tsc`, eslint, vitest and `vite build` all pass. Dev-machine quirks: the repo path contains `&`, which breaks `npm run` shims in cmd.exe — run tools via `node node_modules/<pkg>/...` locally (CI on Linux is unaffected); `npm` lives in `C:\Program Files\nodejs` and may not be on the Git Bash PATH. **Do not merge to `master` until Pages source is switched to "GitHub Actions"** — Pages currently serves the repo root from `master`, which would then be the unbuilt Vite `index.html`.
+- 2026-11-11: **Phase 1 steps 2-7 done on `react-scaffold`.** Data layer (`src/lib/`: sleeper, scoring, lineup, model, insights, fantasycalc, news, format) with Vitest tests (formulas ported 1:1 from legacy); hooks (`useSession`, `useLeagueData` -> `LeagueGate`, `useNews`); Zustand store now holds username/leagueId/collapsed/bookmarks/read; Connect flow; all 10 dashboard cards + Standings/Players/PlayerDetail/News/Settings routes with loading/empty/error states; reusable Modal/Drawer (`ui/Overlay`), skip link, focus-visible, reduced-motion. Required data (league, rosters, users, players) errors out; projections/stats/FantasyCalc/news soft-fail into `flags` + inline notices. Verified: tsc, eslint, vitest (64 tests incl. a mocked-API integration suite, mutation-checked), `vite build`, and headless-Edge screenshots of desktop+phone in light+dark against a mocked league. **Not done / open:** no real-league human check; no contrast audit; news hub untested vs real Worker; `legacy/index.html` stays until parity is confirmed; Pages source must be switched to GitHub Actions before merging to `master`.
