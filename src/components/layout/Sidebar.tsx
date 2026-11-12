@@ -20,7 +20,7 @@ import { TeamAvatar } from '../ui/Avatar'
 import { GAME_DAY, isGroup, NAV_TREE, SETTINGS, type NavGroup, type NavLeaf } from './nav'
 
 const ITEM =
-  'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-[15px] font-semibold transition-colors'
+  'flex min-h-10 items-center gap-3 rounded-xl px-3 py-1.5 text-[15px] font-semibold transition-colors'
 const itemCls = (active: boolean, collapsed: boolean) =>
   `${ITEM} ${collapsed ? 'justify-center' : ''} ${active ? 'bg-active text-ink shadow-[inset_0_0_0_1px_var(--plan-line)]' : 'text-ink-2 hover:bg-card hover:text-ink'}`
 
@@ -325,7 +325,7 @@ export function Sidebar() {
   return (
     <aside
       data-collapsed={collapsed}
-      className={`border-line bg-sidebar sticky top-0 hidden h-dvh shrink-0 flex-col gap-5 overflow-y-auto border-r px-3 py-4 transition-[width] duration-200 md:flex ${
+      className={`border-line bg-sidebar sticky top-0 hidden h-dvh shrink-0 flex-col gap-4 overflow-x-hidden overflow-y-auto border-r px-3 py-4 transition-[width] duration-200 md:flex ${
         collapsed ? 'w-[76px]' : 'w-64 xl:w-[300px] xl:px-4'
       }`}
     >
