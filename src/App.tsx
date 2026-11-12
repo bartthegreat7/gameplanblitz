@@ -1,20 +1,25 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { HashRouter, Route, Routes } from 'react-router-dom'
 
+import { PageSkeleton } from './components/LeagueGate'
 import { AppShell } from './components/layout/AppShell'
 import { createQueryClient } from './lib/queryClient'
 import Connect from './routes/Connect'
 import Dashboard from './routes/Dashboard'
-import Lineup from './routes/Lineup'
-import News from './routes/News'
 import NotFound from './routes/NotFound'
-import PlayerDetail from './routes/PlayerDetail'
-import Players from './routes/Players'
-import Settings from './routes/Settings'
-import Standings from './routes/Standings'
-import Waivers from './routes/Waivers'
 import { applyTheme, useAppStore } from './store/app'
+
+// The dashboard and connect screen load up front; the analysis pages are split into their own
+// chunks so the first load stays small.
+const Lineup = lazy(() => import('./routes/Lineup'))
+const Waivers = lazy(() => import('./routes/Waivers'))
+const Trades = lazy(() => import('./routes/Trades'))
+const News = lazy(() => import('./routes/News'))
+const Standings = lazy(() => import('./routes/Standings'))
+const Players = lazy(() => import('./routes/Players'))
+const PlayerDetail = lazy(() => import('./routes/PlayerDetail'))
+const Settings = lazy(() => import('./routes/Settings'))
 
 const defaultClient = createQueryClient()
 
@@ -25,20 +30,23 @@ export default function App({ client = defaultClient }: { client?: QueryClient }
   return (
     <QueryClientProvider client={client}>
       <HashRouter>
-        <Routes>
-          <Route element={<AppShell />}>
-            <Route index element={<Dashboard />} />
-            <Route path="connect" element={<Connect />} />
-            <Route path="lineup" element={<Lineup />} />
-            <Route path="waivers" element={<Waivers />} />
-            <Route path="news" element={<News />} />
-            <Route path="standings" element={<Standings />} />
-            <Route path="players" element={<Players />} />
-            <Route path="players/:id" element={<PlayerDetail />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
+        <Suspense fallback={<PageSkeleton />}>
+          <Routes>
+            <Route element={<AppShell />}>
+              <Route index element={<Dashboard />} />
+              <Route path="connect" element={<Connect />} />
+              <Route path="lineup" element={<Lineup />} />
+              <Route path="waivers" element={<Waivers />} />
+              <Route path="trades" element={<Trades />} />
+              <Route path="news" element={<News />} />
+              <Route path="standings" element={<Standings />} />
+              <Route path="players" element={<Players />} />
+              <Route path="players/:id" element={<PlayerDetail />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
+        </Suspense>
       </HashRouter>
     </QueryClientProvider>
   )

@@ -1,5 +1,5 @@
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 
 import { fcParamsFor, getFantasyCalc } from '../lib/fantasycalc'
 import { startSlotsOf } from '../lib/lineup'
@@ -18,6 +18,13 @@ import {
   type SleeperMatchup,
 } from '../lib/sleeper'
 import { useSession } from './useSession'
+
+/** Set once the player book has been re-downloaded for an unknown roster player this session. */
+let playerBookRefreshed = false
+/** Test hook: allow another refresh. */
+export const resetPlayerBookRefresh = () => {
+  playerBookRefreshed = false
+}
 
 export interface LeagueFlags {
   /** Sleeper projections request failed */
@@ -65,6 +72,19 @@ export function useLeagueData(): LeagueData {
   const league = leagueQ.data
   const season = league?.season || session.season
   const rosters = rostersQ.data
+
+  // The player book is cached for 24h. A player added in Sleeper since then appears on a roster
+  // but not in the book: re-download it, at most once per session (some ids may never resolve).
+  const players = playersQ.data
+  const missingPlayer = useMemo(
+    () => !!rosters && !!players && rosters.some((r) => (r.players ?? []).some((id) => id && id !== '0' && !(id in players))),
+    [rosters, players],
+  )
+  useEffect(() => {
+    if (!missingPlayer || playerBookRefreshed) return
+    playerBookRefreshed = true
+    void clearPlayersCache().then(() => qc.invalidateQueries({ queryKey: ['players'] }))
+  }, [missingPlayer, qc])
 
   const [matchupsQ, projQ, statsQ, fcQ] = useQueries({
     queries: [

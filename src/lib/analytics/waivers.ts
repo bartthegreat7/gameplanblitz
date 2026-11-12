@@ -2,18 +2,15 @@ import { MIN_GAMES, rateConfidence, type Confidence, type Evidence } from '../ev
 import { f1, ordinal, signed } from '../format'
 import { flexLabel, OUT_INJ, STARTABLE } from '../lineup'
 import type { Model } from '../model'
-import { pointsFor } from '../scoring'
-import type { ScheduleGame, SleeperLeague, StatLine, TrendingEntry } from '../sleeper'
+import type { ScheduleGame, SleeperLeague, TrendingEntry } from '../sleeper'
 import { buildHistory, type WeekRows } from './history'
+import { createValuer, LONG_TERM, lineupIdsOf, type HorizonWeek } from './lineupValue'
 import { optimalAssignment } from './lineupPlan'
 import { defenseKey, defenseVsPosition } from './matchup'
-import { hasStarted, isBye, weekContext } from './schedule'
+import { isBye, weekContext } from './schedule'
 import { buildDepthIndex, depthInfo, formTrend, trendingInfo, type DepthInfo, type FormTrend } from './signals'
 import { usageTrend, type UsageTrend } from './usage'
 import { playerSpread, positionSds, projectionRange } from './volatility'
-
-/** Players with these designations are out for the whole horizon; "Out"/"DNR"/"COV" only for the current week. */
-const LONG_TERM = new Set(['IR', 'PUP', 'Sus', 'NA'])
 
 /** An add must improve your best lineup by at least this many points per week to be an "upgrade". */
 export const UPGRADE_MIN_PER_WEEK = 1
@@ -27,11 +24,7 @@ export type Tier = 'must' | 'strong' | 'upgrade'
 export const tierOf = (gainPerWeek: number): Tier | null =>
   gainPerWeek >= 4 ? 'must' : gainPerWeek >= 2 ? 'strong' : gainPerWeek >= UPGRADE_MIN_PER_WEEK ? 'upgrade' : null
 
-export interface HorizonWeek {
-  week: number
-  /** Sleeper projections for that week (player id → stat line); empty if unpublished */
-  proj: Map<string, StatLine>
-}
+export type { HorizonWeek }
 
 export interface WaiverInput {
   model: Model
@@ -114,12 +107,11 @@ const flagged = (inj: string) => inj !== ''
 export function analyzeWaivers(inp: WaiverInput): WaiverReport {
   const { model: m, league, horizon, schedule } = inp
   const roster = m.myRoster()
-  const away = new Set([...(roster?.reserve ?? []), ...(roster?.taxi ?? [])])
-  const lineupIds = (roster?.players ?? []).filter((id) => !away.has(id))
+  const lineupIds = lineupIdsOf(roster)
   const keepers = new Set(roster?.keepers ?? [])
   const rosterLimit = league.roster_positions.filter((p) => p !== 'IR' && p !== 'TAXI').length
   const rosterFull = lineupIds.length >= rosterLimit
-  const ctx = schedule ? horizon.map((h) => weekContext(schedule, h.week)) : null
+  const { ctx, raw, valueAt, total, started0 } = createValuer(m, horizon, schedule)
   const missingWeeks = horizon.filter((h) => h.proj.size === 0).map((h) => h.week)
   const activeWeeks = Math.max(1, horizon.length - missingWeeks.length)
 
@@ -128,22 +120,6 @@ export function analyzeWaivers(inp: WaiverInput): WaiverReport {
   const defense = inp.weeks.length ? defenseVsPosition(inp.weeks, m.scoring, m.pos) : null
   const depthIndex = buildDepthIndex(m.players)
 
-  const raw = (id: string, k: number) => pointsFor(horizon[k].proj.get(id), m.scoring)
-  /** Projection the lineup can count on: 0 for a player who will not play that week. */
-  const valueAt = (id: string, k: number) => {
-    const inj = m.injury(id)
-    if (LONG_TERM.has(inj) || (k === 0 && OUT_INJ.has(inj))) return 0
-    // the schedule is authoritative: no game that week, no points, whatever a projection says
-    if (ctx && isBye(ctx[k], m.team(id))) return 0
-    return raw(id, k)
-  }
-  const started0 = (id: string) => (ctx ? hasStarted(ctx[0], m.team(id)) : false)
-
-  const total = (ids: string[], k: number) => {
-    const val = new Map(ids.map((id) => [id, valueAt(id, k)] as const))
-    const assigned = optimalAssignment(m.startSlots, ids.map((id) => ({ id, pos: m.pos(id), value: val.get(id)! })))
-    return assigned.reduce((t, id) => t + (id ? val.get(id)! : 0), 0)
-  }
   const base = horizon.map((_, k) => total(lineupIds, k))
   const hold = (id: string) => horizon.reduce((t, _, k) => t + valueAt(id, k), 0)
   const droppable = lineupIds.filter((id) => !keepers.has(id) && !started0(id))

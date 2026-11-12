@@ -28,6 +28,10 @@ export interface SleeperLeagueSettings {
   num_teams?: number
   waiver_budget?: number
   waiver_type?: number
+  /** league type as Sleeper reports it: 0 redraft, 1 keeper, 2 dynasty (from Sleeper docs; unverified on a real league) */
+  type?: number
+  draft_rounds?: number
+  max_keepers?: number
 }
 
 export interface SleeperLeague {
@@ -286,4 +290,23 @@ export interface SleeperTransaction {
 export async function getTransactions(leagueId: string, round: number): Promise<SleeperTransaction[]> {
   const rows = await getJson<unknown>(`${SLEEPER}/league/${leagueId}/transactions/${round}`)
   return Array.isArray(rows) ? (rows as SleeperTransaction[]) : []
+}
+
+/** A draft pick that changed hands. owner_id and roster_id are roster ids (original owner = roster_id). */
+export interface SleeperTradedPick {
+  season: string
+  round: number
+  roster_id: number
+  previous_owner_id?: number
+  owner_id: number
+}
+
+/** Picks whose owner differs from the original. Parsed defensively; unverified against real data. */
+export async function getTradedPicks(leagueId: string): Promise<SleeperTradedPick[]> {
+  const rows = await getJson<unknown>(`${SLEEPER}/league/${leagueId}/traded_picks`)
+  if (!Array.isArray(rows)) return []
+  return rows
+    .map((r) => r as Partial<SleeperTradedPick>)
+    .filter((r): r is SleeperTradedPick => typeof r.round === "number" && typeof r.roster_id === "number" && typeof r.owner_id === "number" && r.season !== undefined)
+    .map((r) => ({ ...r, season: String(r.season) }))
 }
