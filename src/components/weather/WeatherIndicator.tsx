@@ -1,16 +1,4 @@
-import {
-  CalendarClock,
-  Cloud,
-  CloudLightning,
-  CloudOff,
-  CloudRain,
-  CloudSnow,
-  CloudSun,
-  Sun,
-  Warehouse,
-  Wind,
-  type LucideIcon,
-} from 'lucide-react'
+import { CalendarClock, CloudOff, Warehouse, Wind } from 'lucide-react'
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -18,18 +6,27 @@ import { useGameWeather } from '../../hooks/useGameWeather'
 import { useSession } from '../../hooks/useSession'
 import { relTime } from '../../lib/format'
 import { WINDOW, type Condition } from '../../lib/weather/weather'
+import clearDay from '../../assets/weather/clear-day.svg'
+import notAvailable from '../../assets/weather/not-available.svg'
+import overcast from '../../assets/weather/overcast.svg'
+import partlyCloudy from '../../assets/weather/partly-cloudy-day.svg'
+import rain from '../../assets/weather/rain.svg'
+import snow from '../../assets/weather/snow.svg'
+import storm from '../../assets/weather/thunderstorms-rain.svg'
+import wind from '../../assets/weather/wind.svg'
 
-const ICON: Record<Condition, { icon: LucideIcon; label: string }> = {
-  sunny: { icon: Sun, label: 'Sunny' },
-  'partly-cloudy': { icon: CloudSun, label: 'Partly cloudy' },
-  cloudy: { icon: Cloud, label: 'Cloudy' },
-  rain: { icon: CloudRain, label: 'Rain' },
-  snow: { icon: CloudSnow, label: 'Snow' },
-  wind: { icon: Wind, label: 'Windy' },
-  storm: { icon: CloudLightning, label: 'Thunderstorms' },
-  indoor: { icon: Warehouse, label: 'Indoors' },
-  unknown: { icon: Cloud, label: 'Forecast' },
+/* Full-color weather art: "Weather Icons" by Bas Milius (MIT, see src/assets/weather/LICENSE.txt). */
+const ART: Record<Exclude<Condition, 'indoor'>, { src: string; label: string }> = {
+  sunny: { src: clearDay, label: 'Sunny' },
+  'partly-cloudy': { src: partlyCloudy, label: 'Partly cloudy' },
+  cloudy: { src: overcast, label: 'Cloudy' },
+  rain: { src: rain, label: 'Rain' },
+  snow: { src: snow, label: 'Snow' },
+  wind: { src: wind, label: 'Windy' },
+  storm: { src: storm, label: 'Thunderstorms' },
+  unknown: { src: notAvailable, label: 'Forecast' },
 }
+const labelOf = (c: Condition) => (c === 'indoor' ? 'Indoors' : ART[c].label)
 
 const fmtDate = (d: string) =>
   d
@@ -95,12 +92,12 @@ export function WeatherIndicator({
   if (!team || w.status === 'no-game' || w.status === 'played' || !w.game) return null
 
   const cond: Condition = w.status === 'indoor' ? 'indoor' : (w.forecast?.condition ?? 'unknown')
-  const { icon: Icon, label } =
+  const label =
     w.status === 'too-early'
-      ? { icon: CalendarClock, label: 'Forecast not out yet' }
+      ? 'Forecast not out yet'
       : w.status === 'unavailable'
-        ? { icon: CloudOff, label: 'Forecast unavailable' }
-        : ICON[cond]
+        ? 'Forecast unavailable'
+        : labelOf(cond)
   const risky = w.risks.length > 0
   const g = w.game
   const matchup = `${g.away} @ ${g.home}`
@@ -120,13 +117,47 @@ export function WeatherIndicator({
         onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
-        className={`inline-grid size-7 shrink-0 place-items-center rounded-md border align-middle transition-colors ${
+        className={`inline-flex h-8 shrink-0 items-center gap-0.5 rounded-full border pr-2.5 pl-0.5 align-middle text-xs font-bold whitespace-nowrap tabular-nums transition-colors ${
           risky
-            ? 'border-amber/50 bg-amber/12 text-amber'
+            ? 'border-amber/60 bg-amber/12 text-amber'
             : 'border-line bg-panel text-ink-2 hover:text-ink'
         } ${w.loading ? 'animate-pulse' : ''} ${className}`}
       >
-        <Icon size={15} aria-hidden />
+        {w.status === 'indoor' ? (
+          <>
+            <Warehouse size={14} aria-hidden className="mx-1" />
+            Dome
+          </>
+        ) : !f && w.status !== 'too-early' ? (
+          <>
+            <CloudOff size={14} aria-hidden className="mx-1" />
+            —
+          </>
+        ) : w.status === 'too-early' ? (
+          <>
+            <CalendarClock size={14} aria-hidden className="mx-1" />
+            Later
+          </>
+        ) : (
+          <>
+            <img
+              src={
+                f ? (f.condition === 'indoor' ? notAvailable : ART[f.condition].src) : notAvailable
+              }
+              alt=""
+              aria-hidden
+              className="-my-1.5 size-10"
+              draggable={false}
+            />
+            {f ? `${f.tempMax}°` : '—'}
+            {f && f.wind >= 15 && (
+              <span className="ml-1 inline-flex items-center gap-0.5">
+                <Wind size={11} aria-hidden />
+                {f.wind}
+              </span>
+            )}
+          </>
+        )}
       </button>
       {open &&
         createPortal(
@@ -137,6 +168,24 @@ export function WeatherIndicator({
             style={{ top: pos?.top ?? -9999, left: pos?.left ?? -9999 }}
             className="border-line bg-card text-ink fixed z-[60] w-72 rounded-xl border p-3.5 text-left text-sm shadow-2xl"
           >
+            {f && (
+              <div className="border-line -mx-3.5 -mt-3.5 mb-3 flex items-center gap-2 rounded-t-xl border-b bg-panel px-3 py-2">
+                <img
+                  src={f.condition === 'indoor' ? notAvailable : ART[f.condition].src}
+                  alt=""
+                  aria-hidden
+                  className="size-16"
+                  draggable={false}
+                />
+                <div>
+                  <div className="text-2xl font-extrabold tabular-nums">
+                    {f.tempMax}°
+                    <span className="text-ink-3 text-base font-bold"> / {f.tempMin}°</span>
+                  </div>
+                  <div className="text-ink-2 font-semibold">{labelOf(f.condition)}</div>
+                </div>
+              </div>
+            )}
             <div className="font-extrabold">
               {matchup} · Week {g.week}
             </div>
@@ -151,7 +200,7 @@ export function WeatherIndicator({
               <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">
                 {(
                   [
-                    ['Conditions', ICON[f.condition].label],
+                    ['Conditions', labelOf(f.condition)],
                     ['Temperature', `${f.tempMin}–${f.tempMax}°F`],
                     ['Wind', `${f.wind} mph`],
                     ['Gusts', `${f.gusts} mph`],
