@@ -45,10 +45,13 @@ const fmtDate = (d: string) =>
 export function WeatherIndicator({
   team,
   week,
+  compact = false,
   className = '',
 }: {
   team: string | null | undefined
   week?: number
+  /** icon + high only (for tight table columns); wind stays in the tooltip and the amber border */
+  compact?: boolean
   className?: string
 }) {
   const session = useSession()
@@ -130,8 +133,7 @@ export function WeatherIndicator({
           </>
         ) : !f && w.status !== 'too-early' ? (
           <>
-            <CloudOff size={14} aria-hidden className="mx-1" />
-            —
+            <CloudOff size={14} aria-hidden className="mx-1" />—
           </>
         ) : w.status === 'too-early' ? (
           <>
@@ -146,11 +148,11 @@ export function WeatherIndicator({
               }
               alt=""
               aria-hidden
-              className="-my-1.5 size-10"
+              className={compact ? '-my-1 size-8' : '-my-1.5 size-10'}
               draggable={false}
             />
             {f ? `${f.tempMax}°` : '—'}
-            {f && f.wind >= 15 && (
+            {f && f.wind >= 15 && !compact && (
               <span className="ml-1 inline-flex items-center gap-0.5">
                 <Wind size={11} aria-hidden />
                 {f.wind}

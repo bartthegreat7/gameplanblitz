@@ -38,7 +38,9 @@ function PlayerCell({ m, c }: { m: Model; c: Candidate | null }) {
   if (!c) return <span className="text-ink-3">Empty slot</span>
   return (
     <Link to={`/players/${c.id}`} className="flex min-w-0 items-center gap-3 hover:underline">
-      <PlayerAvatar player={m.players[c.id]} className="size-9 text-xs" />
+      <span className="hidden shrink-0 @md:inline-flex">
+        <PlayerAvatar player={m.players[c.id]} className="size-9 text-xs" />
+      </span>
       <span className="min-w-0">
         <span className="block truncate font-bold">{c.name}</span>
         <span className="text-ink-3 block truncate text-sm">
@@ -110,7 +112,7 @@ export function OptimalLineup({
             </caption>
             <thead>
               <tr className="text-ink-3 border-line border-b text-sm">
-                <th scope="col" className="w-14 pb-2.5 text-left font-semibold">
+                <th scope="col" className="w-12 pb-2.5 text-left font-semibold">
                   Pos
                 </th>
                 <th scope="col" className="pb-2.5 text-left font-semibold">
@@ -125,7 +127,7 @@ export function OptimalLineup({
                 <th scope="col" className="w-16 pb-2.5 text-right font-semibold">
                   Proj
                 </th>
-                <th scope="col" className="w-20 pb-2.5 pl-3 text-right font-semibold">
+                <th scope="col" className="w-[4.5rem] pb-2.5 pl-2 text-right font-semibold">
                   Start?
                 </th>
               </tr>
@@ -147,16 +149,18 @@ export function OptimalLineup({
                     <td className="py-2.5 pr-3">
                       <PlayerCell m={m} c={c} />
                     </td>
-                    <td className="text-ink-2 hidden py-2.5 whitespace-nowrap @sm:table-cell">
-                      <span className="inline-flex items-center gap-1.5">
+                    <td className="text-ink-2 hidden py-2 whitespace-nowrap @sm:table-cell">
+                      <span className="flex flex-col items-start gap-1">
+                        <span className="text-sm">
                           {c?.bye ? 'Bye' : c?.opponent ? `vs ${c.opponent}` : '—'}
-                          {c && !c.bye && <WeatherIndicator team={c.team} week={week} />}
                         </span>
+                        {c && !c.bye && <WeatherIndicator team={c.team} week={week} compact />}
+                      </span>
                     </td>
                     <td className="py-2.5 text-right font-bold tabular-nums">
                       {c ? f1(c.out ? 0 : c.proj) : '—'}
                     </td>
-                    <td className="py-2.5 pl-3 text-right">
+                    <td className="py-2.5 pl-2 text-right">
                       <Status kind={kind} />
                     </td>
                   </tr>
