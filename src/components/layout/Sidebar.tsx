@@ -6,6 +6,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
+  Shield,
   Sun,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -27,9 +28,10 @@ const itemCls = (active: boolean, collapsed: boolean) =>
 export function Logo({ collapsed = false }: { collapsed?: boolean }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="from-logo-from to-logo-to text-logo-ink grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-lg font-extrabold shadow-[0_8px_24px_-10px_var(--accent)]">
-        GB
-      </div>
+      <span className="relative grid size-11 shrink-0 place-items-center">
+        <Shield size={44} strokeWidth={1.75} aria-hidden className="text-accent fill-accent/15 absolute inset-0 drop-shadow-[0_6px_14px_var(--accent)]" />
+        <span className="text-ink relative -mt-0.5 text-[13px] font-extrabold tracking-tight">GB</span>
+      </span>
       {!collapsed && (
         <div className="min-w-0 leading-tight">
           <div className="text-xl font-extrabold tracking-tight">GameplanBlitz</div>
@@ -326,7 +328,7 @@ export function Sidebar() {
     <aside
       data-collapsed={collapsed}
       className={`border-line bg-sidebar sticky top-0 hidden h-dvh shrink-0 flex-col gap-4 overflow-x-hidden overflow-y-auto border-r px-3 py-4 transition-[width] duration-200 md:flex ${
-        collapsed ? 'w-[76px]' : 'w-64 xl:w-[300px] xl:px-4'
+        collapsed ? 'w-[76px]' : 'w-64 xl:w-[272px] xl:px-4'
       }`}
     >
       <div className={`flex items-center gap-2 px-1 ${collapsed ? 'flex-col' : 'justify-between'}`}>

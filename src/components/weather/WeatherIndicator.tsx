@@ -6,27 +6,7 @@ import { useGameWeather } from '../../hooks/useGameWeather'
 import { useSession } from '../../hooks/useSession'
 import { relTime } from '../../lib/format'
 import { WINDOW, type Condition } from '../../lib/weather/weather'
-import clearDay from '../../assets/weather/clear-day.svg'
-import notAvailable from '../../assets/weather/not-available.svg'
-import overcast from '../../assets/weather/overcast.svg'
-import partlyCloudy from '../../assets/weather/partly-cloudy-day.svg'
-import rain from '../../assets/weather/rain.svg'
-import snow from '../../assets/weather/snow.svg'
-import storm from '../../assets/weather/thunderstorms-rain.svg'
-import wind from '../../assets/weather/wind.svg'
-
-/* Full-color weather art: "Weather Icons" by Bas Milius (MIT, see src/assets/weather/LICENSE.txt). */
-const ART: Record<Exclude<Condition, 'indoor'>, { src: string; label: string }> = {
-  sunny: { src: clearDay, label: 'Sunny' },
-  'partly-cloudy': { src: partlyCloudy, label: 'Partly cloudy' },
-  cloudy: { src: overcast, label: 'Cloudy' },
-  rain: { src: rain, label: 'Rain' },
-  snow: { src: snow, label: 'Snow' },
-  wind: { src: wind, label: 'Windy' },
-  storm: { src: storm, label: 'Thunderstorms' },
-  unknown: { src: notAvailable, label: 'Forecast' },
-}
-const labelOf = (c: Condition) => (c === 'indoor' ? 'Indoors' : ART[c].label)
+import { ART, labelOf, notAvailable } from './art'
 
 const fmtDate = (d: string) =>
   d
@@ -46,12 +26,15 @@ export function WeatherIndicator({
   team,
   week,
   compact = false,
+  iconOnly = false,
   className = '',
 }: {
   team: string | null | undefined
   week?: number
   /** icon + high only (for tight table columns); wind stays in the tooltip and the amber border */
   compact?: boolean
+  /** just the art (a "Weather" table column); everything else is in the tooltip and the amber border */
+  iconOnly?: boolean
   className?: string
 }) {
   const session = useSession()
@@ -120,7 +103,7 @@ export function WeatherIndicator({
         onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
-        className={`inline-flex h-8 shrink-0 items-center gap-0.5 rounded-full border pr-2.5 pl-0.5 align-middle text-xs font-bold whitespace-nowrap tabular-nums transition-colors ${
+        className={`inline-flex h-8 shrink-0 items-center gap-0.5 rounded-full border align-middle ${iconOnly ? 'size-9 justify-center px-0' : 'pr-2.5 pl-0.5'} text-xs font-bold whitespace-nowrap tabular-nums transition-colors ${
           risky
             ? 'border-amber/60 bg-amber/12 text-amber'
             : 'border-line bg-panel text-ink-2 hover:text-ink'
@@ -128,17 +111,18 @@ export function WeatherIndicator({
       >
         {w.status === 'indoor' ? (
           <>
-            <Warehouse size={14} aria-hidden className="mx-1" />
-            Dome
+            <Warehouse size={14} aria-hidden className={iconOnly ? '' : 'mx-1'} />
+            {!iconOnly && 'Dome'}
           </>
         ) : !f && w.status !== 'too-early' ? (
           <>
-            <CloudOff size={14} aria-hidden className="mx-1" />—
+            <CloudOff size={14} aria-hidden className={iconOnly ? '' : 'mx-1'} />
+            {!iconOnly && '—'}
           </>
         ) : w.status === 'too-early' ? (
           <>
-            <CalendarClock size={14} aria-hidden className="mx-1" />
-            Later
+            <CalendarClock size={14} aria-hidden className={iconOnly ? '' : 'mx-1'} />
+            {!iconOnly && 'Later'}
           </>
         ) : (
           <>
@@ -148,11 +132,11 @@ export function WeatherIndicator({
               }
               alt=""
               aria-hidden
-              className={compact ? '-my-1 size-8' : '-my-1.5 size-10'}
+              className={iconOnly ? 'size-8' : compact ? '-my-1 size-8' : '-my-1.5 size-10'}
               draggable={false}
             />
-            {f ? `${f.tempMax}°` : '—'}
-            {f && f.wind >= 15 && !compact && (
+            {!iconOnly && (f ? `${f.tempMax}°` : '—')}
+            {f && f.wind >= 15 && !compact && !iconOnly && (
               <span className="ml-1 inline-flex items-center gap-0.5">
                 <Wind size={11} aria-hidden />
                 {f.wind}

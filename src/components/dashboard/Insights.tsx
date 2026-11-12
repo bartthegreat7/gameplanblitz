@@ -1,10 +1,9 @@
 import type { UseQueryResult } from '@tanstack/react-query'
-import { Newspaper, Plus, TrendingUp, Zap } from 'lucide-react'
+import { CloudSun, Newspaper, Plus, TrendingUp, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import type { LineupAnalysis } from '../../lib/analytics/lineupAnalysis'
-import type { Candidate } from '../../lib/analytics/lineupPlan'
 import type { WaiverCandidate, WaiverReport } from '../../lib/analytics/waivers'
 import { f1, isHttpUrl, relTime } from '../../lib/format'
 import type { Model } from '../../lib/model'
@@ -17,8 +16,6 @@ import { CardLink, DashboardCard } from './DashboardCard'
 
 /* ---------------- Optimal Lineup ---------------- */
 
-type View = 'optimized' | 'mine'
-
 function Status({ kind }: { kind: 'start' | 'bench' | 'empty' }) {
   const cls = {
     start: 'border-good/40 bg-good/12 text-good',
@@ -27,67 +24,22 @@ function Status({ kind }: { kind: 'start' | 'bench' | 'empty' }) {
   }[kind]
   return (
     <span
-      className={`inline-block min-w-14 rounded-md border px-2 py-1 text-center text-xs font-extrabold ${cls}`}
+      className={`inline-block min-w-11 rounded-md border px-1.5 py-0.5 text-center text-xs font-extrabold ${cls}`}
     >
       {{ start: 'Start', bench: 'Bench', empty: 'Empty' }[kind]}
     </span>
   )
 }
 
-function PlayerCell({ m, c }: { m: Model; c: Candidate | null }) {
-  if (!c) return <span className="text-ink-3">Empty slot</span>
-  return (
-    <Link to={`/players/${c.id}`} className="flex min-w-0 items-center gap-3 hover:underline">
-      <span className="hidden shrink-0 @md:inline-flex">
-        <PlayerAvatar player={m.players[c.id]} className="size-9 text-xs" />
-      </span>
-      <span className="min-w-0">
-        <span className="block truncate font-bold">{c.name}</span>
-        <span className="text-ink-3 block truncate text-sm">
-          {c.team || 'FA'} {c.pos}
-          {c.injury ? <span className="text-bad"> · {c.injury}</span> : null}
-        </span>
-      </span>
-    </Link>
-  )
-}
-
 export function OptimalLineup({
-  m,
   analysis,
   week,
   className = '',
 }: {
-  m: Model
   analysis: LineupAnalysis | null
   week: number
   className?: string
 }) {
-  const [view, setView] = useState<View>('optimized')
-  const toggle = (
-    <div
-      role="group"
-      aria-label="Lineup view"
-      className="border-line bg-panel flex rounded-lg border p-0.5 text-sm font-bold"
-    >
-      {(
-        [
-          ['optimized', 'Optimized'],
-          ['mine', 'My Lineup'],
-        ] as const
-      ).map(([v, label]) => (
-        <button
-          key={v}
-          type="button"
-          aria-pressed={view === v}
-          onClick={() => setView(v)}
-          className={`min-h-9 rounded-md px-3 transition-colors ${view === v ? 'bg-active text-ink shadow-[inset_0_0_0_1px_var(--plan-line)]' : 'text-ink-3 hover:text-ink'}`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  )
   const plan = analysis?.plan
   return (
     <DashboardCard
@@ -97,9 +49,16 @@ export function OptimalLineup({
           ? `Week ${week} · ${f1(plan.current.proj)} as set → ${f1(plan.recommended.proj)} optimized`
           : `Week ${week}`
       }
-      icon={Zap}
+      icon={UserRound}
       className={className}
-      aside={analysis ? toggle : undefined}
+      aside={
+        <Link
+          to="/lineup"
+          className="bg-accent text-accent-ink hover:bg-accent-deep inline-flex min-h-9 items-center rounded-full px-4 text-sm font-extrabold transition-colors"
+        >
+          Optimize
+        </Link>
+      }
       footer={<CardLink to="/lineup">View full lineup &amp; optimization</CardLink>}
     >
       {!plan ? (
@@ -107,12 +66,10 @@ export function OptimalLineup({
       ) : (
         <div className="@container overflow-x-auto">
           <table className="w-full table-fixed border-collapse text-[15px]">
-            <caption className="sr-only">
-              {view === 'optimized' ? 'Optimized lineup' : 'Your current lineup'} for Week {week}
-            </caption>
+            <caption className="sr-only">Optimized lineup for Week {week}</caption>
             <thead>
-              <tr className="text-ink-3 border-line border-b text-sm">
-                <th scope="col" className="w-12 pb-2.5 text-left font-semibold">
+              <tr className="text-ink-3 border-line border-b text-xs tracking-wide uppercase">
+                <th scope="col" className="w-10 pb-2.5 text-left font-semibold">
                   Pos
                 </th>
                 <th scope="col" className="pb-2.5 text-left font-semibold">
@@ -120,48 +77,56 @@ export function OptimalLineup({
                 </th>
                 <th
                   scope="col"
-                  className="hidden w-24 pb-2.5 text-left font-semibold @sm:table-cell"
+                  className="hidden w-16 pb-2.5 text-left font-semibold @min-[23rem]:table-cell"
                 >
                   Opp
                 </th>
-                <th scope="col" className="w-16 pb-2.5 text-right font-semibold">
-                  Proj
+                <th scope="col" className="w-12 pb-2.5 text-center font-semibold">
+                  <CloudSun size={15} aria-hidden className="mx-auto" />
+                  <span className="sr-only">Weather</span>
                 </th>
-                <th scope="col" className="w-[4.5rem] pb-2.5 pl-2 text-right font-semibold">
+                <th scope="col" className="w-12 pb-2.5 text-right font-semibold">
+                  Proj.
+                </th>
+                <th scope="col" className="w-[3.75rem] pb-2.5 pl-2 text-right font-semibold">
                   Start?
                 </th>
               </tr>
             </thead>
             <tbody>
               {plan.slots.map((s, i) => {
-                const c = view === 'optimized' ? s.recommended : s.current
-                const kind = !c
-                  ? 'empty'
-                  : view === 'optimized' || !s.changed || s.move
-                    ? 'start'
-                    : 'bench'
+                const c = s.recommended
                 return (
                   <tr
                     key={`${s.slot}-${i}`}
-                    className={`border-line/60 border-b last:border-0 ${view === 'optimized' && s.changed && !s.move ? 'bg-accent/5' : ''}`}
+                    className={`border-line/60 border-b last:border-0 ${s.changed && !s.move ? 'bg-accent/5' : ''}`}
                   >
-                    <td className="text-ink-2 py-2.5 font-bold">{s.label}</td>
-                    <td className="py-2.5 pr-3">
-                      <PlayerCell m={m} c={c} />
+                    <td className="text-ink-2 py-1.5 font-bold">{s.label}</td>
+                    <td className="py-1.5 pr-2">
+                      {c ? (
+                        <Link
+                          to={`/players/${c.id}`}
+                          title={`${c.name} · ${c.team || 'FA'} ${c.pos}${c.injury ? ` · ${c.injury}` : ''}`}
+                          className="block truncate font-semibold hover:underline"
+                        >
+                          {c.name}
+                          {c.injury && <span className="text-bad"> · {c.injury.slice(0, 1)}</span>}
+                        </Link>
+                      ) : (
+                        <span className="text-ink-3">Empty slot</span>
+                      )}
                     </td>
-                    <td className="text-ink-2 hidden py-2 whitespace-nowrap @sm:table-cell">
-                      <span className="flex flex-col items-start gap-1">
-                        <span className="text-sm">
-                          {c?.bye ? 'Bye' : c?.opponent ? `vs ${c.opponent}` : '—'}
-                        </span>
-                        {c && !c.bye && <WeatherIndicator team={c.team} week={week} compact />}
-                      </span>
+                    <td className="text-ink-2 hidden py-1.5 text-sm whitespace-nowrap @min-[23rem]:table-cell">
+                      {c?.bye ? 'Bye' : c?.opponent ? `vs ${c.opponent}` : '—'}
                     </td>
-                    <td className="py-2.5 text-right font-bold tabular-nums">
+                    <td className="py-1.5 text-center">
+                      {c && !c.bye ? <WeatherIndicator team={c.team} week={week} iconOnly /> : null}
+                    </td>
+                    <td className="py-1.5 text-right font-bold tabular-nums">
                       {c ? f1(c.out ? 0 : c.proj) : '—'}
                     </td>
-                    <td className="py-2.5 pl-2 text-right">
-                      <Status kind={kind} />
+                    <td className="py-1.5 pl-2 text-right">
+                      <Status kind={c ? 'start' : 'empty'} />
                     </td>
                   </tr>
                 )

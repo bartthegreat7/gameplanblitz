@@ -23,7 +23,7 @@ export function AppShell() {
         <main
           id="main"
           tabIndex={-1}
-          className="mx-auto w-full max-w-[1760px] flex-1 px-4 pt-6 pb-28 outline-none sm:px-6 md:pb-12 lg:px-8 2xl:px-12"
+          className="mx-auto w-full max-w-[1760px] flex-1 px-4 pt-6 pb-28 outline-none sm:px-6 md:pb-12 2xl:px-8"
         >
           <Outlet />
           <footer className="text-ink-3 mt-8 text-center text-xs leading-relaxed">

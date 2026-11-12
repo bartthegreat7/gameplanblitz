@@ -53,6 +53,7 @@ export function injuryWatch(
       .sort((x, y) => m.projPts(y) - m.projPts(x))[0]
     out.push({
       id: `injury-${id}`,
+      playerId: id,
       area: 'injury',
       priority: a === 'doubtful' ? 1 : 2,
       title: `Monitor ${m.shortName(id)} (${m.injury(id)})`,
@@ -79,6 +80,7 @@ export function weatherRisk(
 ): GmAction[] {
   return risky.map((r) => ({
     id: `weather-${r.id}`,
+    playerId: r.id,
     area: 'weather' as const,
     priority: 3 as const,
     title: `Review weather for ${m.shortName(r.id)} (${r.matchup})`,
@@ -104,6 +106,7 @@ export function breakoutPickups(
     .slice(0, max)
     .map((b) => ({
       id: `breakout-${b.id}`,
+      playerId: b.id,
       area: 'breakout' as const,
       priority: 3 as const,
       title: `Investigate ${m.shortName(b.id)} (${b.pos}, ${m.team(b.id) || 'FA'}) on waivers`,
@@ -133,6 +136,7 @@ export function injuryOpenings(
       if (rostered.has(r.id) || !r.delta || r.delta.touches + r.delta.targets < minGain) continue
       out.push({
         id: `opening-${r.id}-${id}`,
+        playerId: r.id,
         area: 'breakout',
         priority: 3,
         title: `Investigate ${m.shortName(r.id)}: more work when ${m.shortName(id)} is out`,

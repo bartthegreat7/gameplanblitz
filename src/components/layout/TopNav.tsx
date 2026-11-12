@@ -1,6 +1,7 @@
 import { useIsFetching, useQueryClient } from '@tanstack/react-query'
 import { Menu, RefreshCw, Search } from 'lucide-react'
 import { useCallback, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 
 import { useSession } from '../../hooks/useSession'
 import { useAppStore } from '../../store/app'
@@ -18,6 +19,8 @@ const isMac =
 export function TopNav({ onOpenNav }: { onOpenNav: () => void }) {
   const username = useAppStore((s) => s.username)
   const { week, currentWeek } = useSession()
+  // the dashboard shows the week picker in its own header (as in the design)
+  const onDashboard = useLocation().pathname === '/'
   const setViewWeek = useAppStore((s) => s.setViewWeek)
   const qc = useQueryClient()
   const fetching = useIsFetching() > 0
@@ -57,14 +60,14 @@ export function TopNav({ onOpenNav }: { onOpenNav: () => void }) {
         <div className="flex items-center gap-2 sm:ml-auto">
           {username && (
             <>
-              <WeekSelect className="hidden lg:flex" />
+              {!onDashboard && <WeekSelect className="hidden lg:flex" />}
               <button
                 type="button"
                 onClick={() =>
                   void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] !== 'players' })
                 }
                 aria-label="Refresh live data"
-                className={`${ICON_BTN} hidden sm:grid`}
+                className={`${ICON_BTN} ${onDashboard ? 'grid' : 'hidden sm:grid'}`}
               >
                 <RefreshCw size={18} aria-hidden className={fetching ? 'animate-spin' : ''} />
               </button>
@@ -74,9 +77,9 @@ export function TopNav({ onOpenNav }: { onOpenNav: () => void }) {
           )}
         </div>
       </div>
-      {username && (
+      {username && !onDashboard && (
         <div className="mt-2.5 flex items-center gap-2 lg:hidden">
-          <WeekSelect className="flex-1 sm:flex-none" />
+          {!onDashboard && <WeekSelect className="flex-1 sm:flex-none" />}
           <button
             type="button"
             onClick={() =>

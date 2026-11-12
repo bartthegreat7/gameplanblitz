@@ -62,47 +62,73 @@ describe('dashboard', () => {
       SLOW,
     )
     expect(add).toHaveAttribute('href', '#/waivers')
-    expect(within(plan).getByRole('link', { name: /Fantasy GM/ })).toHaveAttribute('href', '#/gm')
+    expect(within(plan).getByRole('link', { name: /View Details/ })).toHaveAttribute('href', '#/gm')
+    // a personal greeting, no emoji
+    expect(screen.getByRole('heading', { level: 1 }).parentElement).not.toHaveTextContent('👋')
   }, 30_000)
 
-  it('shows four season facts once each: points, projection vs league, roster health, waiver budget', async () => {
+  it('shows the week at a glance: projected points vs league, win probability, playoff odds, standing, The Edge', async () => {
     renderApp()
-    const strip = await screen.findByRole('region', { name: 'Season at a glance' }, SLOW)
-    const cell = (name: string) => within(strip).getByRole('link', { name })
-    expect(cell('Season points')).toHaveTextContent('400.0') // fpts from Sleeper
-    expect(cell('Season points')).toHaveTextContent('1st of 2 · 100.0 per game') // 3-1 = 4 games
-    expect(cell('Projection vs league')).toHaveTextContent('+6.0') // 18 vs average of (18 + 6) / 2 = 12
-    expect(cell('Projection vs league')).toHaveTextContent('18.0 vs 12.0 league average')
-    expect(cell('Roster health')).toHaveTextContent('1 Questionable') // rb2
-    expect(cell('Waiver budget')).toHaveTextContent('$100')
-    expect(cell('Waiver budget')).toHaveAttribute('href', '#/waivers')
-    // the old duplicate stat cards are gone
-    expect(screen.queryByRole('region', { name: 'Projected Score' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Win Probability' })).not.toBeInTheDocument()
+    const bar = await screen.findByRole('region', { name: 'This week at a glance' }, SLOW)
+    const cell = (name: string) => within(bar).getByRole('link', { name })
+    expect(cell('Projected Points')).toHaveTextContent('18.0')
+    expect(cell('Projected Points')).toHaveTextContent('+6.0 vs. league avg') // 18 vs average of (18 + 6) / 2
+    const p = Math.round(100 * winProbability(18, 6))
+    expect(cell('Win Probability')).toHaveTextContent(`${p}%`)
+    expect(cell('League Standing')).toHaveTextContent('1st of 2')
+    expect(cell('League Standing')).toHaveTextContent('3-1')
+    expect(await within(cell('Playoff Odds')).findByText('100%', {}, SLOW)).toBeInTheDocument()
+    expect(cell('The Edge')).toHaveAttribute('href', '#/edge')
   }, 30_000)
 
-  it('shows the matchup with records, projections, the win chance and the edge by position', async () => {
+  it('shows the matchup with records, projections and the win chance', async () => {
     renderApp()
     const card = await screen.findByRole('region', { name: "This Week's Matchup" }, SLOW)
     expect(within(card).getByText('Gridiron Gang')).toBeInTheDocument()
     expect(within(card).getByText('3-1 (1st)')).toBeInTheDocument()
     expect(within(card).getByText('1-3 (2nd)')).toBeInTheDocument()
-    expect(within(card).getByText('Proj. 18.0')).toBeInTheDocument()
+    expect(within(card).getByText('18.0')).toBeInTheDocument()
     const p = Math.round(100 * winProbability(18, 6))
-    expect(within(card).getByText(`${p}%`)).toBeInTheDocument()
-    expect(within(card).getByRole('progressbar', { name: 'Win probability' })).toHaveAttribute(
-      'aria-valuenow',
-      String(p),
+    expect(within(card).getByRole('progressbar', { name: 'Win probability' })).toHaveTextContent(
+      `${p}% Win Chance`,
     )
-    // slot battles: RB 8 vs 6, WR 10 vs nobody
-    const edges = within(card)
-      .getAllByRole('listitem')
-      .map((li) => li.textContent)
-    expect(edges).toEqual(['RB+2.0', 'WR+10.0'])
-    expect(within(card).getByRole('link', { name: /Scout Rival/ })).toHaveAttribute(
-      'href',
-      '#/scouting',
-    )
+    expect(within(card).getByRole('link', { name: 'Scout' })).toHaveAttribute('href', '#/scouting')
+  }, 30_000)
+
+  it('shows the key game weather in the matchup (my QB-slot starter, here rb1 at AAA)', async () => {
+    const date = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10)
+    const hourly = {
+      time: [] as string[],
+      temperature_2m: [] as number[],
+      precipitation_probability: [] as number[],
+      precipitation: [] as number[],
+      snowfall: [] as number[],
+      wind_speed_10m: [] as number[],
+      wind_gusts_10m: [] as number[],
+      weather_code: [] as number[],
+    }
+    for (let i = 0; i < 24; i++) {
+      hourly.time.push(`${date}T${String(i).padStart(2, '0')}:00`)
+      hourly.temperature_2m.push(52)
+      hourly.precipitation_probability.push(60)
+      hourly.precipitation.push(0.01)
+      hourly.snowfall.push(0)
+      hourly.wind_speed_10m.push(12)
+      hourly.wind_gusts_10m.push(18)
+      hourly.weather_code.push(61)
+    }
+    mockFetch({
+      '/schedule/nfl/regular/2025': [
+        { game_id: 'x', week: 5, status: 'pre_game', date, home: 'NYG', away: 'AAA' },
+      ],
+      '/v1/forecast': { hourly },
+    })
+    renderApp()
+    const card = await screen.findByRole('region', { name: "This Week's Matchup" }, SLOW)
+    expect(await within(card).findByText('52°F', {}, SLOW)).toBeInTheDocument()
+    expect(within(card).getByText('Rain · 12 mph')).toBeInTheDocument()
+    expect(within(card).getByText('MetLife Stadium')).toBeInTheDocument()
+    expect(within(card).getByText(/R\. Runnerson · AAA @ NYG/)).toBeInTheDocument()
   }, 30_000)
 
   it('shows the playoff race without bye or division rows the league does not have', async () => {
@@ -130,20 +156,16 @@ describe('dashboard', () => {
     expect(within(card).getByText(/regular season is over/)).toBeInTheDocument()
   }, 30_000)
 
-  it('toggles the lineup between optimized and as set, marking benched starters', async () => {
-    const user = userEvent.setup()
+  it('shows the optimized lineup with a weather column and an Optimize link', async () => {
     mockFetch({ '/players/nfl': { ...PLAYERS, rb1: { ...PLAYERS.rb1, injury_status: 'Out' } } })
     renderApp()
     const card = await screen.findByRole('region', { name: 'Optimal Lineup' }, SLOW)
     const row = (name: RegExp) => within(card).getByRole('row', { name })
+    // rb1 is Out: the optimized lineup starts rb2 at RB
     expect(row(/B\. Benchwood/)).toHaveTextContent('Start')
-    await user.click(within(card).getByRole('button', { name: 'My Lineup' }))
-    expect(within(card).getByRole('button', { name: 'My Lineup' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-    expect(row(/R\. Runnerson/)).toHaveTextContent('Bench')
-    expect(row(/W\. Catchwell/)).toHaveTextContent('Start')
+    expect(within(card).queryByRole('row', { name: /R\. Runnerson/ })).not.toBeInTheDocument()
+    expect(within(card).getByRole('columnheader', { name: 'Weather' })).toBeInTheDocument()
+    expect(within(card).getByRole('link', { name: 'Optimize' })).toHaveAttribute('href', '#/lineup')
   }, 30_000)
 
   it('lists waiver targets that are free agents in this league, with the suggested drop', async () => {

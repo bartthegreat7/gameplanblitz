@@ -10,9 +10,9 @@ export const ICON_TONE: Record<IconTone, string> = {
   coral: 'bg-coral/12 text-coral',
 }
 
-/** One surface for every dashboard card: flat navy, hairline border, soft depth. Gradients are reserved for the Game Plan. */
+/** One surface for every dashboard card: translucent navy over the stadium photo, hairline border, soft depth. */
 export const CARD =
-  'border-line bg-card rounded-2xl border shadow-[0_24px_48px_-36px_rgba(0,0,0,0.75)]'
+  'border-line/70 bg-card/80 rounded-2xl border shadow-[0_24px_48px_-32px_rgba(0,0,0,0.8)] backdrop-blur-md'
 
 /** Card padding: generous, and a step larger on wide screens. */
 export const PAD = 'p-5 sm:p-6'

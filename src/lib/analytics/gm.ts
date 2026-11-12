@@ -38,6 +38,8 @@ export interface GmAction {
   /** when it has to be done by */
   deadline?: string
   sources: string[]
+  /** the player the action is about, when there is one (for a photo) */
+  playerId?: string
   /** route of the tool behind it */
   to: string
 }
@@ -92,6 +94,7 @@ export function buildBrief(i: GmInput, max = MAX_ACTIONS): GmBrief {
     if (!forced && s.delta < MIN_LINEUP_GAIN) continue
     actions.push({
       id: `lineup-${s.recommended.id}`,
+      playerId: s.recommended.id,
       area: 'lineup',
       priority: forced ? 1 : 2,
       title: !s.current
@@ -115,6 +118,7 @@ export function buildBrief(i: GmInput, max = MAX_ACTIONS): GmBrief {
   if (add)
     actions.push({
       id: `waiver-${add.id}`,
+      playerId: add.id,
       area: 'waivers',
       priority: add.tier === 'must' ? 2 : 3,
       title: `Add ${add.name}${add.drop ? `, drop ${add.drop.name}` : ''}`,

@@ -46,8 +46,6 @@ export const isGroup = (e: NavEntry): e is NavGroup => 'children' in e
 /** Sidebar order. "My Leagues" also lists the user's Sleeper leagues (rendered by the sidebar). */
 export const NAV_TREE: NavEntry[] = [
   { to: '/', label: 'Dashboard', icon: Home, primary: true },
-  { to: '/edge', label: 'The Edge', icon: Zap },
-  { to: '/gm', label: 'Fantasy GM', icon: Briefcase },
   {
     id: 'leagues',
     label: 'My Leagues',
@@ -55,7 +53,6 @@ export const NAV_TREE: NavEntry[] = [
     children: [{ to: '/standings', label: 'Standings', icon: Trophy }],
   },
   { to: '/lineup', label: 'Lineup Optimizer', short: 'Lineup', icon: ListChecks, primary: true },
-  { to: '/startsit', label: 'Start/Sit', icon: Scale },
   { to: '/players', label: 'Players', icon: Users },
   { to: '/waivers', label: 'Waiver Wire', short: 'Waivers', icon: Plus, primary: true },
   { to: '/trades', label: 'Trades', icon: ArrowLeftRight },
@@ -65,6 +62,9 @@ export const NAV_TREE: NavEntry[] = [
     label: 'Analytics',
     icon: BarChart3,
     children: [
+      { to: '/edge', label: 'The Edge', icon: Zap },
+      { to: '/gm', label: 'Fantasy GM', icon: Briefcase },
+      { to: '/startsit', label: 'Start/Sit', icon: Scale },
       { to: '/alerts', label: 'Alert Center', icon: BellRing },
       { to: '/breakouts', label: 'Breakout Radar', icon: TrendingUp },
       { to: '/market', label: 'Player Market', icon: LineChart },
