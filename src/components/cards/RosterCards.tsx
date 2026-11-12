@@ -7,6 +7,7 @@ import { PlayerQuickView } from '../PlayerQuickView'
 import { Card } from '../ui/Card'
 import { Pill, PosTag } from '../ui/Pill'
 import { Drawer } from '../ui/Overlay'
+import { WeatherIndicator } from '../weather/WeatherIndicator'
 import { EmptyState } from '../ui/states'
 import { PlayerRow, Proj, ProjNotice, type CardProps } from './shared'
 
@@ -87,6 +88,7 @@ export function RosterCard({ data }: CardProps) {
               </>
             }
             right={<Proj value={f1(p.pj)} />}
+            after={<WeatherIndicator team={model.team(p.id)} />}
           />
         ))
       )}

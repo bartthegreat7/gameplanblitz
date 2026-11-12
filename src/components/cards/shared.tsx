@@ -30,9 +30,11 @@ interface PlayerRowProps {
   /** when set, the row is a button (opens a drawer) instead of a link to the player page */
   onSelect?: (id: string) => void
   badge?: ReactNode
+  /** rendered beside the row, outside its button/link (e.g. another control) */
+  after?: ReactNode
 }
 
-export function PlayerRow({ model, id, rank, meta, right, onSelect, badge }: PlayerRowProps) {
+export function PlayerRow({ model, id, rank, meta, right, onSelect, badge, after }: PlayerRowProps) {
   const inner = (
     <>
       {rank !== undefined && <span className="text-ink-3 w-6 shrink-0 text-center text-lg font-extrabold">{rank}</span>}
@@ -48,14 +50,21 @@ export function PlayerRow({ model, id, rank, meta, right, onSelect, badge }: Pla
     </>
   )
   const cls = 'border-line/60 flex w-full items-center gap-3 border-t py-3 text-left first:border-t-0 hover:bg-card-2/50'
-  return onSelect ? (
-    <button type="button" className={cls} onClick={() => onSelect(id)}>
+  const row = onSelect ? (
+    <button type="button" className={after ? cls.replace('border-t', 'min-w-0 flex-1') : cls} onClick={() => onSelect(id)}>
       {inner}
     </button>
   ) : (
-    <Link to={`/players/${id}`} className={cls}>
+    <Link to={`/players/${id}`} className={after ? cls.replace('border-t', 'min-w-0 flex-1') : cls}>
       {inner}
     </Link>
+  )
+  if (!after) return row
+  return (
+    <div className="border-line/60 flex items-center gap-2 border-t first:border-t-0">
+      {row}
+      {after}
+    </div>
   )
 }
 

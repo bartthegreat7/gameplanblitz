@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 
 import { LeagueGate } from '../components/LeagueGate'
+import { WeatherIndicator } from '../components/weather/WeatherIndicator'
 import { TeamAvatar } from '../components/ui/Avatar'
 import { FreshnessBadge } from '../components/ui/badges'
 import { Pill, PosTag } from '../components/ui/Pill'
@@ -23,7 +24,7 @@ const STATE: Record<GameState, { label: string; tone: 'info' | 'prio' | 'neutral
   unknown: { label: '—', tone: 'neutral' },
 }
 
-function SideTable({ side, title }: { side: LiveSide; title: string }) {
+function SideTable({ side, title, teamOf }: { side: LiveSide; title: string; teamOf: (id: string) => string }) {
   return (
     <section aria-label={title} className="border-line bg-card rounded-2xl border p-4">
       <h2 className="mb-2 text-lg font-extrabold">{title}</h2>
@@ -50,6 +51,7 @@ function SideTable({ side, title }: { side: LiveSide; title: string }) {
                       <PosTag pos={p.pos} />
                       <span className="font-semibold">{p.name}</span>
                       {p.injury && <Pill tone="caution">{p.injury}</Pill>}
+                      {p.state === 'not-started' && <WeatherIndicator team={teamOf(p.id)} />}
                     </span>
                   ) : (
                     <span className="text-bad italic">Empty</span>
@@ -175,8 +177,8 @@ function GameDayView({ data }: { data: Ready }) {
       </section>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <SideTable side={me} title="Your starters" />
-        {opp && <SideTable side={opp} title={`${opp.name} starters`} />}
+        <SideTable side={me} title="Your starters" teamOf={m.team} />
+        {opp && <SideTable side={opp} title={`${opp.name} starters`} teamOf={m.team} />}
       </div>
     </div>
   )

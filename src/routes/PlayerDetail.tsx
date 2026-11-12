@@ -6,6 +6,7 @@ import { ArticleCard } from '../components/news/ArticleCard'
 import { ProjNotice } from '../components/cards/shared'
 import { LeagueGate } from '../components/LeagueGate'
 import { PlayerAvatar } from '../components/ui/Avatar'
+import { WeatherIndicator } from '../components/weather/WeatherIndicator'
 import { Pill, PosTag } from '../components/ui/Pill'
 import { EmptyState, ErrorState, ListSkeleton } from '../components/ui/states'
 import { ProjectionBreakdown } from '../components/projection/ProjectionBreakdown'
@@ -66,6 +67,7 @@ function Detail({ data, id }: { data: Ready; id: string }) {
             <div className="text-ink-3 mt-1 flex flex-wrap items-center gap-2 text-sm">
               <PosTag pos={model.pos(id)} />
               <span>{model.team(id) || 'Free agent'}</span>
+              <WeatherIndicator team={model.team(id)} />
               {inj && <Pill tone={OUT_INJ.has(inj) ? 'warn' : 'caution'}>{inj}</Pill>}
               <Pill tone={owner ? 'info' : 'prio'}>{owner ? `On ${model.teamName(owner.roster_id)}` : 'Free agent in your league'}</Pill>
             </div>

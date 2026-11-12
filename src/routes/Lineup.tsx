@@ -10,6 +10,7 @@ import { Drawer } from '../components/ui/Overlay'
 import { PosTag } from '../components/ui/Pill'
 import { Segmented } from '../components/ui/Segmented'
 import { EmptyState, Notice } from '../components/ui/states'
+import { WeatherIndicator } from '../components/weather/WeatherIndicator'
 import { useLineupInputs } from '../hooks/useLineupInputs'
 import type { Ready } from '../hooks/useLeagueData'
 import { analyzeLineup } from '../lib/analytics/lineupAnalysis'
@@ -38,7 +39,17 @@ function Tile({ title, t, accent }: { title: string; t: Totals; accent?: boolean
 const COLUMNS: Column<Candidate>[] = [
   { key: 'name', header: 'Player', cell: (c) => <span className="font-bold">{c.name}</span>, sortValue: (c) => c.name },
   { key: 'pos', header: 'Pos', cell: (c) => <PosTag pos={c.pos} />, sortValue: (c) => c.pos },
-  { key: 'opp', header: 'Opp', cell: (c) => c.opponent ?? (c.bye ? 'BYE' : '—'), hideBelow: 'sm' },
+  {
+    key: 'opp',
+    header: 'Opp',
+    cell: (c) => (
+      <span className="inline-flex items-center gap-1.5">
+        {c.opponent ?? (c.bye ? 'BYE' : '—')}
+        {!c.bye && <WeatherIndicator team={c.team} />}
+      </span>
+    ),
+    hideBelow: 'sm',
+  },
   { key: 'proj', header: 'Proj', cell: (c) => f1(c.proj), sortValue: (c) => c.proj, align: 'right' },
   { key: 'floor', header: 'Floor', cell: (c) => (c.floor !== null ? f1(c.floor) : '—'), sortValue: (c) => c.floor ?? -1, align: 'right', hideBelow: 'sm' },
   { key: 'ceil', header: 'Ceiling', cell: (c) => (c.ceiling !== null ? f1(c.ceiling) : '—'), sortValue: (c) => c.ceiling ?? -1, align: 'right', hideBelow: 'sm' },

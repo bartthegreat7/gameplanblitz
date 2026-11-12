@@ -11,6 +11,7 @@ import type { Model } from '../../lib/model'
 import { NewsNotPublished, type NewsResponse } from '../../lib/news'
 import { newestFirst, tsOf } from '../../lib/newsFeed'
 import { PlayerAvatar } from '../ui/Avatar'
+import { WeatherIndicator } from '../weather/WeatherIndicator'
 import { EmptyState, ErrorState, ListSkeleton } from '../ui/states'
 import { CardLink, DashboardCard } from './DashboardCard'
 
@@ -147,7 +148,10 @@ export function OptimalLineup({
                       <PlayerCell m={m} c={c} />
                     </td>
                     <td className="text-ink-2 hidden py-2.5 whitespace-nowrap @sm:table-cell">
-                      {c?.bye ? 'Bye' : c?.opponent ? `vs ${c.opponent}` : '—'}
+                      <span className="inline-flex items-center gap-1.5">
+                          {c?.bye ? 'Bye' : c?.opponent ? `vs ${c.opponent}` : '—'}
+                          {c && !c.bye && <WeatherIndicator team={c.team} week={week} />}
+                        </span>
                     </td>
                     <td className="py-2.5 text-right font-bold tabular-nums">
                       {c ? f1(c.out ? 0 : c.proj) : '—'}
