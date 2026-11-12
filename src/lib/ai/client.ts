@@ -1,5 +1,4 @@
 import type { Fact } from './facts'
-import type { RawLine } from './podcast'
 
 /* Client for the GameplanBlitz AI Worker (VITE_AI_API). The Worker holds the API key; this file
    only ever sends the fact sheet, the question and the conversation. Streams, cancels and retries. */
@@ -116,33 +115,8 @@ export async function streamGm(
   return { text, stop }
 }
 
-export interface ScriptRequest {
-  type: string
-  format: string
-  tone: string
-  hosts: string[]
-  chapters: { id: string; title: string; facts: string[] }[]
-  facts: Fact[]
-  league: { name: string; week: number }
-  targetLines: number
-}
-
-export async function requestScript(req: ScriptRequest, opts: { token: string; signal?: AbortSignal }): Promise<RawLine[]> {
-  const res = await call('/api/studio/script', { ...req, facts: factPayload(req.facts) }, opts.token, opts.signal)
-  const body = (await res.json()) as { lines?: RawLine[] }
-  if (!Array.isArray(body.lines)) throw new AiError('The script came back in an unexpected shape.', 'shape', 502)
-  return body.lines
-}
-
-export async function synthesize(text: string, voice: string, opts: { token: string; signal?: AbortSignal }): Promise<Blob> {
-  const res = await call('/api/studio/tts', { text, voice }, opts.token, opts.signal)
-  return res.blob()
-}
-
 export interface Usage {
   chat: { used: number; limit: number }
-  scripts: { used: number; limit: number }
-  ttsChars: { used: number; limit: number }
   resetsInSeconds: number
 }
 
@@ -150,16 +124,3 @@ export async function getUsage(token: string, signal?: AbortSignal): Promise<Usa
   const res = await call('/api/usage', null, token, signal, 'GET')
   return res.json()
 }
-
-/** Aura voices offered for the two hosts (Deepgram Aura on Cloudflare Workers AI). */
-export const CLOUD_VOICES = [
-  { id: 'orion', label: 'Orion' },
-  { id: 'asteria', label: 'Asteria' },
-  { id: 'arcas', label: 'Arcas' },
-  { id: 'luna', label: 'Luna' },
-  { id: 'helios', label: 'Helios' },
-  { id: 'athena', label: 'Athena' },
-] as const
-
-/** Text-to-speech requests are capped per line (the Worker enforces the same limit). */
-export const MAX_TTS_CHARS = 800

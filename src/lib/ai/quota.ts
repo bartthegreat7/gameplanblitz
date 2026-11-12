@@ -1,9 +1,9 @@
 /* Client-side daily allowance for paid AI calls, a first line of cost control (the Worker enforces
    its own quotas and rate limits). Stored per browser; resets at local midnight. */
 
-export type QuotaKind = 'chat' | 'scripts' | 'ttsChars'
+export type QuotaKind = 'chat'
 
-export const LOCAL_LIMITS: Record<QuotaKind, number> = { chat: 30, scripts: 5, ttsChars: 30_000 }
+export const LOCAL_LIMITS: Record<QuotaKind, number> = { chat: 30 }
 
 const KEY = 'gb-ai-usage'
 const today = (now = new Date()) =>
@@ -12,7 +12,7 @@ const today = (now = new Date()) =>
 type Usage = { day: string } & Record<QuotaKind, number>
 
 function read(now?: Date): Usage {
-  const empty: Usage = { day: today(now), chat: 0, scripts: 0, ttsChars: 0 }
+  const empty: Usage = { day: today(now), chat: 0 }
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? 'null') as Usage | null
     return raw && raw.day === empty.day ? { ...empty, ...raw } : empty

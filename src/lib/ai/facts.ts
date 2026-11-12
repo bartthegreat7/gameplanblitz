@@ -12,7 +12,7 @@ import type { Article } from '../news'
 import { tsOf } from '../newsFeed'
 import type { SleeperMatchup } from '../sleeper'
 
-/* The fact sheet: every number the AI Fantasy GM and the Podcast Studio may use, as short sentences
+/* The fact sheet: every number the AI Fantasy GM may use, as short sentences
    built only from what GameplanBlitz's tools already computed. Each fact is labeled as a Sleeper/
    publisher fact or a model output, with its source and timestamp. Nothing here is estimated anew. */
 

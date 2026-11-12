@@ -56,12 +56,12 @@ describe('AI client', () => {
   })
 
   it('reports quota errors with retry-after and does not retry them', async () => {
-    const { synthesize, withRetry } = await load()
+    const { getUsage, withRetry } = await load()
     const fetchMock = vi.fn(async () =>
       new Response(JSON.stringify({ error: 'quota', message: 'Daily limit reached for this feature.' }), { status: 429, headers: { 'retry-after': '3600' } }),
     )
     vi.stubGlobal('fetch', fetchMock)
-    await expect(withRetry(() => synthesize('hi', 'orion', { token: '' }), { sleep: async () => {} })).rejects.toMatchObject({
+    await expect(withRetry(() => getUsage(''), { sleep: async () => {} })).rejects.toMatchObject({
       code: 'quota',
       status: 429,
       retryAfter: 3600,
@@ -71,7 +71,7 @@ describe('AI client', () => {
   })
 
   it('retries server errors and network failures, then succeeds', async () => {
-    const { synthesize, withRetry } = await load()
+    const { getUsage, withRetry } = await load()
     let n = 0
     vi.stubGlobal(
       'fetch',
@@ -79,17 +79,17 @@ describe('AI client', () => {
         n++
         if (n === 1) throw new TypeError('offline')
         if (n === 2) return new Response('{}', { status: 503 })
-        return new Response('mp3', { status: 200 })
+        return new Response(JSON.stringify({ chat: { used: 1, limit: 40 }, resetsInSeconds: 5 }), { status: 200 })
       }),
     )
     const sleeps: number[] = []
-    const blob = await withRetry(() => synthesize('hi', 'orion', { token: '' }), { sleep: async (ms) => void sleeps.push(ms) })
-    expect(await blob.text()).toBe('mp3')
+    const usage = await withRetry(() => getUsage(''), { sleep: async (ms) => void sleeps.push(ms) })
+    expect(usage.chat).toEqual({ used: 1, limit: 40 })
     expect(sleeps).toEqual([800, 1600])
   })
 
   it('passes cancellation through without retrying', async () => {
-    const { synthesize, withRetry } = await load()
+    const { getUsage, withRetry } = await load()
     const ac = new AbortController()
     vi.stubGlobal(
       'fetch',
@@ -99,7 +99,7 @@ describe('AI client', () => {
         return new Response('')
       }),
     )
-    await expect(withRetry(() => synthesize('hi', 'orion', { token: '', signal: ac.signal }), { signal: ac.signal })).rejects.toMatchObject({ name: 'AbortError' })
+    await expect(withRetry(() => getUsage('', ac.signal), { signal: ac.signal })).rejects.toMatchObject({ name: 'AbortError' })
   })
 
   it('is off when no Worker URL is configured', async () => {

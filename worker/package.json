@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "GameplanBlitz AI Worker: AI Fantasy GM answers, podcast scripts and synthetic voices. Holds the API key server-side.",
+  "description": "GameplanBlitz AI Worker: AI Fantasy GM answers. Holds the API key server-side.",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "deploy": "wrangler deploy"

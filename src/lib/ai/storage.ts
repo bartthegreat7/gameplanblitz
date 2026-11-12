@@ -2,10 +2,8 @@ import { createStore, del, get, keys, set, type UseStore } from 'idb-keyval'
 
 import type { Answer } from './assistant'
 import type { Fact } from './facts'
-import type { Chapter, EpisodeType, Format, Host, Line, Tone } from './podcast'
 
-/* Private, on-device storage for the AI Fantasy GM conversation and Podcast Studio episodes
-   (IndexedDB). Nothing here is uploaded. When IndexedDB is unavailable (private windows, tests),
+/* Private, on-device storage for the AI Fantasy GM conversation (IndexedDB). Nothing here is uploaded. When IndexedDB is unavailable (private windows, tests),
    data lives in memory for the session. */
 
 interface Kv {
@@ -55,15 +53,12 @@ function kvStore(db: string): Kv {
 }
 
 let chatKv: Kv | null = null
-let studioKv: Kv | null = null
 const chat = () => (chatKv ??= kvStore('gb-gm-chat'))
-const studio = () => (studioKv ??= kvStore('gb-studio'))
 
 /** Test hook: forget in-memory data. */
 export function resetAiStorage() {
   memory.clear()
   chatKv = null
-  studioKv = null
 }
 
 /* ---------------- conversation ---------------- */
@@ -92,64 +87,11 @@ export const saveChat = (leagueId: string, msgs: ChatMessage[]) =>
   )
 export const clearChat = (leagueId: string) => chat().del(leagueId)
 
-/* ---------------- episodes ---------------- */
-
-export interface EpisodeAudio {
-  engine: 'device' | 'cloud'
-  /** device: voice names; cloud: Aura voice ids, per host */
-  voices: string[]
-  /** seconds per line (estimates for device voices) */
-  durations: number[]
-}
-
-export interface Episode {
-  id: string
-  leagueId: string
-  leagueName: string
-  week: number
-  createdAt: number
-  type: EpisodeType
-  format: Format
-  tone: Tone
-  title: string
-  hosts: Host[]
-  outline: Chapter[]
-  lines: Line[]
-  writer: 'built-in' | 'ai'
-  /** the facts the script cites, as they were when it was written */
-  facts: Fact[]
-  factsAsOf: number
-  audio: EpisodeAudio | null
-  /** pinned to Saved episodes */
-  saved: boolean
-}
-
-const EP = 'ep:'
-const clipKey = (id: string, i: number) => `audio:${id}:${i}`
-
-export async function listEpisodes(leagueId?: string): Promise<Episode[]> {
-  const ks = (await studio().keys()).filter((k) => k.startsWith(EP))
-  const eps = (await Promise.all(ks.map((k) => studio().get<Episode>(k)))).filter(
-    (e): e is Episode => !!e && (!leagueId || e.leagueId === leagueId),
-  )
-  return eps.sort((a, b) => b.createdAt - a.createdAt)
-}
-export const getEpisode = (id: string) => studio().get<Episode>(EP + id)
-export const saveEpisode = (e: Episode) => studio().set(EP + e.id, e)
-export const saveClip = (id: string, i: number, blob: Blob) => studio().set(clipKey(id, i), blob)
-export const getClip = (id: string, i: number) => studio().get<Blob>(clipKey(id, i))
-
-/** Deletes the episode, its transcript and every stored audio clip. */
-export async function deleteEpisode(id: string) {
-  const prefix = `audio:${id}:`
-  const ks = (await studio().keys()).filter((k) => k.startsWith(prefix))
-  await Promise.all([...ks.map((k) => studio().del(k)), studio().del(EP + id)])
-}
-
-export async function deleteClips(id: string) {
-  const prefix = `audio:${id}:`
-  const ks = (await studio().keys()).filter((k) => k.startsWith(prefix))
-  await Promise.all(ks.map((k) => studio().del(k)))
+/** The retired Podcast Studio kept episodes and audio in its own database: remove it (best effort). */
+try {
+  if (typeof indexedDB !== 'undefined') indexedDB.deleteDatabase('gb-studio')
+} catch {
+  /* nothing to clean up */
 }
 
 export const newId = () =>

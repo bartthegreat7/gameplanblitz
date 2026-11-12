@@ -177,8 +177,6 @@ export function resetStore(over: Partial<ReturnType<typeof useAppStore.getState>
     aiConsent: false,
     aiToken: '',
     readAloud: false,
-    deviceVoices: [null, null],
-    cloudVoices: ['orion', 'asteria'],
     ...over,
   })
 }

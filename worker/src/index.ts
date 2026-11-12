@@ -3,36 +3,23 @@ import Anthropic from '@anthropic-ai/sdk'
 import {
   BadRequest,
   charge,
-  cleanScript,
   corsHeaders,
   allowedOrigin,
   factsBlock,
   GM_SYSTEM,
   MAX,
   readLimits,
-  SCRIPT_SCHEMA,
-  SCRIPT_SYSTEM,
-  scriptPrompt,
   sse,
   tokenOk,
   usageFor,
   validateChat,
-  validateScript,
-  validateTts,
-  type Kind,
   type KV,
 } from './logic'
 
 /* GameplanBlitz AI Worker. Holds the Anthropic API key (a Worker secret) and runs:
-     POST /api/gm             AI Fantasy GM answer, streamed as server-sent events
-     POST /api/studio/script  podcast script (JSON) from an approved outline
-     POST /api/studio/tts     one line of speech (audio/mpeg), Deepgram Aura on Workers AI
-     GET  /api/usage          today's usage and limits for the caller
+     POST /api/gm     AI Fantasy GM answer, streamed as server-sent events
+     GET  /api/usage  today's usage and limits for the caller
    Only facts the app sends are used; the Worker stores no league data. */
-
-interface AiBinding {
-  run(model: string, input: Record<string, unknown>, opts?: { returnRawResponse?: boolean }): Promise<unknown>
-}
 
 export interface Env {
   ANTHROPIC_API_KEY: string
@@ -42,13 +29,11 @@ export interface Env {
   ALLOWED_ORIGINS: string
   /** defaults to claude-opus-5-5 */
   AI_MODEL?: string
-  AI: AiBinding
   USAGE: KV
   [k: string]: unknown
 }
 
 const DEFAULT_MODEL = 'claude-opus-5-5'
-const TTS_MODEL = '@cf/deepgram/aura-1'
 const FALLBACK_BETA = 'server-side-fallback-2026-07-01'
 
 const json = (body: unknown, status: number, headers: Record<string, string>, extra: Record<string, string> = {}) =>
@@ -79,8 +64,8 @@ export default {
 
     const who = req.headers.get('cf-connecting-ip') ?? 'unknown'
     const limits = readLimits(env)
-    const spend = async (kind: Kind, amount: number) => {
-      const c = await charge(env.USAGE, who, kind, amount, limits, Date.now())
+    const spend = async () => {
+      const c = await charge(env.USAGE, who, limits, Date.now())
       if (c.ok) return null
       const message =
         c.reason === 'rate'
@@ -101,52 +86,9 @@ export default {
 
       if (url.pathname === '/api/gm') {
         const body = validateChat(await readBody(req))
-        const denied = await spend('chat', 1)
+        const denied = await spend()
         if (denied) return denied
         return streamAnswer(env, body, req.signal, cors)
-      }
-
-      if (url.pathname === '/api/studio/script') {
-        const body = validateScript(await readBody(req))
-        const denied = await spend('scripts', 1)
-        if (denied) return denied
-        const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY })
-        const stream = client.beta.messages.stream(
-          {
-            model: env.AI_MODEL || DEFAULT_MODEL,
-            max_tokens: 16_000,
-            betas: [FALLBACK_BETA],
-            fallbacks: 'default',
-            output_config: { effort: 'medium', format: { type: 'json_schema', schema: SCRIPT_SCHEMA } },
-            system: SCRIPT_SYSTEM,
-            messages: [{ role: 'user', content: scriptPrompt(body) }],
-          },
-          { signal: req.signal },
-        )
-        const msg = await stream.finalMessage()
-        if (msg.stop_reason === 'refusal')
-          return json({ error: 'refused', message: 'The model declined to write this script.' }, 422, cors)
-        if (msg.stop_reason === 'max_tokens')
-          return json({ error: 'too_long', message: 'The script ran too long. Try a shorter episode.' }, 422, cors)
-        const text = msg.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('')
-        const lines = cleanScript(JSON.parse(text), body)
-        return json({ lines, model: msg.model }, 200, cors)
-      }
-
-      if (url.pathname === '/api/studio/tts') {
-        const body = validateTts(await readBody(req))
-        const denied = await spend('ttsChars', body.text.length)
-        if (denied) return denied
-        const res = (await env.AI.run(
-          TTS_MODEL,
-          { text: body.text, speaker: body.voice, encoding: 'mp3' },
-          { returnRawResponse: true },
-        )) as Response
-        if (!res.ok) return json({ error: 'tts_failed', message: 'Speech generation failed.' }, 502, cors)
-        return new Response(res.body, {
-          status: 200,
-          headers: { 'content-type': 'audio/mpeg', 'cache-control': 'no-store', ...cors },
-        })
       }
 
       return json({ error: 'not_found' }, 404, cors)
