@@ -192,6 +192,13 @@ describe('schedule context', () => {
     expect(isBye(ctx, 'ZZZ')).toBe(false) // never in the schedule: not flagged
     expect(isBye(ctx, '')).toBe(false)
   })
+  it('flags no one as on a bye when the schedule has no games at all for the week', () => {
+    // week 9 is absent from the data: that is missing data, not a league-wide bye
+    const empty = weekContext(games, 9)
+    expect(empty.known.has('AAA')).toBe(true)
+    expect(isBye(empty, 'AAA')).toBe(false)
+    expect(isBye(empty, 'EEE')).toBe(false)
+  })
   it('treats anything other than pre_game as started (locked)', () => {
     expect(hasStarted(ctx, 'AAA')).toBe(true)
     expect(hasStarted(ctx, 'CCC')).toBe(false)

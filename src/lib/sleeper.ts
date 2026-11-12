@@ -45,6 +45,11 @@ export interface SleeperRoster {
   co_owners?: string[] | null
   players: string[] | null
   starters: string[] | null
+  /** injured reserve: does not count against the roster limit and cannot start */
+  reserve?: string[] | null
+  taxi?: string[] | null
+  /** designated keepers in keeper leagues (never suggested as drops) */
+  keepers?: string[] | null
   settings: {
     wins?: number
     losses?: number
@@ -77,6 +82,11 @@ export interface SleeperPlayer {
   injury_status?: string | null
   injury_body_part?: string | null
   injury_notes?: string | null
+  /** depth-chart rank within depth_chart_position (1 = starter). WR depth is split by alignment. */
+  depth_chart_order?: number | null
+  depth_chart_position?: string | null
+  age?: number | null
+  years_exp?: number | null
 }
 
 export type PlayerMap = Record<string, SleeperPlayer>
@@ -242,3 +252,38 @@ export const headshotUrl = (p: SleeperPlayer) =>
   p.position === 'DEF'
     ? `https://sleepercdn.com/images/team_logos/nfl/${String(p.team ?? p.player_id).toLowerCase()}.png`
     : `https://sleepercdn.com/content/nfl/players/${p.player_id}.jpg`
+
+/* ---- waiver-related feeds ---- */
+
+export interface TrendingEntry {
+  player_id: string
+  /** adds (or drops) across Sleeper in the lookback window */
+  count: number
+}
+
+/** Sleeper-wide add/drop counts, a popularity signal across all leagues (not specific to yours). */
+export async function getTrending(type: 'add' | 'drop', lookbackHours = 24, limit = 50): Promise<TrendingEntry[]> {
+  const rows = await getJson<unknown>(`${SLEEPER}/players/nfl/trending/${type}?lookback_hours=${lookbackHours}&limit=${limit}`)
+  if (!Array.isArray(rows)) return []
+  return rows.filter(
+    (r): r is TrendingEntry => !!r && typeof (r as TrendingEntry).player_id === 'string' && typeof (r as TrendingEntry).count === 'number',
+  )
+}
+
+/** A league transaction (trade, waiver claim, free-agent add). Fields are optional: parsed defensively. */
+export interface SleeperTransaction {
+  type?: string
+  status?: string
+  /** player_id → roster_id that received him */
+  adds?: Record<string, number> | null
+  drops?: Record<string, number> | null
+  settings?: { waiver_bid?: number } | null
+  leg?: number
+  created?: number
+}
+
+/** All transactions for one round (Sleeper uses the week as the round). Empty array if none. */
+export async function getTransactions(leagueId: string, round: number): Promise<SleeperTransaction[]> {
+  const rows = await getJson<unknown>(`${SLEEPER}/league/${leagueId}/transactions/${round}`)
+  return Array.isArray(rows) ? (rows as SleeperTransaction[]) : []
+}

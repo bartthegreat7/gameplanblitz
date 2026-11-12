@@ -25,8 +25,13 @@ export function weekContext(games: ScheduleGame[], week: number): WeekContext {
   return { opponent, status, known }
 }
 
-/** On bye: a known team with no game this week. Unknown teams are never flagged. */
-export const isBye = (ctx: WeekContext, team: string) => !!team && ctx.known.has(team) && !ctx.opponent.has(team)
+/**
+ * On bye: a known team with no game in a week that does have games. Unknown teams are never
+ * flagged, and neither is anyone when the schedule has no games at all for the week (missing
+ * data must not read as "everyone is on a bye").
+ */
+export const isBye = (ctx: WeekContext, team: string) =>
+  !!team && ctx.opponent.size > 0 && ctx.known.has(team) && !ctx.opponent.has(team)
 
 /**
  * Game already started or finished, so the player is locked in Sleeper. Anything other than

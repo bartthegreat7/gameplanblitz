@@ -56,7 +56,22 @@ export const weekRows = (week: number) => {
 export const SCHEDULE = [
   { game_id: 'g1', week: 5, status: 'pre_game', date: '2025-11-02', home: 'AAA', away: 'CCC' },
   { game_id: 'g2', week: 5, status: 'pre_game', date: '2025-11-02', home: 'BBB', away: 'DDD' },
+  // later weeks, so nobody is mistaken for being on a bye
+  { game_id: 'g3', week: 6, status: 'pre_game', date: '2025-11-09', home: 'AAA', away: 'CCC' },
+  { game_id: 'g4', week: 6, status: 'pre_game', date: '2025-11-09', home: 'BBB', away: 'DDD' },
+  { game_id: 'g5', week: 7, status: 'pre_game', date: '2025-11-16', home: 'AAA', away: 'CCC' },
+  { game_id: 'g6', week: 7, status: 'pre_game', date: '2025-11-16', home: 'BBB', away: 'DDD' },
 ]
+
+/** Four winning RB bids (5, 10, 15, 20): median 12.5, 75th percentile 16.25, max 20. */
+const winningBid = (adds: Record<string, number>, bid: number) => ({ type: 'waiver', status: 'complete', adds, settings: { waiver_bid: bid } })
+export const TRANSACTIONS: Record<number, unknown[]> = {
+  1: [winningBid({ opp1: 2 }, 5), winningBid({ rb2: 1 }, 10)],
+  2: [winningBid({ rb1: 1 }, 15), { type: 'trade', status: 'complete', adds: { wr1: 1 } }],
+  3: [winningBid({ opp1: 2 }, 20)],
+  4: [],
+  5: [],
+}
 
 export type Routes = Record<string, unknown | (() => Response)>
 
@@ -81,6 +96,14 @@ export function mockFetch(overrides: Routes = {}) {
     '/league/L1': LEAGUE,
     '/players/nfl': PLAYERS,
     '/projections/nfl/2025/5': PROJ,
+    '/projections/nfl/2025/6': PROJ,
+    '/projections/nfl/2025/7': PROJ,
+    '/players/nfl/trending/add': [{ player_id: 'fa1', count: 12345 }],
+    '/league/L1/transactions/1': TRANSACTIONS[1],
+    '/league/L1/transactions/2': TRANSACTIONS[2],
+    '/league/L1/transactions/3': TRANSACTIONS[3],
+    '/league/L1/transactions/4': TRANSACTIONS[4],
+    '/league/L1/transactions/5': TRANSACTIONS[5],
     '/stats/nfl/2025': { rb1: { rec: 40, gp: 4 } },
     '/stats/nfl/2025/1': weekRows(1),
     '/stats/nfl/2025/2': weekRows(2),

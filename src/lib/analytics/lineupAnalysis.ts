@@ -34,7 +34,7 @@ export interface LineupAnalysis {
 }
 
 /** Most common non-empty value, or null. */
-function mode<T>(xs: (T | null | undefined)[]): T | null {
+export function mostCommon<T>(xs: (T | null | undefined)[]): T | null {
   const counts = new Map<T, number>()
   for (const x of xs) if (x) counts.set(x, (counts.get(x) ?? 0) + 1)
   return [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
@@ -87,7 +87,7 @@ export function analyzeLineup(input: AnalysisInput): LineupAnalysis | null {
     })
   }
 
-  const provider = mode(projectionRows.map((r) => r.company))
+  const provider = mostCommon(projectionRows.map((r) => r.company))
   const plan = planLineup({
     startSlots: m.startSlots,
     currentStarters: me.starters ?? [],

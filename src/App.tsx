@@ -13,6 +13,7 @@ import PlayerDetail from './routes/PlayerDetail'
 import Players from './routes/Players'
 import Settings from './routes/Settings'
 import Standings from './routes/Standings'
+import Waivers from './routes/Waivers'
 import { applyTheme, useAppStore } from './store/app'
 
 const defaultClient = createQueryClient()
@@ -29,6 +30,7 @@ export default function App({ client = defaultClient }: { client?: QueryClient }
             <Route index element={<Dashboard />} />
             <Route path="connect" element={<Connect />} />
             <Route path="lineup" element={<Lineup />} />
+            <Route path="waivers" element={<Waivers />} />
             <Route path="news" element={<News />} />
             <Route path="standings" element={<Standings />} />
             <Route path="players" element={<Players />} />
