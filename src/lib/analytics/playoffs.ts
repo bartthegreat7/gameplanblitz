@@ -69,7 +69,8 @@ export function teamModels(opts: {
     const s = opts.scores.get(id) ?? []
     const proj = opts.projected.get(id) ?? 0
     const season = s.length ? meanOf(s) : proj
-    const mean = opts.basis === 'season' ? season : opts.basis === 'projection' ? proj : (season + proj) / 2
+    const mean =
+      opts.basis === 'season' ? season : opts.basis === 'projection' ? proj : (season + proj) / 2
     const sd = Math.max(MIN_SD, s.length >= MIN_GAMES_FOR_SD ? sdOf(s) : pooled)
     return { rosterId: id, mean, sd }
   })
@@ -159,7 +160,20 @@ export function simulate(input: SimInput): TeamOdds[] {
   const order = P > 1 ? bracketOrder(size) : [1]
   const forced = new Map((input.forced ?? []).map((f) => [`${f.week}|${f.rosterId}`, f.result]))
 
-  const acc = new Map(ids.map((id) => [id, { playoff: 0, bye: 0, first: 0, champ: 0, wins: 0, seedSum: 0, seeds: new Array<number>(n).fill(0) }]))
+  const acc = new Map(
+    ids.map((id) => [
+      id,
+      {
+        playoff: 0,
+        bye: 0,
+        first: 0,
+        champ: 0,
+        wins: 0,
+        seedSum: 0,
+        seeds: new Array<number>(n).fill(0),
+      },
+    ]),
+  )
   const score = (id: number) => {
     const t = model.get(id)
     return t ? Math.max(0, t.mean + t.sd * normal(rng)) : 0
@@ -204,7 +218,9 @@ export function simulate(input: SimInput): TeamOdds[] {
     })
     if (P === 0) continue
     // fixed bracket (no re-seeding); seeds beyond P are byes
-    let round: (number | null)[] = order.map((seed) => (seed <= P ? ranked[seed - 1].rosterId : null))
+    let round: (number | null)[] = order.map((seed) =>
+      seed <= P ? ranked[seed - 1].rosterId : null,
+    )
     while (round.length > 1) {
       const next: (number | null)[] = []
       for (let i = 0; i < round.length; i += 2) {
@@ -236,7 +252,9 @@ export function simulate(input: SimInput): TeamOdds[] {
 /* ---------- schedule helpers ---------- */
 
 /** Regular-season games from Sleeper matchups (grouped by matchup_id), for the given weeks. */
-export function gamesFrom(weeks: { week: number; matchups: { roster_id: number; matchup_id: number | null }[] }[]): Game[] {
+export function gamesFrom(
+  weeks: { week: number; matchups: { roster_id: number; matchup_id: number | null }[] }[],
+): Game[] {
   const out: Game[] = []
   for (const { week, matchups } of weeks) {
     const byId = new Map<number, number[]>()
@@ -244,7 +262,8 @@ export function gamesFrom(weeks: { week: number; matchups: { roster_id: number; 
       if (m.matchup_id === null || m.matchup_id === undefined) continue
       byId.set(m.matchup_id, [...(byId.get(m.matchup_id) ?? []), m.roster_id])
     }
-    for (const pair of byId.values()) if (pair.length === 2) out.push({ week, home: pair[0], away: pair[1] })
+    for (const pair of byId.values())
+      if (pair.length === 2) out.push({ week, home: pair[0], away: pair[1] })
   }
   return out
 }
@@ -253,12 +272,21 @@ export function gamesFrom(weeks: { week: number; matchups: { roster_id: number; 
  * Remaining strength of schedule: average expected score of a team's remaining opponents, minus
  * the league average expected score. Positive = a harder road.
  */
-export function remainingSOS(rosterId: number, games: Game[], teams: TeamModel[]): { games: number; vsAvg: number } {
+export function remainingSOS(
+  rosterId: number,
+  games: Game[],
+  teams: TeamModel[],
+): { games: number; vsAvg: number } {
   const mean = new Map(teams.map((t) => [t.rosterId, t.mean]))
   const leagueAvg = teams.reduce((a, t) => a + t.mean, 0) / Math.max(1, teams.length)
-  const opps = games.flatMap((g) => (g.home === rosterId ? [g.away] : g.away === rosterId ? [g.home] : []))
+  const opps = games.flatMap((g) =>
+    g.home === rosterId ? [g.away] : g.away === rosterId ? [g.home] : [],
+  )
   if (opps.length === 0) return { games: 0, vsAvg: 0 }
-  return { games: opps.length, vsAvg: opps.reduce((a, o) => a + (mean.get(o) ?? leagueAvg), 0) / opps.length - leagueAvg }
+  return {
+    games: opps.length,
+    vsAvg: opps.reduce((a, o) => a + (mean.get(o) ?? leagueAvg), 0) / opps.length - leagueAvg,
+  }
 }
 
 /* ---------- season setup shared by the Playoff Simulator and the GM ---------- */
@@ -282,7 +310,9 @@ export function prepareSeason(opts: {
   const left = weeks.filter((w) => w.week >= week && w.week <= lastRegular)
   const ids = m.rosters.map((r) => r.roster_id)
   const scores = new Map(ids.map((id) => [id, scoreHistory(done, id).map((h) => h.points)]))
-  const projected = new Map(ids.map((id) => [id, projectedLineup(m, id).reduce((a, s) => a + s.proj, 0)]))
+  const projected = new Map(
+    ids.map((id) => [id, projectedLineup(m, id).reduce((a, s) => a + s.proj, 0)]),
+  )
   const teams = teamModels({ rosterIds: ids, scores, projected, basis })
   const standings: StandingRow[] = m.rosters.map((r) => ({
     rosterId: r.roster_id,
@@ -292,7 +322,10 @@ export function prepareSeason(opts: {
     pf: (r.settings?.fpts ?? 0) + (r.settings?.fpts_decimal ?? 0) / 100,
   }))
   const remaining = gamesFrom(left)
-  const missingWeeks = Array.from({ length: Math.max(0, lastRegular - week + 1) }, (_, i) => week + i).filter(
+  const missingWeeks = Array.from(
+    { length: Math.max(0, lastRegular - week + 1) },
+    (_, i) => week + i,
+  ).filter(
     (w) => !left.some((x) => x.week === w && x.matchups.some((mm) => mm.matchup_id !== null)),
   )
   return { teams, standings, remaining, missingWeeks }
@@ -300,3 +333,27 @@ export function prepareSeason(opts: {
 
 /** Teams that skip round one in a fixed bracket of `n` playoff teams. */
 export const byeCount = (n: number) => (n <= 1 ? 0 : 2 ** Math.ceil(Math.log2(n)) - n)
+
+/* ---------------- trade impact on the playoff race ---------------- */
+
+export interface OddsShift {
+  rosterId: number
+  /** change in expected weekly score (points), e.g. a trade's average weekly lineup change */
+  perWeek: number
+}
+
+/**
+ * Playoff and title odds before and after shifting some teams' expected weekly scores. Both runs use
+ * the same seed (common random numbers), so the difference comes from the shift alone. Assumes the
+ * shift holds for every remaining game.
+ */
+export function oddsWithShift(
+  input: SimInput,
+  shifts: OddsShift[],
+): { before: TeamOdds[]; after: TeamOdds[] } {
+  const teams = input.teams.map((t) => {
+    const s = shifts.find((x) => x.rosterId === t.rosterId)
+    return s ? { ...t, mean: t.mean + s.perWeek } : t
+  })
+  return { before: simulate(input), after: simulate({ ...input, teams }) }
+}

@@ -5,6 +5,7 @@ import {
   MIN_SD,
   mulberry32,
   normal,
+  oddsWithShift,
   rankTeams,
   remainingSOS,
   simulate,
@@ -14,7 +15,13 @@ import {
   type StandingRow,
 } from './playoffs'
 
-const row = (rosterId: number, wins: number, losses: number, pf: number, ties = 0): StandingRow => ({ rosterId, wins, losses, ties, pf })
+const row = (
+  rosterId: number,
+  wins: number,
+  losses: number,
+  pf: number,
+  ties = 0,
+): StandingRow => ({ rosterId, wins, losses, ties, pf })
 const team = (rosterId: number, mean: number, sd = 15) => ({ rosterId, mean, sd })
 
 describe('randomness', () => {
@@ -43,7 +50,11 @@ describe('teamModels', () => {
     [2, [90]], // too few games for its own sd
     [3, []], // no games at all
   ])
-  const projected = new Map([[1, 125], [2, 100], [3, 95]])
+  const projected = new Map([
+    [1, 125],
+    [2, 100],
+    [3, 95],
+  ])
   const ids = [1, 2, 3]
 
   it('uses season average, projection, or a 50/50 blend', () => {
@@ -54,12 +65,17 @@ describe('teamModels', () => {
   it('falls back to the projection for a team with no games', () => {
     expect(teamModels({ rosterIds: ids, scores, projected, basis: 'season' })[2].mean).toBe(95)
   })
-  it('uses the team\'s own volatility with 3+ games, else the pooled league value, never below the floor', () => {
+  it("uses the team's own volatility with 3+ games, else the pooled league value, never below the floor", () => {
     const t = teamModels({ rosterIds: ids, scores, projected, basis: 'blend' })
     expect(t[0].sd).toBeCloseTo(Math.sqrt(500 / 3), 6)
     expect(t[1].sd).toBe(t[2].sd) // both pooled
     expect(t[1].sd).toBeGreaterThanOrEqual(MIN_SD)
-    const flat = teamModels({ rosterIds: [1], scores: new Map([[1, [100, 100, 100, 100]]]), projected: new Map(), basis: 'season' })
+    const flat = teamModels({
+      rosterIds: [1],
+      scores: new Map([[1, [100, 100, 100, 100]]]),
+      projected: new Map(),
+      basis: 'season',
+    })
     expect(flat[0].sd).toBe(MIN_SD)
   })
 })
@@ -74,7 +90,10 @@ describe('bracketOrder', () => {
 
 describe('rankTeams', () => {
   it('orders by wins (ties count half), then points for', () => {
-    const r = rankTeams([row(1, 5, 4, 1000), row(2, 5, 4, 1100), row(3, 6, 3, 900), row(4, 4, 4, 1500, 1)], mulberry32(1))
+    const r = rankTeams(
+      [row(1, 5, 4, 1000), row(2, 5, 4, 1100), row(3, 6, 3, 900), row(4, 4, 4, 1500, 1)],
+      mulberry32(1),
+    )
     expect(r.map((x) => x.rosterId)).toEqual([3, 2, 1, 4]) // 4 has 4.5 effective wins
   })
 })
@@ -84,8 +103,10 @@ describe('simulate', () => {
     teams: [team(1, 120), team(2, 110), team(3, 100), team(4, 90)],
     standings: [row(1, 3, 1, 450), row(2, 2, 2, 430), row(3, 2, 2, 410), row(4, 1, 3, 380)],
     remaining: [
-      { week: 5, home: 1, away: 2 }, { week: 5, home: 3, away: 4 },
-      { week: 6, home: 1, away: 3 }, { week: 6, home: 2, away: 4 },
+      { week: 5, home: 1, away: 2 },
+      { week: 5, home: 3, away: 4 },
+      { week: 6, home: 1, away: 3 },
+      { week: 6, home: 2, away: 4 },
     ],
     playoffTeams: 2,
     sims: 3000,
@@ -113,13 +134,21 @@ describe('simulate', () => {
   })
 
   it('is decided by the standings when no games remain (ties broken by points for)', () => {
-    const o = simulate({ ...base, remaining: [], standings: [row(1, 3, 1, 400), row(2, 3, 1, 450), row(3, 2, 2, 999), row(4, 0, 4, 0)] })
+    const o = simulate({
+      ...base,
+      remaining: [],
+      standings: [row(1, 3, 1, 400), row(2, 3, 1, 450), row(3, 2, 2, 999), row(4, 0, 4, 0)],
+    })
     expect(o.map((t) => t.playoffPct)).toEqual([100, 100, 0, 0])
     expect(o[1].firstSeedPct).toBe(100) // same record, more points
   })
 
   it('makes a dominant team a near-lock', () => {
-    const o = simulate({ ...base, teams: [team(1, 200, 10), team(2, 60, 10), team(3, 60, 10), team(4, 60, 10)], standings: base.standings.map((r) => ({ ...r, wins: 2, losses: 2 })) })
+    const o = simulate({
+      ...base,
+      teams: [team(1, 200, 10), team(2, 60, 10), team(3, 60, 10), team(4, 60, 10)],
+      standings: base.standings.map((r) => ({ ...r, wins: 2, losses: 2 })),
+    })
     expect(o[0].playoffPct).toBeGreaterThan(99)
     expect(o[0].championPct).toBeGreaterThan(95)
   })
@@ -132,7 +161,14 @@ describe('simulate', () => {
   })
 
   it('a forced result is always honored', () => {
-    const o = simulate({ ...base, sims: 500, forced: [{ week: 5, rosterId: 4, result: 'W' }, { week: 6, rosterId: 4, result: 'W' }] })
+    const o = simulate({
+      ...base,
+      sims: 500,
+      forced: [
+        { week: 5, rosterId: 4, result: 'W' },
+        { week: 6, rosterId: 4, result: 'W' },
+      ],
+    })
     expect(o[3].avgWins).toBeCloseTo(3, 9) // 1 win now + both remaining games, every time
   })
 
@@ -154,13 +190,28 @@ describe('simulate', () => {
 
 describe('schedule helpers', () => {
   it('pairs Sleeper matchups by matchup_id and skips byes', () => {
-    const g = gamesFrom([{ week: 7, matchups: [
-      { roster_id: 1, matchup_id: 1 }, { roster_id: 2, matchup_id: 2 }, { roster_id: 3, matchup_id: 1 }, { roster_id: 4, matchup_id: 2 }, { roster_id: 5, matchup_id: null },
-    ] }])
-    expect(g).toEqual([{ week: 7, home: 1, away: 3 }, { week: 7, home: 2, away: 4 }])
+    const g = gamesFrom([
+      {
+        week: 7,
+        matchups: [
+          { roster_id: 1, matchup_id: 1 },
+          { roster_id: 2, matchup_id: 2 },
+          { roster_id: 3, matchup_id: 1 },
+          { roster_id: 4, matchup_id: 2 },
+          { roster_id: 5, matchup_id: null },
+        ],
+      },
+    ])
+    expect(g).toEqual([
+      { week: 7, home: 1, away: 3 },
+      { week: 7, home: 2, away: 4 },
+    ])
   })
   it('measures remaining strength of schedule against the league average', () => {
-    const games: Game[] = [{ week: 5, home: 1, away: 2 }, { week: 6, home: 3, away: 1 }]
+    const games: Game[] = [
+      { week: 5, home: 1, away: 2 },
+      { week: 6, home: 3, away: 1 },
+    ]
     const s = remainingSOS(1, games, [team(1, 100), team(2, 130), team(3, 120), team(4, 90)])
     expect(s.games).toBe(2)
     expect(s.vsAvg).toBeCloseTo(125 - 110) // opponents average 125; league average 110
@@ -171,5 +222,35 @@ describe('schedule helpers', () => {
 describe('byeCount', () => {
   it('gives byes to fill the bracket to a power of two', () => {
     expect([1, 2, 4, 6, 7, 8, 10, 12].map(byeCount)).toEqual([0, 0, 0, 2, 1, 0, 6, 4])
+  })
+})
+
+describe('oddsWithShift', () => {
+  const teams = [1, 2, 3, 4].map((rosterId) => ({ rosterId, mean: 100, sd: 15 }))
+  const standings = teams.map((t) => ({
+    rosterId: t.rosterId,
+    wins: 3,
+    losses: 3,
+    ties: 0,
+    pf: 600,
+  }))
+  const remaining = [7, 8, 9].flatMap((week) => [
+    { week, home: 1, away: 2 },
+    { week, home: 3, away: 4 },
+  ])
+  const input = { teams, standings, remaining, playoffTeams: 2, sims: 3000, seed: 7 }
+  it('raises the shifted team’s odds and lowers a rival’s, from the same random draws', () => {
+    const { before, after } = oddsWithShift(input, [
+      { rosterId: 1, perWeek: 10 },
+      { rosterId: 2, perWeek: -10 },
+    ])
+    const odds = (o: typeof before, id: number) => o.find((t) => t.rosterId === id)!.playoffPct
+    expect(odds(after, 1)).toBeGreaterThan(odds(before, 1))
+    expect(odds(after, 2)).toBeLessThan(odds(before, 2))
+    expect(before).toEqual(simulate(input)) // the baseline is the normal simulation
+  })
+  it('changes nothing without a shift', () => {
+    const { before, after } = oddsWithShift(input, [])
+    expect(after).toEqual(before)
   })
 })

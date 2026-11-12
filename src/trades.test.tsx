@@ -43,6 +43,19 @@ describe('Trade War Room', () => {
     expect(within(result).getByText(/may need more \(estimate\)/)).toBeInTheDocument()
   })
 
+  it("shows how the trade moves both teams' playoff and title odds (model)", async () => {
+    const user = await openAnalyzer()
+    await user.click(within(screen.getByRole('group', { name: 'You give' })).getByRole('checkbox', { name: /R\. Runnerson/ }))
+    await user.click(within(screen.getByRole('group', { name: 'You get' })).getByRole('checkbox', { name: /R\. Runningback/ }))
+    const impact = await screen.findByRole('region', { name: 'Playoff impact' }, { timeout: 15_000 })
+    const row = (name: RegExp) => within(impact).getAllByRole('row').find((r) => name.test(r.textContent ?? ''))!
+    expect(row(/^You/)).toHaveTextContent('−2.0 pts') // -6 over 3 weeks
+    expect(row(/^Rival/)).toHaveTextContent('+2.0 pts')
+    expect(row(/^You/)).toHaveTextContent(/%.*→.*%/)
+    expect(impact).toHaveTextContent(/same random draws before and after/)
+    expect(impact).toHaveTextContent(/separate from trade fairness/)
+  })
+
   it('shows reasoning and copies an offer written for the recipient', async () => {
     const user = await openAnalyzer()
     await user.click(within(screen.getByRole('group', { name: 'You give' })).getByRole('checkbox', { name: /R\. Runnerson/ }))
