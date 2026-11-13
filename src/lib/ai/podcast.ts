@@ -9,13 +9,20 @@ import { unsupportedNumbers, type Fact, type Topic } from './facts'
 export type EpisodeType = 'preview' | 'recap' | 'moves' | 'kickoff'
 export type Format = 'solo' | 'debate'
 export type Tone = 'straight' | 'humor'
-export type Length = 'short' | 'standard'
+export type Length = 'short' | 'standard' | 'extended'
 
 export const EPISODE_TYPES: { id: EpisodeType; label: string; blurb: string }[] = [
-  { id: 'recap', label: 'Weekly Review', blurb: 'Last week around the league, the standings, power rankings and the race.' },
-  { id: 'preview', label: 'The Game Plan', blurb: 'Your matchup, lineup calls, injuries, weather and every matchup this week.' },
-  { id: 'kickoff', label: 'Kickoff Briefing', blurb: 'Last checks before lock: designations, weather, news.' },
-  { id: 'moves', label: 'Waivers & Trades', blurb: 'Pickups, stashes, trade ideas and keeper notes.' },
+  { id: 'recap', label: 'Postgame Report', blurb: 'Last week around the league: results, upsets, the standings, power rankings and the race.' },
+  { id: 'moves', label: 'Waiver War Room', blurb: 'Free agents, waiver priorities, roster weaknesses, trade partners and keeper notes.' },
+  { id: 'preview', label: 'Game Plan Preview', blurb: 'Your matchup, lineup calls, injuries, weather and every matchup this week.' },
+  { id: 'kickoff', label: 'Kickoff Briefing', blurb: 'Last checks before lock: designations, weather, lineup decisions, league storylines.' },
+]
+
+/** Editions. Minutes are targets: the real length depends on how much your league data supports. */
+export const EDITIONS: { id: Length; label: string; minutes: number }[] = [
+  { id: 'short', label: 'Quick', minutes: 5 },
+  { id: 'standard', label: 'Standard', minutes: 10 },
+  { id: 'extended', label: 'Extended', minutes: 20 },
 ]
 
 export interface Host {
@@ -86,11 +93,36 @@ const SPECS: Record<EpisodeType, ChapterSpec[]> = {
   moves: [
     { id: 'waivers', title: 'Waiver targets', topics: ['waivers'], max: 4 },
     { id: 'breakouts', title: 'Breakouts and openings', topics: ['breakout'], max: 3 },
-    { id: 'trades', title: 'Trade ideas', topics: ['trades'], max: 3 },
+    { id: 'partners', title: 'Roster fits and trade partners', topics: ['trades'], max: 2, filter: (f) => f.data?.role === 'partner' },
+    { id: 'trades', title: 'Trade ideas', topics: ['trades'], max: 3, filter: (f) => f.data?.role !== 'partner' && f.data?.role !== 'impact' },
     { id: 'keepers', title: 'Keeper notes', topics: ['keepers'], max: 3 },
     { id: 'news', title: 'News that matters', topics: ['news'], max: 2 },
   ],
 }
+
+/** Extra chapters for the extended (20-minute) edition. */
+const EXTENDED: Record<EpisodeType, ChapterSpec[]> = {
+  recap: [
+    { id: 'season', title: 'Your season so far', topics: ['history'], max: 4 },
+    { id: 'news', title: 'News that matters', topics: ['news'], max: 3 },
+    { id: 'ahead', title: 'This Week Around the League', topics: ['league'], max: 6, filter: (f) => f.data?.segment === 'preview' },
+  ],
+  moves: [
+    { id: 'impact', title: 'What your stars are worth to your lineup', topics: ['trades'], max: 3, filter: (f) => f.data?.role === 'impact' },
+    { id: 'standing', title: 'Where you stand', topics: ['standings', 'playoffs'], max: 3 },
+  ],
+  preview: [
+    { id: 'news', title: 'News that matters', topics: ['news'], max: 3 },
+    { id: 'pickups', title: 'Late pickups', topics: ['waivers'], max: 2 },
+    { id: 'power', title: 'Power rankings check', topics: ['league'], max: 4, filter: (f) => f.data?.segment === 'power' },
+  ],
+  kickoff: [
+    { id: 'league', title: 'League storylines', topics: ['league'], max: 6, filter: (f) => f.data?.segment === 'preview' },
+    { id: 'race', title: 'What it means for the race', topics: ['playoffs'], max: 1 },
+  ],
+}
+
+const SCALE: Record<Length, number> = { short: 0.6, standard: 1, extended: 1.6 }
 
 export interface Outline {
   chapters: Chapter[]
@@ -101,8 +133,8 @@ export interface Outline {
 export function buildOutline(type: EpisodeType, facts: Fact[], length: Length = 'standard'): Outline {
   const chapters: Chapter[] = []
   const skipped: string[] = []
-  const scale = length === 'short' ? 0.6 : 1
-  for (const s of SPECS[type]) {
+  const scale = SCALE[length]
+  for (const s of length === 'extended' ? [...SPECS[type], ...EXTENDED[type]] : SPECS[type]) {
     const pool = facts.filter((f) => s.topics.includes(f.topic) && (s.filter ? s.filter(f) : true))
     const pick = pool.slice(0, Math.max(1, Math.round(s.max * scale)))
     if (pick.length === 0) skipped.push(s.title)
@@ -317,4 +349,4 @@ export const estimateSeconds = (text: string, rate = 1) =>
   Math.max(1.2, text.split(/\s+/).filter(Boolean).length / (2.6 * rate))
 
 /** Episode length options, in lines of script (the built-in writer is driven by the outline). */
-export const TARGET_LINES: Record<Length, number> = { short: 18, standard: 34 }
+export const TARGET_LINES: Record<Length, number> = { short: 18, standard: 34, extended: 64 }

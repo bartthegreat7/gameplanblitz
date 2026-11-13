@@ -1,3 +1,4 @@
+import type { Fact } from './facts'
 import { EPISODE_TYPES, type Line } from './podcast'
 import type { Episode } from './storage'
 
@@ -114,3 +115,14 @@ export function downloadBlob(blob: Blob, name: string) {
 
 export const fileName = (ep: Episode, ext: string) =>
   `war-room-${ep.leagueName}-week-${ep.week}-${ep.type}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '') + `.${ext}`
+
+/** League results quoted in the episode, for the score ticker ("Team A 102.4 def. Team B 101.9"). */
+export function tickerItems(facts: Fact[]): string[] {
+  return facts
+    .filter((f) => f.topic === 'league' && /^Week \d+: /.test(f.text))
+    .map((f) => {
+      const body = f.text.replace(/^Week \d+: /, '')
+      // the result ends at the first period right after a score ("… 101.9."); "def." must not cut it
+      return body.match(/^(.*?\d)\.(?:\s|$)/)?.[1] ?? body.replace(/\.$/, '')
+    })
+}

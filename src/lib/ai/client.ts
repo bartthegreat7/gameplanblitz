@@ -157,8 +157,9 @@ export async function getUsage(token: string, signal?: AbortSignal): Promise<Usa
 export interface PodcastSubscription {
   username: string
   leagueId: string
-  shows: ('recap' | 'preview' | 'kickoff')[]
-  length: 'short' | 'standard'
+  shows: ('recap' | 'moves' | 'preview' | 'kickoff')[]
+  length: 'short' | 'standard' | 'extended'
+  hour?: number
   format: 'solo' | 'debate'
   tone: 'straight' | 'humor'
   /** minutes to add to UTC for local time (the Worker schedules shows in the user's time zone) */

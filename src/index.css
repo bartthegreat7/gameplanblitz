@@ -151,11 +151,50 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
+/* the Sports Desk broadcast view: always a dark "TV picture", in both themes */
+.bc-stage {
+  --bc-bg: #07111f;
+  --bc-panel: #0d2135;
+  --bc-blue: #1468d1;
+  --bc-light: #65b8ff;
+  --bc-amber: #f6b73c;
+  --bc-ink: #f6f9ff;
+  color: var(--bc-ink);
+}
+@keyframes bc-card {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+@keyframes bc-graphic {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+@keyframes bc-ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.bc-card {
+  animation: bc-card 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.bc-graphic {
+  animation: bc-graphic 360ms ease-out;
+}
+.bc-ticker {
+  animation: bc-ticker 40s linear infinite;
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+  .bc-ticker {
+    animation: none !important;
   }
 }

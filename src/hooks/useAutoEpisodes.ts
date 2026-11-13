@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { buildEpisode } from '../lib/ai/autoEpisode'
 import { aiConfigured, fetchServerEpisodes } from '../lib/ai/client'
-import { dueShows } from '../lib/ai/series'
+import { datesOfWeek, DUE_HOUR, dueShows } from '../lib/ai/series'
 import { listEpisodes, newId, saveEpisode } from '../lib/ai/storage'
 import { getSchedule } from '../lib/sleeper'
 import { useAppStore } from '../store/app'
@@ -15,8 +15,8 @@ const localDay = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
 /**
- * Opted-in automatic shows, prepared when GamePlanBitz is open: if this week's Weekly Review, Game
- * Plan or Kickoff Briefing is due and missing, it is written from the fact sheet and saved to the
+ * Opted-in automatic shows, prepared when GamePlanBitz is open: if this week's Postgame Report, Waiver
+ * War Room, Game Plan Preview or Kickoff Briefing is due and missing, it is written from the fact sheet and saved to the
  * library (one per show per week). This is not a background scheduler: with the site closed, only the
  * AI Worker's scheduled job can prepare episodes. Returns a counter that changes when episodes are added.
  */
@@ -34,7 +34,8 @@ export function useAutoEpisodes(data: Ready, sheet: FactSheet) {
   useEffect(() => {
     if (!ready || busy.current) return
     busy.current = true
-    const gameDates = (scheduleQ.data ?? []).filter((g) => g.week === week).map((g) => g.date)
+    const gameDates = datesOfWeek(scheduleQ.data ?? [], week)
+    const prevGameDates = datesOfWeek(scheduleQ.data ?? [], week - 1)
     void (async () => {
       try {
         let eps = await listEpisodes(league.league_id)
@@ -56,7 +57,7 @@ export function useAutoEpisodes(data: Ready, sheet: FactSheet) {
         // any episode of the show this week counts, made by hand or automatically
         const existing = new Set(eps.filter((e) => e.week === week && (e.season ?? season) === season).map((e) => e.type))
         const now = new Date()
-        const due = dueShows({ gameDates, today: localDay(now), hour: now.getHours(), enabled: prefs.shows, existing })
+        const due = dueShows({ gameDates, prevGameDates, today: localDay(now), hour: now.getHours(), enabled: prefs.shows, existing, dueHour: prefs.hour ?? DUE_HOUR })
         let added = 0
         for (const type of due) {
           const ep = buildEpisode({
@@ -68,7 +69,7 @@ export function useAutoEpisodes(data: Ready, sheet: FactSheet) {
             leagueName: league.name,
             season,
             week,
-            length: type === 'recap' ? prefs.length : 'short',
+            length: type === 'kickoff' ? 'short' : prefs.length,
             format: prefs.format,
             tone: prefs.tone,
             now: now.getTime(),

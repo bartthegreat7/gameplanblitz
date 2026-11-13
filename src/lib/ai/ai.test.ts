@@ -15,7 +15,8 @@ import {
   type NameEntry,
 } from './assistant'
 import { buildFacts, numbersIn, unsupportedNumbers, type Fact, type FactInput } from './facts'
-import { buildOutline, checkScript, HOSTS, speakable, writeScript } from './podcast'
+import { tickerItems } from './episode'
+import { buildOutline, checkScript, EDITIONS, HOSTS, speakable, writeScript } from './podcast'
 import { canSpend, LOCAL_LIMITS, record, remainingToday } from './quota'
 
 /* League: my RBs Rusher Runnerson (8, Questionable) and Backup Benchwood (3), WR Wideout
@@ -372,5 +373,28 @@ describe('local AI allowance', () => {
     expect(remainingToday('chat', d1)).toBe(1)
     expect(canSpend('chat', 2, d1)).toBe(false)
     expect(remainingToday('chat', new Date(2026, 10, 13, 9))).toBe(LOCAL_LIMITS.chat)
+  })
+})
+
+describe('broadcast view and editions', () => {
+  it('builds the score ticker from the league results quoted in an episode', () => {
+    const f = (topic: Fact['topic'], text: string) => ({ id: 'F1', topic, kind: 'fact', text, source: '', asOf: null, players: [], to: '' }) as Fact
+    expect(
+      tickerItems([
+        f('league', 'Week 4: Gridiron Gang 102.4 def. Rival 101.9. Rusher Runnerson led Gridiron Gang with 30.0.'),
+        f('league', 'Week 4 highest score: Gridiron Gang with 102.4.'),
+        f('recap', 'Week 4: you won.'),
+      ]),
+    ).toEqual(['Gridiron Gang 102.4 def. Rival 101.9'])
+  })
+
+  it('offers 5, 10 and 20 minute editions, and the extended one adds chapters', () => {
+    expect(EDITIONS.map((e) => e.minutes)).toEqual([5, 10, 20])
+    const facts = [
+      { id: 'F1', topic: 'recap', kind: 'fact', text: 'You won.', source: '', asOf: null, players: [], to: '' },
+      { id: 'F2', topic: 'history', kind: 'fact', text: 'Your moves this season: 1 trade.', source: '', asOf: null, players: [], to: '' },
+    ] as Fact[]
+    expect(buildOutline('recap', facts, 'standard').chapters.map((c) => c.id)).toEqual(['result'])
+    expect(buildOutline('recap', facts, 'extended').chapters.map((c) => c.id)).toEqual(['result', 'season'])
   })
 })

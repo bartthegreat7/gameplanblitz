@@ -117,12 +117,12 @@ describe('Game Day Live', () => {
 })
 
 describe('automatic weekly shows', () => {
-  it('prepares the due Weekly Review once when opted in, and shows the briefing banner', async () => {
+  it('prepares the due Postgame Report and Waiver War Room once when opted in, and shows the briefing banner', async () => {
     const day = (n: number) => {
       const d = new Date(Date.now() + n * 86_400_000)
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     }
-    // Week 5's first game is tomorrow: the Weekly Review was due yesterday, The Game Plan is not due yet
+    // Week 5's first game is tomorrow: the Postgame Report (Monday) and Waiver War Room (Tuesday) are due, the Game Plan Preview is not
     mockFetch({
       ...routes,
       '/schedule/nfl/regular/2025': SCHEDULE.map((g) => (g.week === 5 ? { ...g, date: g.game_id === 'g1' ? day(1) : day(3) } : g)),
@@ -133,11 +133,16 @@ describe('automatic weekly shows', () => {
     renderApp()
     const pod = await screen.findByRole('region', { name: 'AI Podcast' }, SLOW)
     expect(await within(pod).findByText('Your Weekly Fantasy Briefing Is Ready', {}, { timeout: 25_000 })).toBeInTheDocument()
-    expect(pod).toHaveTextContent('Weekly Review · Week 5')
+    expect(pod).toHaveTextContent(/(Postgame Report|Waiver War Room) · Week 5/)
     const eps = await listEpisodes('L1')
-    expect(eps.map((e) => [e.type, e.week, e.auto])).toEqual([['recap', 5, true]])
-    expect(eps[0].lines.some((l) => l.chapter === 'around')).toBe(true) // Around the League segment
-    expect(eps[0].lines[0].kind).toBe('disclosure')
+    expect(eps.map((e) => [e.type, e.week, e.auto]).sort()).toEqual([
+      ['moves', 5, true],
+      ['recap', 5, true],
+    ])
+    const recap = eps.find((e) => e.type === 'recap')!
+    expect(recap.lines.some((l) => l.chapter === 'around')).toBe(true) // Around the League segment
+    expect(recap.lines[0].kind).toBe('disclosure')
+    expect(eps.find((e) => e.type === 'moves')!.lines.some((l) => l.chapter === 'waivers')).toBe(true)
   }, 40_000)
 
   it('does nothing until the user opts in', async () => {

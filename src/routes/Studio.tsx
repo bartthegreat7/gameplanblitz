@@ -27,6 +27,7 @@ import {
   writeScript,
   type EpisodeType,
   type Format,
+  EDITIONS,
   type Length,
   type Line,
   type Outline,
@@ -283,7 +284,7 @@ function StudioPage({ data }: { data: Ready }) {
               <div className="mb-5 flex flex-wrap gap-4">
                 <Choice label="Hosts" value={format} onChange={setFormat} options={[{ value: 'solo', label: 'One host' }, { value: 'debate', label: 'Two-host debate' }]} />
                 <Choice label="Tone" value={tone} onChange={setTone} options={[{ value: 'straight', label: 'Straight analysis' }, { value: 'humor', label: 'Humorous' }]} />
-                <Choice label="Length" value={length} onChange={setLength} options={[{ value: 'short', label: 'Short' }, { value: 'standard', label: 'Standard' }]} />
+                <Choice label="Edition" value={length} onChange={setLength} options={EDITIONS.map((e) => ({ value: e.id, label: `${e.label} · ~${e.minutes} min` }))} />
                 <div>
                   <div className="text-ink-3 mb-1.5 text-xs font-extrabold tracking-wide uppercase">Script writer</div>
                   <div role="group" aria-label="Script writer" className="border-line bg-panel inline-flex rounded-xl border p-0.5 text-sm font-bold">

@@ -156,6 +156,15 @@ describe('Podcast Studio', () => {
     await user.click(within(player).getByRole('button', { name: 'Play' }))
     expect(spoken[0]).toMatch(/^Welcome to The War Room for Test League, Week 5\./)
     expect(within(player).getByRole('button', { name: 'Pause' })).toBeInTheDocument()
+    // the broadcast view: network bug, AI label, the fictional host in the lower third
+    const stage = within(player).getByRole('figure', { name: 'Broadcast view' })
+    expect(stage).toHaveTextContent('GPB Sports Desk')
+    expect(stage).toHaveTextContent('AI-generated')
+    await user.click(within(player).getByRole('button', { name: /The matchup/ }))
+    expect(stage).toHaveTextContent(/(Jordan|Casey)\s*AI host/)
+    expect(stage).toHaveTextContent('The matchup')
+    await user.click(within(player).getByRole('button', { name: 'Hide broadcast view' }))
+    expect(within(player).queryByRole('figure', { name: 'Broadcast view' })).not.toBeInTheDocument()
     // jump to a chapter: speech restarts at that chapter's first line
     await user.click(within(player).getByRole('button', { name: /The matchup/ }))
     expect(spoken.at(-1)).toMatch(/^(First, the matchup\.|Start with who you’re facing\.)$/)
@@ -164,10 +173,10 @@ describe('Podcast Studio', () => {
 
     // library: save, then delete with confirmation
     const lib = screen.getByRole('region', { name: 'Episode library' })
-    expect(within(lib).getByText('The Game Plan · Week 5')).toBeInTheDocument()
+    expect(within(lib).getByText('Game Plan Preview · Week 5')).toBeInTheDocument()
     await user.click(within(player).getByRole('button', { name: 'Save episode' }))
     expect(await within(lib).findByRole('button', { name: /Saved \(1\)/ })).toBeInTheDocument()
-    await user.click(within(lib).getByRole('button', { name: 'Delete The Game Plan · Week 5' }))
+    await user.click(within(lib).getByRole('button', { name: 'Delete Game Plan Preview · Week 5' }))
     await user.click(within(lib).getByRole('button', { name: 'Delete' }))
     expect(await within(lib).findByText(/No episodes yet/)).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Episode player' })).not.toBeInTheDocument()

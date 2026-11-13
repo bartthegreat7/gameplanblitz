@@ -2,7 +2,8 @@ import { CalendarClock } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { AiError, aiConfigured, podcastSubscribe, podcastUnsubscribe } from '../../lib/ai/client'
-import { SHOWS } from '../../lib/ai/series'
+import { EDITIONS } from '../../lib/ai/podcast'
+import { HOUR_CHOICES, SHOWS } from '../../lib/ai/series'
 import { useAppStore, type PodcastPrefs } from '../../store/app'
 import { CARD, PAD } from '../dashboard/styles'
 
@@ -26,7 +27,7 @@ export function AutoShows({ leagueId }: { leagueId: string }) {
   const token = useAppStore((s) => s.aiToken)
   const [server, setServer] = useState<string | null>(null)
   const was = useRef(prefs.auto)
-  const key = [prefs.auto, prefs.shows.join(), prefs.length, prefs.format, prefs.tone, leagueId, username, token].join('|')
+  const key = [prefs.auto, prefs.shows.join(), prefs.length, prefs.format, prefs.tone, prefs.hour, leagueId, username, token].join('|')
   // keep the Worker's subscription in step with these settings (only when a Worker is configured)
   useEffect(() => {
     if (!aiConfigured() || !username) return
@@ -36,7 +37,7 @@ export function AutoShows({ leagueId }: { leagueId: string }) {
     const t = setTimeout(() => {
       const job = prefs.auto
         ? podcastSubscribe(
-            { username, leagueId, shows: prefs.shows, length: prefs.length, format: prefs.format, tone: prefs.tone, tzOffsetMinutes: -new Date().getTimezoneOffset() },
+            { username, leagueId, shows: prefs.shows, length: prefs.length, hour: prefs.hour, format: prefs.format, tone: prefs.tone, tzOffsetMinutes: -new Date().getTimezoneOffset() },
             token,
           ).then(() => 'Scheduled on the AI server: episodes are prepared even when this site is closed.')
         : podcastUnsubscribe(username, leagueId, token).then(() => 'Removed from the AI server, with its stored episodes.')
@@ -73,18 +74,31 @@ export function AutoShows({ leagueId }: { leagueId: string }) {
               <label className="flex items-center gap-2.5">
                 <input type="checkbox" checked={prefs.shows.includes(s.type as never)} onChange={() => toggleShow(s.type as PodcastPrefs['shows'][number])} className="accent-accent size-4" />
                 <span className="min-w-0 flex-1">
-                  <b>{s.series}</b>
-                  <span className="text-ink-3"> · {s.when}</span>
+                  <b>
+                    {s.day}: {s.series}
+                  </b>
+                  <span className="text-ink-3 block text-xs">Comes out {s.when}.</span>
                 </span>
               </label>
             </li>
           ))}
         </ul>
         <div className="flex flex-wrap gap-2">
-          <Choice label="Length" value={prefs.length} options={[['short', 'Short'], ['standard', 'Standard']]} onChange={(v) => set({ length: v })} />
+          <Choice label="Edition" value={prefs.length} options={EDITIONS.map((e) => [e.id, `${e.label} ~${e.minutes} min`] as [typeof e.id, string])} onChange={(v) => set({ length: v })} />
           <Choice label="Hosts" value={prefs.format} options={[['solo', 'One host'], ['debate', 'Two hosts']]} onChange={(v) => set({ format: v })} />
           <Choice label="Style" value={prefs.tone} options={[['straight', 'Analytical'], ['humor', 'Fun + trash talk']]} onChange={(v) => set({ tone: v })} />
         </div>
+        <label className="flex items-center gap-2.5 text-sm">
+          Prepare from
+          <select value={prefs.hour ?? 6} onChange={(e) => set({ hour: Number(e.target.value) })} className="border-line bg-card-2 min-h-9 rounded-lg border px-2">
+            {HOUR_CHOICES.map((h) => (
+              <option key={h} value={h}>
+                {h === 12 ? '12 PM' : `${h} AM`}
+              </option>
+            ))}
+          </select>
+          on the day a show is due (your time)
+        </label>
         <label className="flex items-center gap-2.5 text-sm">
           <input type="checkbox" checked={prefs.banner} onChange={(e) => set({ banner: e.target.checked })} className="accent-accent size-4" />
           Show &ldquo;Your Weekly Fantasy Briefing Is Ready&rdquo; on the dashboard
@@ -96,9 +110,10 @@ export function AutoShows({ leagueId }: { leagueId: string }) {
         </p>
       )}
       <p className="text-ink-3 text-xs">
-        Shows follow the NFL schedule&apos;s dates: the Weekly Review two days before the week&apos;s first game, The Game Plan on its
-        first game day, the Kickoff Briefing the morning of the first weekend games. Sleeper publishes no kickoff times or official
-        inactives, so the briefing never claims them. Private by default; delete episodes any time.
+        Shows follow the NFL schedule&apos;s dates, so Thursday, Saturday, holiday and international games move them. The Kickoff
+        Briefing is skipped if it can&apos;t be ready on its day. Editions are targets: an episode is as long as your league data supports.
+        Sleeper publishes no kickoff times or official inactives, so no show claims them. Failed episodes are retried up to 3 times on the
+        AI server; each show is made once per week. Private by default; delete episodes any time.
       </p>
     </section>
   )

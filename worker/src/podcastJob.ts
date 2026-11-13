@@ -1,6 +1,6 @@
 import { buildEpisode } from '../../src/lib/ai/autoEpisode'
 import type { EpisodeType, Format, Length, Tone } from '../../src/lib/ai/podcast'
-import { dueShows, episodeKey } from '../../src/lib/ai/series'
+import { datesOfWeek, DUE_HOUR, dueShows, episodeKey, HOUR_CHOICES } from '../../src/lib/ai/series'
 import { serverFacts, type SleeperBundle } from '../../src/lib/ai/serverEpisode'
 import type { Episode } from '../../src/lib/ai/storage'
 import {
@@ -37,6 +37,8 @@ export interface Subscription {
   username: string
   shows: EpisodeType[]
   length: Length
+  /** local hour from which shows are prepared (4-12) */
+  hour?: number
   format: Format
   tone: Tone
   /** minutes to add to UTC for the subscriber's local time */
@@ -69,7 +71,7 @@ export const jobKey = (s: Pick<Subscription, 'leagueId' | 'userId'>, season: str
 export const indexKey = (leagueId: string, userId: string) => `eps:${leagueId}:${userId}`
 export const episodeStoreKey = (leagueId: string, userId: string, id: string) => `ep:${leagueId}:${userId}:${id}`
 
-const SHOW_TYPES: EpisodeType[] = ['recap', 'preview', 'kickoff']
+const SHOW_TYPES: EpisodeType[] = ['recap', 'moves', 'preview', 'kickoff']
 
 /** Validates a subscription request (the Worker resolves the Sleeper user and league membership). */
 export function validateSubscription(x: unknown): Omit<Subscription, 'userId' | 'createdAt'> {
@@ -89,7 +91,8 @@ export function validateSubscription(x: unknown): Omit<Subscription, 'userId' | 
     username: str('username', 60),
     leagueId: str('leagueId', 40),
     shows: [...new Set(shows)],
-    length: pick('length', ['short', 'standard'], 'standard'),
+    length: pick('length', ['short', 'standard', 'extended'], 'standard'),
+    hour: typeof o.hour === 'number' && HOUR_CHOICES.includes(o.hour) ? o.hour : DUE_HOUR,
     format: pick('format', ['solo', 'debate'], 'debate'),
     tone: pick('tone', ['straight', 'humor'], 'straight'),
     tzOffsetMinutes: Math.round(tz),
@@ -161,7 +164,8 @@ export async function runScheduled(kv: JobKV, now: number, f: typeof fetch = fet
   const state = await get<NflState>(f, `${SLEEPER}/v1/state/nfl`)
   if (state.season_type !== 'regular') return []
   const schedule = await get<ScheduleGame[]>(f, `${SLEEPER}/schedule/nfl/regular/${state.season}`)
-  const gameDates = schedule.filter((g) => g.week === state.week).map((g) => g.date)
+  const gameDates = datesOfWeek(schedule, state.week)
+  const prevGameDates = datesOfWeek(schedule, state.week - 1)
   let players: PlayerMap | null = null
   const bundles = new Map<string, Promise<SleeperBundle>>()
   const results: JobResult[] = []
@@ -172,7 +176,7 @@ export async function runScheduled(kv: JobKV, now: number, f: typeof fetch = fet
     const hour = local.getUTCHours()
     const existing = new Set<EpisodeType>()
     for (const t of sub.shows) if ((await readJson<JobRecord>(kv, jobKey(sub, state.season, state.week, t)))?.state === 'done') existing.add(t)
-    const due = dueShows({ gameDates, today, hour, enabled: sub.shows, existing })
+    const due = dueShows({ gameDates, prevGameDates, today, hour, enabled: sub.shows, existing, dueHour: sub.hour ?? DUE_HOUR })
     for (const type of due) {
       const key = jobKey(sub, state.season, state.week, type)
       const job = await readJson<JobRecord>(kv, key)
@@ -201,7 +205,7 @@ export async function runScheduled(kv: JobKV, now: number, f: typeof fetch = fet
           leagueName: bundle.league.name,
           season: state.season,
           week: state.week,
-          length: type === 'recap' ? sub.length : 'short',
+          length: type === 'kickoff' ? 'short' : sub.length,
           format: sub.format,
           tone: sub.tone,
           now,

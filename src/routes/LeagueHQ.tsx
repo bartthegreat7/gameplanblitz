@@ -412,7 +412,7 @@ function HqView({ data }: { data: Ready }) {
           {[
             { to: '/scores', label: 'Scores Around the League', blurb: 'Weekly scores, awards, storylines and a shareable recap.' },
             { to: '/playoffs', label: 'Playoff Simulator', blurb: 'Playoff and title odds for every team.' },
-            { to: '/studio', label: 'The Fantasy War Room', blurb: 'Weekly Review and The Game Plan podcast episodes.' },
+            { to: '/studio', label: 'The Fantasy War Room', blurb: 'Postgame Report, Waiver War Room, Game Plan Preview and Kickoff Briefing.' },
           ].map((x) => (
             <li key={x.to}>
               <Link to={x.to} className="border-line/70 bg-card-2/60 hover:bg-raised flex h-full flex-col rounded-xl border p-3">

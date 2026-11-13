@@ -14,7 +14,7 @@ import {
 } from './podcastJob'
 
 /* Runs the scheduled job in-process: no browser, an in-memory KV, Sleeper served from fixtures.
-   Week 5: games Thu 2025-10-09 and Sun 2025-10-12, so the Weekly Review is due Tue 2025-10-07. */
+   Week 5: games Thu 2025-10-09 and Sun 2025-10-12, so the Postgame Report is due Mon 2025-10-06 and the Waiver War Room Tue 2025-10-07. */
 
 class MemKV implements JobKV {
   data = new Map<string, string>()
@@ -61,6 +61,7 @@ function sleeper(over: Record<string, () => Response> = {}, seasonType = 'regula
       { player_id: 'rb1', stats: { rec: 8 } },
       { player_id: 'wr1', stats: { rec: 10 } },
       { player_id: 'opp1', stats: { rec: 6 } },
+      { player_id: 'fa1', stats: { rec: 12 } }, // a free agent who would start over rb1
     ],
     '/v1/league/L1/matchups/1': week(90, 80),
     '/v1/league/L1/matchups/2': week(95, 85),
@@ -91,7 +92,7 @@ const SUB: Subscription = {
   createdAt: 0,
 }
 const at = (iso: string) => Date.parse(iso)
-const TUE_8AM_ET = at('2025-10-07T12:00:00Z')
+const MON_8AM_ET = at('2025-10-06T12:00:00Z')
 
 async function subscribed() {
   const kv = new MemKV()
@@ -100,57 +101,68 @@ async function subscribed() {
 }
 
 describe('scheduled Fantasy War Room job', () => {
-  it('generates the due Weekly Review with no browser, stores it privately and never duplicates it', async () => {
+  it('generates the due Postgame Report with no browser, stores it privately and never duplicates it', async () => {
     const kv = await subscribed()
     const { f } = sleeper()
-    expect(await runScheduled(kv, TUE_8AM_ET, f)).toEqual([{ key: jobKey(SUB, '2025', 5, 'recap'), status: 'generated' }])
+    expect(await runScheduled(kv, MON_8AM_ET, f)).toEqual([{ key: jobKey(SUB, '2025', 5, 'recap'), status: 'generated' }])
     const eps = await listEpisodesFor(kv, 'L1', 'u1')
     expect(eps).toHaveLength(1)
-    expect(eps[0]).toMatchObject({ type: 'recap', week: 5, season: '2025', auto: true, title: 'Weekly Review · Week 5' })
+    expect(eps[0]).toMatchObject({ type: 'recap', week: 5, season: '2025', auto: true, title: 'Postgame Report · Week 5' })
     expect(eps[0].lines[0].kind).toBe('disclosure')
     expect(eps[0].lines.some((l) => l.chapter === 'around' && l.text.includes('Gridiron Gang 102.4 def. Rival 101.9'))).toBe(true)
     // the next hourly run does nothing: the job is done
-    expect(await runScheduled(kv, TUE_8AM_ET + 3_600_000, f)).toEqual([])
+    expect(await runScheduled(kv, MON_8AM_ET + 3_600_000, f)).toEqual([])
     expect(JSON.parse((await kv.get(indexKey('L1', 'u1')))!)).toHaveLength(1)
-    expect(await kv.get(`cost:2025-10-07:episodes`)).toBe('1')
+    expect(await kv.get(`cost:2025-10-06:episodes`)).toBe('1')
   })
 
-  it('waits for the due hour in the subscriber’s time zone, then adds The Game Plan on Thursday', async () => {
+  it('waits for the due hour in the subscriber’s time zone, then adds the Game Plan Preview on Thursday', async () => {
     const kv = await subscribed()
     const { f } = sleeper()
-    expect(await runScheduled(kv, at('2025-10-07T09:00:00Z'), f)).toEqual([]) // 5 AM Eastern
-    await runScheduled(kv, TUE_8AM_ET, f)
+    expect(await runScheduled(kv, at('2025-10-06T09:00:00Z'), f)).toEqual([]) // 5 AM Eastern
+    await runScheduled(kv, MON_8AM_ET, f)
     const thu = await runScheduled(kv, at('2025-10-09T11:00:00Z'), f)
     expect(thu.map((r) => r.key)).toEqual([jobKey(SUB, '2025', 5, 'preview')])
     expect((await listEpisodesFor(kv, 'L1', 'u1')).map((e) => e.type)).toEqual(['preview', 'recap'])
   })
 
+  it('makes the Tuesday Waiver War Room server-side from free agents who improve this week’s lineup', async () => {
+    const kv = new MemKV()
+    await kv.put(subKey('L1', 'u1'), JSON.stringify({ ...SUB, shows: ['moves'], hour: 7 }))
+    const { f } = sleeper()
+    expect(await runScheduled(kv, at('2025-10-07T11:00:00Z'), f)).toEqual([]) // 6 AM local (UTC-5): before the chosen 7 AM
+    expect(await runScheduled(kv, at('2025-10-07T12:00:00Z'), f)).toEqual([{ key: jobKey(SUB, '2025', 5, 'moves'), status: 'generated' }])
+    const [ep] = await listEpisodesFor(kv, 'L1', 'u1')
+    expect(ep).toMatchObject({ type: 'moves', title: 'Waiver War Room · Week 5' })
+    expect(ep.outline.map((c) => c.id)).toContain('waivers')
+  })
+
   it('records failures and retries on a later run, giving up after the attempt limit', async () => {
     const kv = await subscribed()
     const broken = sleeper({ '/v1/league/L1/rosters': () => new Response('down', { status: 503 }) })
-    const first = await runScheduled(kv, TUE_8AM_ET, broken.f)
+    const first = await runScheduled(kv, MON_8AM_ET, broken.f)
     expect(first[0]).toMatchObject({ status: 'failed', error: 'Sleeper 503 for /v1/league/L1/rosters' })
-    const ok = await runScheduled(kv, TUE_8AM_ET + 3_600_000, sleeper().f)
+    const ok = await runScheduled(kv, MON_8AM_ET + 3_600_000, sleeper().f)
     expect(ok[0].status).toBe('generated')
 
     const kv2 = await subscribed()
-    for (let i = 0; i < MAX_ATTEMPTS; i++) await runScheduled(kv2, TUE_8AM_ET + i * 3_600_000, broken.f)
-    expect((await runScheduled(kv2, TUE_8AM_ET + 9 * 3_600_000, sleeper().f))[0].status).toBe('gave-up')
+    for (let i = 0; i < MAX_ATTEMPTS; i++) await runScheduled(kv2, MON_8AM_ET + i * 3_600_000, broken.f)
+    expect((await runScheduled(kv2, MON_8AM_ET + 9 * 3_600_000, sleeper().f))[0].status).toBe('gave-up')
   })
 
   it('skips a job another run is working on, and does nothing out of season or without subscribers', async () => {
     const kv = await subscribed()
-    await kv.put(jobKey(SUB, '2025', 5, 'recap'), JSON.stringify({ state: 'running', attempts: 1, at: TUE_8AM_ET - 60_000 }))
-    expect((await runScheduled(kv, TUE_8AM_ET, sleeper().f))[0].status).toBe('skipped-running')
-    expect(await runScheduled(await subscribed(), TUE_8AM_ET, sleeper({}, 'off').f)).toEqual([])
+    await kv.put(jobKey(SUB, '2025', 5, 'recap'), JSON.stringify({ state: 'running', attempts: 1, at: MON_8AM_ET - 60_000 }))
+    expect((await runScheduled(kv, MON_8AM_ET, sleeper().f))[0].status).toBe('skipped-running')
+    expect(await runScheduled(await subscribed(), MON_8AM_ET, sleeper({}, 'off').f)).toEqual([])
     const empty = sleeper()
-    expect(await runScheduled(new MemKV(), TUE_8AM_ET, empty.f)).toEqual([])
+    expect(await runScheduled(new MemKV(), MON_8AM_ET, empty.f)).toEqual([])
     expect(empty.calls).toEqual([]) // no subscribers: not even a Sleeper request
   })
 
   it('opting out removes the subscription and every stored episode', async () => {
     const kv = await subscribed()
-    await runScheduled(kv, TUE_8AM_ET, sleeper().f)
+    await runScheduled(kv, MON_8AM_ET, sleeper().f)
     await unsubscribe(kv, 'L1', 'u1')
     expect([...kv.data.keys()].filter((k) => k.startsWith('sub:') || k.startsWith('ep:') || k.startsWith('eps:'))).toEqual([])
     expect(await runScheduled(kv, at('2025-10-09T11:00:00Z'), sleeper().f)).toEqual([])

@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 
 import type { KeeperRules } from '../lib/analytics/keepers'
 import type { GmMemory } from '../lib/ai/gmFacts'
+import type { EpisodeType, Length } from '../lib/ai/podcast'
 
 export type Theme = 'light' | 'dark'
 
@@ -65,8 +66,10 @@ interface AppState {
 export interface PodcastPrefs {
   /** prepare this week's shows automatically (explicit opt-in) */
   auto: boolean
-  shows: ('recap' | 'preview' | 'kickoff')[]
-  length: 'short' | 'standard'
+  shows: EpisodeType[]
+  length: Length
+  /** local hour from which a due show is prepared */
+  hour: number
   format: 'solo' | 'debate'
   /** humor adds good-natured, number-free league ribbing */
   tone: 'straight' | 'humor'
@@ -74,7 +77,7 @@ export interface PodcastPrefs {
   banner: boolean
 }
 
-export const DEFAULT_PODCAST: PodcastPrefs = { auto: false, shows: ['recap', 'preview'], length: 'standard', format: 'debate', tone: 'straight', banner: true }
+export const DEFAULT_PODCAST: PodcastPrefs = { auto: false, shows: ['recap', 'moves', 'preview'], length: 'standard', format: 'debate', tone: 'straight', banner: true, hour: 6 }
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -115,7 +118,7 @@ export const useAppStore = create<AppState>()(
       },
       setAi: (p) => set(p),
       podcast: DEFAULT_PODCAST,
-      setPodcast: (p) => set({ podcast: { ...get().podcast, ...p } }),
+      setPodcast: (p) => set({ podcast: { ...DEFAULT_PODCAST, ...get().podcast, ...p } }),
       gmMemory: {},
       setGmMemory: (leagueId, mem) => {
         const next = { ...get().gmMemory }

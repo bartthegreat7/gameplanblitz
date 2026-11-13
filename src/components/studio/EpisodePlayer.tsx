@@ -7,6 +7,7 @@ import { relTime } from '../../lib/format'
 import { FactRow } from '../ai/FactRow'
 import { CARD, PAD } from '../dashboard/styles'
 import { AiBadge } from './AiBadge'
+import { BroadcastStage } from './BroadcastStage'
 import { usePlayback } from './usePlayback'
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2]
@@ -49,6 +50,7 @@ export function EpisodePlayer({
     setSpeed,
   } = usePlayback(ep)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [broadcast, setBroadcast] = useState(true)
 
   const byId = new Map(ep.facts.map((f) => [f.id, f]))
   const cited = [...new Set(ep.lines.flatMap((l) => l.cite))].map((id) => byId.get(id)).filter(Boolean)
@@ -66,6 +68,17 @@ export function EpisodePlayer({
         <AiBadge engine={ep.audio?.engine ?? null} writer={ep.writer} />
       </div>
 
+      <div className="grid gap-2">
+        <button
+          type="button"
+          aria-pressed={broadcast}
+          onClick={() => setBroadcast(!broadcast)}
+          className="border-line text-ink-2 hover:bg-raised justify-self-start rounded-lg border px-3 py-1.5 text-xs font-bold"
+        >
+          {broadcast ? 'Hide broadcast view' : 'Show broadcast view'}
+        </button>
+        {broadcast && <BroadcastStage ep={ep} index={index} chapterTitle={chapterNow?.title ?? null} />}
+      </div>
       {canPlay ? (
         <div className="border-line/60 bg-bg/40 grid gap-3 rounded-2xl border p-4">
           <div className="flex items-center gap-2">
