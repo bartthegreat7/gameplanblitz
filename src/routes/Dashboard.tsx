@@ -10,6 +10,7 @@ import { ProjNotice } from '../components/cards/shared'
 import { ActionItems } from '../components/command/ActionItems'
 import { BreakoutRadar } from '../components/command/BreakoutRadar'
 import { CommandHeader } from '../components/command/CommandHeader'
+import { ScoreStrip } from '../components/league/ScoreStrip'
 import { GameDayStrip } from '../components/command/GameDayStrip'
 import { GmPanel } from '../components/command/GmPanel'
 import { LineupCompact } from '../components/command/LineupCompact'
@@ -142,6 +143,7 @@ function DashboardView({ data }: { data: Ready }) {
       <div className="-mt-1 mb-3 grid grid-cols-1 gap-3">
         <CommandHeader tab={tab} onTab={setTab} />
         <ProjNotice data={data} />
+        {tab === 'overview' && <ScoreStrip data={data} />}
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_21rem] 2xl:grid-cols-[minmax(0,1fr)_23.5rem] 3xl:grid-cols-[minmax(0,1fr)_26rem] gap-4">
         <div className="@container/main grid min-w-0 content-start gap-4">

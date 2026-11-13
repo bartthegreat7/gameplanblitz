@@ -123,6 +123,7 @@ export const NAV_SECTIONS: NavSection[] = [
     label: 'Media & Live',
     entries: [
       { to: '/studio', label: 'AI Podcast', icon: Headphones, isNew: true },
+      { to: '/scores', label: 'Scores Around the League', icon: Trophy },
       { to: '/news', label: 'News & Analysis', short: 'News', icon: Newspaper, primary: true },
       GAME_DAY,
     ],

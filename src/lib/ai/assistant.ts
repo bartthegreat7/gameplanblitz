@@ -22,6 +22,7 @@ export type Intent =
   | 'projection'
   | 'news'
   | 'recap'
+  | 'league'
   | 'summary'
   | 'unknown'
 
@@ -36,6 +37,7 @@ const RULES: [Intent, RegExp][] = [
   ['trades', /\b(trade|offer|deal|buy low|sell high)/i],
   ['waivers', /\b(waiver|pick ?up|free agent|faab|stash|add)\b/i],
   ['playoffs', /\b(playoff|seed|bye|title|championship|make it)/i],
+  ['league', /\b(around the league|league scores?|scores around|other (games|matchups|teams)|rest of the league|power rank|every matchup|who (won|lost|scored the most))/i],
   ['recap', /\b(last week|recap|how did (i|we)|result)/i],
   ['scouting', /\b(opponent|scout|facing|against|their (team|lineup|roster))/i],
   ['standings', /\b(standing|rank|record|what place|first place|last place)/i],
@@ -66,6 +68,7 @@ const TOPICS: Partial<Record<Intent, Topic[]>> = {
   projection: ['projection', 'lineup', 'injury', 'news'],
   news: ['news'],
   recap: ['recap'],
+  league: ['league'],
 }
 
 /* ---------------- players ---------------- */

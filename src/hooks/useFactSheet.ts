@@ -3,12 +3,20 @@ import { useMemo } from 'react'
 
 import { buildFacts, type Fact } from '../lib/ai/facts'
 import type { NameEntry } from '../lib/ai/assistant'
-import { findMyMatchup, findOpponent, gameDay } from '../lib/insights'
+import type { LeagueFactDraft } from '../lib/ai/leagueFacts'
+import { leagueFacts } from '../lib/ai/leagueFacts'
+import { movers, powerRankings, storylines, weekAwards } from '../lib/analytics/league'
+import { simulate } from '../lib/analytics/playoffs'
+import { findMyMatchup, findOpponent, gameDay, standings } from '../lib/insights'
+import { lineupTotal } from '../lib/lineup'
 import { useGmBrief } from './useGmBrief'
 import type { Ready } from './useLeagueData'
+import { useLeagueBoard } from './useLeagueBoard'
 import { useLeagueMatchups } from './useLeagueMatchups'
+import { useLeagueSeason } from './useLeagueSeason'
 import { useLineupInputs } from './useLineupInputs'
 import { useProjectionEngine } from './useProjectionEngine'
+import { useSeasonSim } from './useSeasonSim'
 
 /**
  * The fact sheet for this league and week: the AI Fantasy GM and the Podcast Studio may use these
@@ -35,6 +43,31 @@ export function useFactSheet(data: Ready) {
   const started = (mine?.points ?? 0) > 0 || (opp?.points ?? 0) > 0
   const live = started ? { mine: mine?.points ?? 0, theirs: opp?.points ?? 0 } : null
   const liveKey = live ? `${live.mine}:${live.theirs}` : ''
+
+  // Around the League: last week's results, awards, storylines, rankings, this week's previews
+  const leagueSeason = useLeagueSeason(data)
+  const board = useLeagueBoard(data)
+  const sim = useSeasonSim(data)
+  const odds = useMemo(() => (sim.input ? simulate(sim.input) : null), [sim.input])
+  const league_: LeagueFactDraft[] = useMemo(() => {
+    const lastWk = week - 1
+    const done = leagueSeason.season.filter((w) => w.week <= lastWk)
+    const lw = done.find((w) => w.week === lastWk)
+    const strength = new Map(m.rosters.map((r) => [r.roster_id, lineupTotal(m.optimal(r.players ?? []))]))
+    const rows = lastWk >= 1 ? powerRankings(done, lastWk, strength) : []
+    const prev = lastWk >= 2 ? powerRankings(done, lastWk - 1, null) : []
+    return leagueFacts({
+      name: m.teamName,
+      playerName: m.name,
+      last: lw
+        ? { week: lastWk, games: lw.games, awards: weekAwards(lw.games), stories: storylines(done, lastWk, m.teamName, gm.playoffTeams) }
+        : null,
+      power: rows.length ? { through: lastWk, rows, change: new Map(movers(prev, rows).map((x) => [x.rosterId, x.change])) } : null,
+      standings: standings(m),
+      upcoming: { week, games: board.games.filter((g) => g.status === 'scheduled') },
+      odds,
+    })
+  }, [leagueSeason.season, board.games, odds, m, week, gm.playoffTeams])
 
   const facts: Fact[] = useMemo(
     () =>
@@ -64,6 +97,7 @@ export function useFactSheet(data: Ready) {
               }
             }
           : null,
+        league: league_,
         lastWeek: lastWeeks.length && !last.loading ? { week: lastWeeks[0], matchups: last.weeks[0]?.matchups ?? [] } : null,
         stamps: {
           sleeper: sleeperAt,
@@ -93,6 +127,7 @@ export function useFactSheet(data: Ready) {
       engine.projectionFor,
       last.loading,
       last.weeks,
+      league_,
       sleeperAt,
       lineupIn.projectionsUpdatedAt,
       valuesAt,

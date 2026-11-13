@@ -65,6 +65,7 @@ const SPECS: Record<EpisodeType, ChapterSpec[]> = {
     { id: 'scout', title: 'Scouting the opponent', topics: ['scouting'], max: 4 },
     { id: 'lineup', title: 'Lineup decisions', topics: ['lineup'], max: 4, filter: (f) => f.data?.role === 'swap' || f.players.length === 0 || f.data?.role === 'starter' },
     { id: 'risk', title: 'Injuries and weather', topics: ['injury', 'weather'], max: 4, filter: isStarterInjury },
+    { id: 'league', title: 'This Week Around the League', topics: ['league'], max: 8, filter: (f) => f.data?.segment === 'preview' },
     { id: 'race', title: 'What it means for the race', topics: ['playoffs'], max: 1 },
   ],
   kickoff: [
@@ -76,6 +77,8 @@ const SPECS: Record<EpisodeType, ChapterSpec[]> = {
   ],
   recap: [
     { id: 'result', title: 'Last week’s result', topics: ['recap'], max: 5 },
+    { id: 'around', title: 'Around the League', topics: ['league'], max: 16, filter: (f) => f.data?.segment === 'around' },
+    { id: 'power', title: 'Power rankings', topics: ['league'], max: 6, filter: (f) => f.data?.segment === 'power' },
     { id: 'table', title: 'The standings', topics: ['standings'], max: 5 },
     { id: 'race', title: 'Playoff picture', topics: ['playoffs'], max: 1 },
     { id: 'next', title: 'Looking ahead', topics: ['matchup'], max: 2 },
@@ -137,7 +140,17 @@ const INTRO: Record<string, string[]> = {
   breakouts: ['Rising usage.', 'Players getting more work.'],
   trades: ['Trade ideas.', 'Let’s talk trades.'],
   keepers: ['Keeper notes.', 'Thinking about next season.'],
+  around: ['Now let’s go around the league.', 'Time for Around the League: every matchup from last week.'],
+  power: ['Power rankings and the standings.', 'Let’s see how the league stacks up.'],
+  league: ['This week around the league.', 'Now a look at every other matchup this week.'],
 }
+
+/** Number-free, good-natured league ribbing for the humorous tone (never about a real person). */
+const LEAGUE_JOKES = [
+  'Somewhere in this league, a manager is refreshing the stat corrections page right now.',
+  'If your bench outscored your starters, we are not judging. Much.',
+  'Group chat is going to be lively this week.',
+]
 
 const LEAD_IN: Record<'fact' | 'model', string[]> = {
   fact: ['From Sleeper:', 'The facts:', 'For the record:'],
@@ -237,7 +250,7 @@ export function writeScript(outline: Chapter[], facts: Fact[], o: WriteOptions):
       }
     }
     if (o.tone === 'humor' && rng() < 0.6)
-      lines.push({ speaker: two ? 1 : 0, kind: 'banter', text: pick(rng, JOKES), cite: [], chapter: c.id })
+      lines.push({ speaker: two ? 1 : 0, kind: 'banter', text: pick(rng, c.id === 'around' || c.id === 'power' ? LEAGUE_JOKES : JOKES), cite: [], chapter: c.id })
   }
   lines.push({ speaker: 0, kind: 'disclosure', text: d.close, cite: [], chapter: 'close' })
   return lines

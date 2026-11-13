@@ -26,6 +26,7 @@ const TOPIC_LABEL: Record<Topic, string> = {
   news: 'News',
   recap: 'Last week',
   scouting: 'Opponent',
+  league: 'Around the league',
 }
 
 function Knowledge({ sheet }: { sheet: FactSheet }) {

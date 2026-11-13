@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 
 import { LeagueGate } from '../components/LeagueGate'
+import { LeagueLive } from '../components/league/LeagueLive'
 import { WeatherIndicator } from '../components/weather/WeatherIndicator'
 import { TeamAvatar } from '../components/ui/Avatar'
 import { FreshnessBadge } from '../components/ui/badges'
@@ -26,7 +27,7 @@ const STATE: Record<GameState, { label: string; tone: 'info' | 'prio' | 'neutral
 
 function SideTable({ side, title, teamOf }: { side: LiveSide; title: string; teamOf: (id: string) => string }) {
   return (
-    <section aria-label={title} className="border-line bg-card rounded-2xl border p-4">
+    <section aria-label={title} className="border-line bg-card min-w-0 rounded-2xl border p-4">
       <h2 className="mb-2 text-lg font-extrabold">{title}</h2>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -176,10 +177,12 @@ function GameDayView({ data }: { data: Ready }) {
         </Link>
       </section>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <SideTable side={me} title="Your starters" teamOf={m.team} />
         {opp && <SideTable side={opp} title={`${opp.name} starters`} teamOf={m.team} />}
       </div>
+
+      <LeagueLive data={data} />
     </div>
   )
 }

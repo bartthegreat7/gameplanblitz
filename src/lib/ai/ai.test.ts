@@ -298,7 +298,7 @@ describe('podcast', () => {
   it('outlines only chapters the tools have facts for', () => {
     const o = buildOutline('preview', facts)
     expect(o.chapters.map((c) => c.id)).toEqual(['matchup', 'lineup', 'risk', 'race'])
-    expect(o.skipped).toEqual(['Scouting the opponent'])
+    expect(o.skipped).toEqual(['Scouting the opponent', 'This Week Around the League']) // no league facts in this fixture
     const recap = buildOutline('recap', facts)
     expect(recap.chapters[0]).toMatchObject({ id: 'result', title: 'Last week’s result' })
     expect(buildOutline('moves', facts).chapters).toEqual([])

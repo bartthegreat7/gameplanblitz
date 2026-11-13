@@ -1,4 +1,5 @@
 import { f1, ordinal, signed, trunc } from '../format'
+import type { LeagueFactDraft } from './leagueFacts'
 import type { GmAction } from '../analytics/gm'
 import type { KeeperCandidate } from '../analytics/keepers'
 import type { LineupAnalysis } from '../analytics/lineupAnalysis'
@@ -31,6 +32,7 @@ export type Topic =
   | 'news'
   | 'recap'
   | 'scouting'
+  | 'league'
 
 export const TOPIC_ORDER: Topic[] = [
   'matchup',
@@ -47,6 +49,7 @@ export const TOPIC_ORDER: Topic[] = [
   'news',
   'recap',
   'scouting',
+  'league',
 ]
 
 export interface Fact {
@@ -103,6 +106,8 @@ export interface FactInput {
   engine: ((id: string) => EngineView | null) | null
   /** last completed week's matchups, for recaps */
   lastWeek: { week: number; matchups: SleeperMatchup[] } | null
+  /** Around the League: every result, awards, storylines, rankings and previews (see leagueFacts) */
+  league?: LeagueFactDraft[]
   stamps: Stamps
 }
 
@@ -479,6 +484,19 @@ export function buildFacts(i: FactInput): Fact[] {
         to: '/scouting',
       })
   }
+
+  // ---- around the league
+  for (const d of i.league ?? [])
+    add({
+      topic: 'league',
+      kind: d.kind,
+      text: d.text,
+      source: d.kind === 'fact' ? 'Sleeper matchups and standings' : d.segment === 'preview' ? 'Sleeper projections (league scoring)' : 'GamePlanBitz power rankings and playoff simulation',
+      asOf: d.segment === 'preview' ? stamps.projections : stamps.sleeper,
+      players: d.players,
+      to: '/scores',
+      data: { segment: d.segment },
+    })
 
   return out
     .sort((a, b) => TOPIC_ORDER.indexOf(a.topic) - TOPIC_ORDER.indexOf(b.topic))
