@@ -36,6 +36,8 @@ export interface SleeperLeagueSettings {
   max_keepers?: number
   /** number of divisions (0 or absent = none); per Sleeper docs, unverified on a real league */
   divisions?: number
+  /** 1 = every team also plays the league median each week (per Sleeper docs; unverified on a real league) */
+  league_average_match?: number
 }
 
 export interface SleeperLeague {

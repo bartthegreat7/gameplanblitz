@@ -6,8 +6,8 @@ import { CARD } from '../components/dashboard/styles'
 import { LeagueGate } from '../components/LeagueGate'
 import { EmptyState, ListSkeleton, Notice } from '../components/ui/states'
 import type { Ready } from '../hooks/useLeagueData'
-import { useLeagueHistory, type HistorySeason } from '../hooks/useLeagueHistory'
-import { championRoster, leagueRecords, managerStats, ownerOf, rivalries, seasonStandings } from '../lib/analytics/leagueHistory'
+import { useLeagueHistory } from '../hooks/useLeagueHistory'
+import { championRoster, leagueRecords, managerStats, ownerOf, rivalries, seasonStandings, teamNameIn } from '../lib/analytics/leagueHistory'
 import { f1 } from '../lib/format'
 import type { SleeperUser } from '../lib/sleeper'
 
@@ -25,10 +25,7 @@ function HqView({ data }: { data: Ready }) {
     return out
   }, [h.seasons])
   const who = (userId: string | null) => (userId ? (people.get(userId)?.display_name ?? 'Former manager') : 'Unowned team')
-  const teamIn = (s: HistorySeason, rosterId: number) => {
-    const u = s.users.find((x) => x.user_id === ownerOf(s, rosterId))
-    return u?.metadata?.team_name || u?.display_name || `Team ${rosterId}`
-  }
+  const teamIn = teamNameIn
   const commissioner = m.users.find((u) => u.is_owner)
 
   const stats = useMemo(() => managerStats(h.seasons), [h.seasons])

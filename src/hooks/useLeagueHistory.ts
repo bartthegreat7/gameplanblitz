@@ -45,6 +45,7 @@ async function loadSeason(league: SleeperLeague): Promise<HistorySeason> {
     users,
     weeks: regularWeeks(weeks, last + 1),
     bracket: bracket?.length ? bracket : null,
+    medianGame: league.settings.league_average_match === 1,
     draft,
   }
 }
@@ -122,6 +123,7 @@ export function useLeagueHistory(data: Ready) {
       users: m.users,
       weeks: completed.filter((w) => w.week < playoffStart),
       bracket: bracketQ.data?.length ? bracketQ.data : null,
+      medianGame: league.settings.league_average_match === 1,
       draft: draftQ.data ?? null,
     }),
     [league, m.rosters, m.users, completed, playoffStart, bracketQ.data, draftQ.data],

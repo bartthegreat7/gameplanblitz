@@ -66,3 +66,22 @@ describe('League HQ', () => {
     expect(screen.getByRole('region', { name: 'Draft and keeper history' })).toHaveTextContent(/Sleeper has no draft picks/)
   }, 30_000)
 })
+
+describe('Expected Wins & Luck', () => {
+  it('rebuilds records from scores with all-play, expected wins, luck and the formulas shown', async () => {
+    mockFetch({
+      '/league/L1/matchups/1': [m(1, 100), m(2, 80)],
+      '/league/L1/matchups/2': [m(1, 90), m(2, 95)],
+    })
+    renderApp('#/luck')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Expected Wins & Luck' }, SLOW)).toBeInTheDocument()
+    const table = await screen.findByRole('table', { name: /Actual record, all-play record/ }, SLOW)
+    const mine = within(table).getAllByRole('rowheader').find((r) => r.textContent?.includes('(you)'))!.closest('tr')!
+    expect(mine).toHaveTextContent(/Gridiron Gang \(you\)\s*1-1\s*1-1 \(50%\)\s*1\.0/)
+    expect(mine).toHaveTextContent(/190\.0\s*175\.0/)
+    // week-by-week for my team by default
+    const weeks = screen.getByRole('region', { name: 'Week by week' })
+    expect(within(weeks).getAllByRole('row')).toHaveLength(3)
+    expect(screen.getByRole('region', { name: 'How it is calculated' })).toHaveTextContent(/adds up to zero/)
+  }, 30_000)
+})

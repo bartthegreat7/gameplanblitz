@@ -31,6 +31,7 @@ import {
   Users,
   type LucideIcon,
   Landmark,
+  Clover,
 } from 'lucide-react'
 
 export interface NavLeaf {
@@ -100,6 +101,7 @@ export const NAV_SECTIONS: NavSection[] = [
         children: [
           { to: '/hq', label: 'League HQ', icon: Landmark, blurb: 'History, records, rivalries, trades and drafts' },
           { to: '/standings', label: 'Standings', icon: ListOrdered },
+          { to: '/luck', label: 'Expected Wins & Luck', icon: Clover, blurb: 'All-play records, expected wins, schedule luck' },
         ],
       },
       { to: '/team', label: 'My Team', icon: Users },

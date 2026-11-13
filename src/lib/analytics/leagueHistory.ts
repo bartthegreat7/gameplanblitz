@@ -18,6 +18,8 @@ export interface SeasonData {
   /** completed regular-season weeks */
   weeks: WeekGames[]
   bracket: BracketGame[] | null
+  /** the league also plays the weekly median (Sleeper's league_average_match) */
+  medianGame?: boolean
 }
 
 /** Regular-season weeks with scores, paired into games. */
@@ -28,6 +30,16 @@ export function regularWeeks(matchupsByWeek: { week: number; matchups: SleeperMa
 }
 
 export const ownerOf = (s: SeasonData, rosterId: number): string | null => s.rosters.find((r) => r.roster_id === rosterId)?.owner_id ?? null
+
+/** A roster's team name in that season (Sleeper team name, else the manager's name). */
+export function teamNameIn(s: SeasonData, rosterId: number): string {
+  const u = s.users.find((x) => x.user_id === ownerOf(s, rosterId))
+  return u?.metadata?.team_name || u?.display_name || `Team ${rosterId}`
+}
+
+/** The roster a manager had in that season. */
+export const rosterOf = (s: SeasonData, userId: string | null): number | null =>
+  userId ? (s.rosters.find((r) => r.owner_id === userId)?.roster_id ?? null) : null
 
 /** The champion's roster id: the winner of the bracket game marked p = 1, else of the last round's single game. */
 export function championRoster(bracket: BracketGame[] | null): number | null {
