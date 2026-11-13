@@ -298,6 +298,8 @@ export interface SleeperTransaction {
   settings?: { waiver_bid?: number } | null
   leg?: number
   created?: number
+  /** rosters involved (trades list both sides) */
+  roster_ids?: number[]
 }
 
 /** All transactions for one round (Sleeper uses the week as the round). Empty array if none. */

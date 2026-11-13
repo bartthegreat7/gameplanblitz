@@ -30,7 +30,7 @@ function ScoresView({ data }: { data: Ready }) {
   }
   const live = board.games.filter((g) => g.status === 'live').length
   return (
-    <div className="mx-auto grid max-w-6xl gap-5">
+    <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5">
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
