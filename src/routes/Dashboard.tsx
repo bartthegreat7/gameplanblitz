@@ -19,6 +19,7 @@ import { NewsCompact } from '../components/command/NewsCompact'
 import { PodcastPanel } from '../components/command/PodcastPanel'
 import { isTab, type TabId } from '../components/command/tabs'
 import { WeatherWatch } from '../components/command/WeatherWatch'
+import { WeekLeaders } from '../components/command/WeekLeaders'
 import { Welcome } from '../components/command/Welcome'
 import { DashboardBackground } from '../components/dashboard/DashboardBackground'
 import { WaiverTargets } from '../components/dashboard/Insights'
@@ -215,6 +216,8 @@ function DashboardView({ data }: { data: Ready }) {
                 />
               </>
             )}
+
+            {tab === 'leaders' && <WeekLeaders m={m} matchups={matchups} week={week} note={weekNote} />}
 
             {tab === 'strategy' && (
               <>

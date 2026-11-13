@@ -96,7 +96,7 @@ describe('command center header', () => {
     expect(screen.getByText(/Week 5 is here\. You're projected to win by/)).toHaveTextContent('12.0 points')
 
     const tabs = within(screen.getByRole('tablist', { name: 'Command Center views' })).getAllByRole('tab')
-    expect(tabs.map((t) => t.textContent)).toEqual(['Overview', 'Team', 'Matchup', 'League', 'Strategy', 'Reports'])
+    expect(tabs.map((t) => t.textContent)).toEqual(['Overview', 'Team', 'Matchup', 'League', 'Leaders', 'Strategy', 'Reports'])
     expect(tabs[0]).toHaveAttribute('aria-selected', 'true')
     // arrow keys move between tabs and show the matching panel
     tabs[0].focus()
@@ -391,5 +391,38 @@ describe('my team page', () => {
     expect(within(health).getByText('Backup Benchwood')).toBeInTheDocument() // Questionable, on the bench
     expect(screen.getByRole('region', { name: 'Optimal Lineup' })).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'My Roster' })).toBeInTheDocument()
+  }, 30_000)
+})
+
+describe('leaders view', () => {
+  it("names the week's top scoring team and the top scorer at each position", async () => {
+    mockFetch({
+      '/league/L1/matchups/5': [
+        { roster_id: 1, matchup_id: 9, points: 31.5, starters: ['rb1', 'wr1'], players: ['rb1', 'rb2', 'wr1'], players_points: { rb1: 8.5, rb2: 19.2, wr1: 23 } },
+        { roster_id: 2, matchup_id: 9, points: 14, starters: ['opp1'], players: ['opp1'], players_points: { opp1: 14 } },
+      ],
+    })
+    renderApp('#/?tab=leaders')
+    const view = await screen.findByRole('region', { name: 'Week leaders' }, SLOW)
+    expect(within(view).getByRole('heading', { name: 'Week 5 Leaders' })).toBeInTheDocument()
+    const top = within(view).getByRole('region', { name: 'Top scoring team' })
+    expect(top).toHaveTextContent('Gridiron Gang (you)')
+    expect(top).toHaveTextContent('31.5')
+    const teams = within(within(view).getByRole('region', { name: 'Team scores' })).getAllByRole('listitem')
+    expect(teams.map((t) => t.textContent)).toEqual([expect.stringMatching(/Gridiron Gang.*31\.5/), expect.stringMatching(/Rival.*14\.0/)])
+    // the best RB sat on my bench; the rival's RB is third
+    const rb = within(view).getByRole('region', { name: 'Top RB' })
+    expect(rb).toHaveTextContent(/Backup Benchwood.*Gridiron Gang.*Bench.*19\.2/)
+    expect(within(rb).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      expect.stringMatching(/R\. Runningback · Rival.*14\.0/),
+      expect.stringMatching(/R\. Runnerson.*8\.5/),
+    ])
+    expect(within(view).getByRole('region', { name: 'Top WR' })).toHaveTextContent(/Wideout Catchwell.*23\.0/)
+  }, 30_000)
+
+  it('says when nothing has been scored yet', async () => {
+    renderApp('#/?tab=leaders')
+    const view = await screen.findByRole('region', { name: 'Week leaders' }, SLOW)
+    expect(within(view).getByText(/No points have been scored in Week 5 yet/)).toBeInTheDocument()
   }, 30_000)
 })

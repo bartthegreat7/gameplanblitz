@@ -180,6 +180,8 @@ describe('week status and outlook', () => {
     expect(kickoffNote([g('2025-10-05', 'complete'), g('2025-10-06')], 5, '2025-10-06')).toBe('Games underway')
     expect(kickoffNote([g('2025-10-05', 'complete')], 5, '2025-10-07')).toBe('Week complete')
     expect(kickoffNote([g('2025-10-05', 'pre_game', 6)], 5, '2025-10-01')).toBeNull()
+    expect(kickoffNote([g('', 'complete')], 5, '2025-10-01')).toBe('Week complete') // no date, still final
+    expect(kickoffNote([g('')], 5, '2025-10-01')).toBeNull()
   })
   it('states the projected margin, or why there is none', () => {
     expect(outlookLine(11, 127.4, 119.6)).toEqual({ text: "Week 11 is here. You're projected to win by", margin: 127.4 - 119.6 })

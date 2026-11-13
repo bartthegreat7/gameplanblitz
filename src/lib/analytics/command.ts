@@ -291,12 +291,13 @@ export const gameDate = (date: string) =>
  * this counts days): "4 days until kickoff", "Kickoff today", "Games underway", "Week complete".
  */
 export function kickoffNote(schedule: ScheduleLike[] | null | undefined, week: number, today: string): string | null {
-  const games = (schedule ?? []).filter((g) => g.week === week && g.date)
+  const games = (schedule ?? []).filter((g) => g.week === week)
   if (!games.length) return null
   if (games.every((g) => g.status === 'complete')) return 'Week complete'
   if (games.some((g) => g.status !== 'pre_game' && g.status !== 'complete') || games.some((g) => g.status === 'complete'))
     return 'Games underway'
-  const first = games.map((g) => g.date).sort()[0]
+  const first = games.map((g) => g.date).filter(Boolean).sort()[0]
+  if (!first) return null
   const days = Math.round((Date.parse(`${first}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000)
   if (days <= 0) return 'Kickoff today'
   return `${days} day${days === 1 ? '' : 's'} until kickoff`
