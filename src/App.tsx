@@ -21,6 +21,7 @@ const Lab = lazy(() => import('./routes/Lab'))
 const Scores = lazy(() => import('./routes/Scores'))
 const Autopilot = lazy(() => import('./routes/Autopilot'))
 const Xray = lazy(() => import('./routes/Xray'))
+const Simulator = lazy(() => import('./routes/Simulator'))
 const Accuracy = lazy(() => import('./routes/Accuracy'))
 const Breakouts = lazy(() => import('./routes/Breakouts'))
 const Injuries = lazy(() => import('./routes/Injuries'))
@@ -64,6 +65,7 @@ export default function App({ client = defaultClient }: { client?: QueryClient }
               <Route path="scores" element={<Scores />} />
               <Route path="autopilot" element={<Autopilot />} />
               <Route path="xray" element={<Xray />} />
+              <Route path="simulate" element={<Simulator />} />
               <Route path="accuracy" element={<Accuracy />} />
               <Route path="breakouts" element={<Breakouts />} />
               <Route path="injuries" element={<Injuries />} />
