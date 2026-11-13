@@ -10,6 +10,7 @@ import {
   FlaskConical,
   FlaskRound,
   Gauge,
+  GraduationCap,
   Headphones,
   HeartPulse,
   Home,
@@ -122,6 +123,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { to: '/lab', label: 'Strategy Lab', icon: FlaskConical, also: LAB_TOOLS.map((t) => t.to) },
       { to: '/simulate', label: 'What-If Simulator', icon: FlaskRound },
       { to: '/playoffs', label: 'Playoff Simulator', icon: Medal },
+      { to: '/academy', label: 'GM Academy', icon: GraduationCap },
     ],
   },
   {

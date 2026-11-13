@@ -68,3 +68,37 @@ describe('Alternate Reality Simulator', () => {
     expect(await row()).toHaveTextContent(/18\.0\s*18\.0/)
   }, 40_000)
 })
+
+describe('Fantasy GM Academy', () => {
+  it('reviews a past week by process and outcome, and tracks lessons', async () => {
+    const { default: userEvent } = await import('@testing-library/user-event')
+    const user = userEvent.setup()
+    // Week 4: started rb2 (projected 3) over rb1 (projected 8); rb1 scored 20, rb2 scored 5
+    mockFetch({
+      '/league/L1/matchups/4': [
+        { roster_id: 1, matchup_id: 1, points: 15, starters: ['rb2', 'wr1'], players: ['rb1', 'rb2', 'wr1'], players_points: { rb1: 20, rb2: 5, wr1: 10 } },
+        { roster_id: 2, matchup_id: 1, points: 12, starters: ['opp1'], players: ['opp1'], players_points: { opp1: 12 } },
+      ],
+      '/projections/nfl/2025/4': [
+        { player_id: 'rb1', stats: { rec: 8 } },
+        { player_id: 'rb2', stats: { rec: 3 } },
+        { player_id: 'wr1', stats: { rec: 10 } },
+      ],
+    })
+    renderApp('#/academy')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Fantasy GM Academy' }, SLOW)).toBeInTheDocument()
+    const reviews = screen.getByRole('region', { name: 'Weekly decision reviews' })
+    const week4 = await within(reviews).findByText(/^Week 4/, {}, { timeout: 20_000 })
+    const item = week4.closest('li')!
+    expect(item).toHaveTextContent(/Win by 3\.0/)
+    expect(item).toHaveTextContent(/your lineup projected 13\.0, the best possible 18\.0 \(5\.0 left on the bench\)/)
+    expect(item).toHaveTextContent(/Process miss.*RB: you started Backup Benchwood \(projected 3\.0, scored 5\.0\) over Rusher Runnerson \(projected 8\.0, scored 20\.0\)/)
+    const dev = screen.getByRole('region', { name: 'GM development' })
+    expect(dev).toHaveTextContent(/Area to work on: RB decisions/)
+    const lessons = screen.getByRole('region', { name: 'Strategy lessons' })
+    await user.click(within(lessons).getByText('Judge decisions by process, not points'))
+    await user.click(within(lessons).getAllByRole('button', { name: 'Mark as completed' })[0])
+    expect(dev).toHaveTextContent(/Lessons completed: 1 of 8/)
+    expect(JSON.parse(localStorage.getItem('gb-academy-lessons')!)).toEqual(['process'])
+  }, 40_000)
+})
