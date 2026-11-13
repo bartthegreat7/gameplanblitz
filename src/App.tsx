@@ -26,6 +26,7 @@ const Academy = lazy(() => import('./routes/Academy'))
 const LeagueHQ = lazy(() => import('./routes/LeagueHQ'))
 const Luck = lazy(() => import('./routes/Luck'))
 const Managers = lazy(() => import('./routes/Managers'))
+const RedZone = lazy(() => import('./routes/RedZone'))
 const Accuracy = lazy(() => import('./routes/Accuracy'))
 const Breakouts = lazy(() => import('./routes/Breakouts'))
 const Injuries = lazy(() => import('./routes/Injuries'))
@@ -74,6 +75,7 @@ export default function App({ client = defaultClient }: { client?: QueryClient }
               <Route path="hq" element={<LeagueHQ />} />
               <Route path="luck" element={<Luck />} />
               <Route path="managers" element={<Managers />} />
+              <Route path="redzone" element={<RedZone />} />
               <Route path="accuracy" element={<Accuracy />} />
               <Route path="breakouts" element={<Breakouts />} />
               <Route path="injuries" element={<Injuries />} />

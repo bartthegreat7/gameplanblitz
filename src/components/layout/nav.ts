@@ -33,6 +33,7 @@ import {
   Landmark,
   Clover,
   Fingerprint,
+  Siren,
 } from 'lucide-react'
 
 export interface NavLeaf {
@@ -140,6 +141,7 @@ export const NAV_SECTIONS: NavSection[] = [
     entries: [
       { to: '/studio', label: 'AI Podcast', icon: Headphones, isNew: true },
       { to: '/scores', label: 'Scores Around the League', icon: Trophy },
+      { to: '/redzone', label: 'League RedZone', icon: Siren, isNew: true },
       { to: '/news', label: 'News & Analysis', short: 'News', icon: Newspaper, primary: true },
       GAME_DAY,
     ],

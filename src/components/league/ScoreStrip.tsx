@@ -17,7 +17,7 @@ export function ScoreStrip({ data }: { data: Ready }) {
   return (
     <section aria-label="League scoreboard" className={`${CARD} flex min-w-0 items-stretch gap-2 p-2`}>
       <Link
-        to="/scores"
+        to={games.some((g) => g.status === 'live') ? '/redzone' : '/scores'}
         className="hover:bg-raised flex shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-3 text-center transition-colors"
       >
         <Trophy size={18} aria-hidden className="text-amber" />
