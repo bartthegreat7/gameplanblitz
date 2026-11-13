@@ -1,4 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
+import { LeagueGate } from '../components/LeagueGate'
+import { TrustPanel } from '../components/trust/TrustPanel'
+import { useAppStore } from '../store/app'
 import { Target } from 'lucide-react'
 import type { ReactNode } from 'react'
 
@@ -278,6 +281,7 @@ function Report({ file }: { file: ModelFile }) {
 }
 
 export default function Accuracy() {
+  const username = useAppStore((s) => s.username)
   const q = useQuery({
     queryKey: ['projectionModel'],
     queryFn: getModelFile,
@@ -287,13 +291,15 @@ export default function Accuracy() {
   return (
     <div className="mx-auto max-w-6xl">
       <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight md:text-3xl">
-        <Target size={24} aria-hidden className="text-accent" /> Projection Accuracy
+        <Target size={24} aria-hidden className="text-accent" /> Prediction Trust
       </h1>
       <p className="text-ink-2 mt-1 max-w-3xl">
-        How well GamePlanBlitz's projection engine and Sleeper's own projections predicted what
-        actually happened, measured on past weeks with no look-ahead. The engine only changes a
-        projection where it proved better here.
+        How well GamePlanBitz's predictions held up: the projection engine and Sleeper's own
+        projections against what actually happened (past weeks, no look-ahead), win odds in your
+        league, and how the lineup advice compared with the lineups you set.
       </p>
+      {username && <LeagueGate>{(data) => <TrustPanel data={data} file={q.data ?? null} />}</LeagueGate>}
+      <h2 className="mt-8 text-xl font-extrabold tracking-tight">Projection engine backtest</h2>
       {q.isPending ? (
         <div className="mt-5">
           <ListSkeleton rows={5} />

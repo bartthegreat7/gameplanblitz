@@ -71,7 +71,7 @@ export const LAB_TOOLS: NavLeaf[] = [
   { to: '/injuries', label: 'Injury Center', icon: HeartPulse, blurb: 'Designations, team context and the injury domino effect.' },
   { to: '/weather', label: 'Weather Watch', icon: CloudSun, blurb: "Every game's forecast and the players involved." },
   { to: '/alerts', label: 'Alert Center', icon: BellRing, blurb: 'What changed since your last visit.' },
-  { to: '/accuracy', label: 'Projection Accuracy', icon: Target, blurb: 'How the projection engine scores against results.' },
+  { to: '/accuracy', label: 'Prediction Trust', icon: Target, blurb: 'How every prediction held up: projections, win odds and lineup advice.' },
 ]
 
 export interface NavSection {

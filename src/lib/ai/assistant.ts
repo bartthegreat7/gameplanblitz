@@ -213,7 +213,7 @@ const LABEL: Record<string, string> = {
   '/scouting': 'Opponent Scouting',
   '/gameday': 'Game Day Mode',
   '/edge': 'The Edge',
-  '/accuracy': 'Projection Accuracy',
+  '/accuracy': 'Prediction Trust',
 }
 
 const UNCERTAINTY: Partial<Record<Intent, string>> = {
@@ -221,7 +221,7 @@ const UNCERTAINTY: Partial<Record<Intent, string>> = {
     'Projections are estimates, and a single play can swing a week. The ranges show how far outcomes usually spread.',
   lineup: 'Projections are estimates; the optimizer maximizes projected points, not guaranteed points.',
   projection:
-    'Projections are estimates. Projection Accuracy shows how far they have missed in past weeks.',
+    'Projections are estimates. Prediction Trust shows how far they have missed in past weeks.',
   matchup: 'Win probability is a model estimate from projected totals, not a guarantee.',
   scouting: 'Their lineup can still change before kickoff.',
   waivers:

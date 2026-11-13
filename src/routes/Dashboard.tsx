@@ -253,7 +253,7 @@ function DashboardView({ data }: { data: Ready }) {
                 <MoreLinks
                   links={[
                     ['/gm', 'Weekly GM Brief'],
-                    ['/accuracy', 'Projection Accuracy'],
+                    ['/accuracy', 'Prediction Trust'],
                     ['/alerts', 'Alert Center'],
                     ['/studio?view=library', 'Podcast episodes'],
                   ]}

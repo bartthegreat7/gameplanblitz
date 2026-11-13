@@ -1,20 +1,15 @@
-import { useQueries } from '@tanstack/react-query'
 import { ArrowRight, BookOpenCheck, CheckCircle2, GraduationCap, LineChart, Scale } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { CARD } from '../components/dashboard/styles'
 import { LeagueGate } from '../components/LeagueGate'
 import { EmptyState, ListSkeleton, Notice } from '../components/ui/states'
 import type { Ready } from '../hooks/useLeagueData'
-import { useLeagueMatchups } from '../hooks/useLeagueMatchups'
-import { useSession } from '../hooks/useSession'
-import { progress, reviewWeek, type Decision, type WeekReview } from '../lib/analytics/academy'
+import { usePastWeeks } from '../hooks/usePastWeeks'
+import { progress, type Decision } from '../lib/analytics/academy'
 import { LESSONS } from '../lib/analytics/lessons'
 import { f1 } from '../lib/format'
-import { findMyMatchup, findOpponent } from '../lib/insights'
-import { pointsFor } from '../lib/scoring'
-import { getProjectionRows, statRowsToMap } from '../lib/sleeper'
 
 const DONE_KEY = 'gb-academy-lessons'
 const readDone = (): string[] => {
@@ -55,40 +50,8 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
 }
 
 function AcademyView({ data }: { data: Ready }) {
-  const { model: m, league, season } = data
-  const { currentWeek } = useSession()
-  const weeks = useMemo(() => Array.from({ length: Math.max(0, currentWeek - 1) }, (_, i) => i + 1), [currentWeek])
-  const sched = useLeagueMatchups(league.league_id, weeks)
-  const projQs = useQueries({
-    queries: weeks.map((w) => ({
-      queryKey: ['projections', season, w],
-      queryFn: () => getProjectionRows(season, w),
-      staleTime: 60 * 60_000,
-      retry: 1,
-    })),
-  })
-  const projStamp = projQs.map((q) => q.dataUpdatedAt).join(',')
-  const reviews = useMemo<WeekReview[]>(() => {
-    const out: WeekReview[] = []
-    for (const { week, matchups } of sched.weeks) {
-      const rows = projQs[week - 1]?.data
-      const mine = findMyMatchup(matchups, m.myRosterId)
-      if (!rows || !mine || !(mine.points > 0)) continue
-      const proj = statRowsToMap(rows)
-      out.push(
-        reviewWeek({
-          week,
-          mine,
-          opp: findOpponent(matchups, m.myRosterId) ?? null,
-          startSlots: m.startSlots,
-          posOf: m.pos,
-          projOf: (id) => pointsFor(proj.get(id), m.scoring),
-        }),
-      )
-    }
-    return out.sort((a, b) => b.week - a.week)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sched.weeks, projStamp, m])
+  const m = data.model
+  const { reviews, loading } = usePastWeeks(data)
   const p = progress(reviews)
   const [done, setDone] = useState<string[]>(readDone)
   const toggleDone = (id: string) => {
@@ -100,7 +63,6 @@ function AcademyView({ data }: { data: Ready }) {
       /* storage unavailable */
     }
   }
-  const loading = sched.loading || projQs.some((q) => q.isPending)
 
   return (
     <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5">

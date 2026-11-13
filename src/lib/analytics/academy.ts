@@ -27,6 +27,8 @@ export interface WeekReview {
   bestProj: number
   /** projected points left on the bench: the process gap */
   processGap: number
+  /** actual points the best projected lineup would have scored (did the advice pay off?) */
+  bestProjActual: number
   /** actual points of your lineup and of the best lineup in hindsight */
   setActual: number
   bestActual: number
@@ -58,10 +60,11 @@ export function reviewWeek(o: {
   const starters = (mine.starters ?? []).map((id) => (id && id !== '0' ? id : null))
   const startSet = new Set(starters.filter(Boolean) as string[])
   const sum = (ids: (string | null)[], f: (id: string) => number) => ids.reduce((t, id) => t + (id ? f(id) : 0), 0)
-  const best = (f: (id: string) => number) =>
-    sum(optimalAssignment(o.startSlots, roster.map((id) => ({ id, pos: o.posOf(id), value: f(id) }))), f)
+  const pick = (f: (id: string) => number) => optimalAssignment(o.startSlots, roster.map((id) => ({ id, pos: o.posOf(id), value: f(id) })))
+  const best = (f: (id: string) => number) => sum(pick(f), f)
   const setProj = sum(starters, o.projOf)
   const bestProj = best(o.projOf)
+  const bestProjActual = sum(pick(o.projOf), actualOf)
   const setActual = mine.points ?? sum(starters, actualOf)
   const bestActual = best(actualOf)
   const decisions: Decision[] = []
@@ -92,6 +95,7 @@ export function reviewWeek(o: {
     setProj,
     bestProj,
     processGap: Math.max(0, bestProj - setProj),
+    bestProjActual,
     setActual,
     bestActual,
     hindsightGap: Math.max(0, bestActual - setActual),

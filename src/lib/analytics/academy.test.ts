@@ -24,7 +24,7 @@ describe('decision reviews', () => {
       posOf,
       projOf: (id) => ({ a: 10, b: 6, c: 9, d: 7 })[id]!,
     })
-    expect(r).toMatchObject({ setProj: 15, bestProj: 19, processGap: 4, setActual: 16, bestActual: 27, hindsightGap: 11, result: 'W', margin: 2 })
+    expect(r).toMatchObject({ setProj: 15, bestProj: 19, processGap: 4, bestProjActual: 27, setActual: 16, bestActual: 27, hindsightGap: 11, result: 'W', margin: 2 })
     expect(r.decisions).toEqual([{ slot: 'RB', started: { id: 'b', proj: 6, actual: 4 }, benched: { id: 'a', proj: 10, actual: 15 }, verdict: 'process-miss' }])
   })
 
@@ -71,6 +71,7 @@ describe('decision reviews', () => {
       setProj: 100,
       bestProj: 100 + processGap,
       processGap,
+      bestProjActual: 100,
       setActual: 100,
       bestActual: 110,
       hindsightGap: 10,

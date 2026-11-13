@@ -102,3 +102,30 @@ describe('Fantasy GM Academy', () => {
     expect(JSON.parse(localStorage.getItem('gb-academy-lessons')!)).toEqual(['process'])
   }, 40_000)
 })
+
+describe('Prediction Trust', () => {
+  it('shows league calibration, tracked lineup advice, recent misses and limits', async () => {
+    mockFetch({
+      '/league/L1/matchups/4': [
+        { roster_id: 1, matchup_id: 1, points: 15, starters: ['rb2', 'wr1'], players: ['rb1', 'rb2', 'wr1'], players_points: { rb1: 20, rb2: 5, wr1: 10 } },
+        { roster_id: 2, matchup_id: 1, points: 12, starters: ['opp1'], players: ['opp1'], players_points: { opp1: 12 } },
+      ],
+      '/projections/nfl/2025/4': [
+        { player_id: 'rb1', stats: { rec: 8 } },
+        { player_id: 'rb2', stats: { rec: 3 } },
+        { player_id: 'wr1', stats: { rec: 10 } },
+        { player_id: 'opp1', stats: { rec: 6 } },
+      ],
+    })
+    renderApp('#/accuracy')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Prediction Trust' }, SLOW)).toBeInTheDocument()
+    const cal = await screen.findByRole('region', { name: 'Win probability calibration' }, SLOW)
+    expect(await within(cal).findByText(/Brier score/, {}, { timeout: 20_000 })).toHaveTextContent(/over 1 games/)
+    const advice = screen.getByRole('region', { name: 'Recommendation tracking' })
+    expect(advice).toHaveTextContent(/matched the advice in 0 of 1 weeks/)
+    expect(advice).toHaveTextContent(/advised lineup would have scored more in 1, a net \+15\.0 points/)
+    expect(advice).toHaveTextContent(/does not show that any advice caused/)
+    expect(screen.getByRole('region', { name: 'Recent misses' })).toHaveTextContent(/Backup Benchwood.*projected 3\.0, scored 5\.0/)
+    expect(screen.getByRole('region', { name: 'Known limitations' })).toHaveTextContent(/accuracy by weather cannot be measured/)
+  }, 40_000)
+})
