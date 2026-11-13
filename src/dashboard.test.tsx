@@ -305,6 +305,15 @@ describe('right column', () => {
     expect(within(pod).getByRole('link', { name: /New Episode/ })).toHaveAttribute('href', '#/studio')
     expect(within(pod).getByRole('link', { name: /Episode Library/ })).toHaveAttribute('href', '#/studio?view=library')
   }, 30_000)
+  it('heads the right column with Autopilot: today’s focus, urgent items and the league network pages', async () => {
+    mockFetch({ '/players/nfl': { ...PLAYERS, rb1: { ...PLAYERS.rb1, injury_status: 'Out' } } })
+    renderApp()
+    const ap = await screen.findByRole('region', { name: 'Autopilot heads-up' }, SLOW)
+    expect(ap).toHaveTextContent(/Today \(\w+day\)/)
+    expect(await within(ap).findByText(/1 thing to do now: /, {}, SLOW)).toBeInTheDocument()
+    const net = within(ap).getByRole('navigation', { name: 'League network' })
+    expect(within(net).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['#/alerts', '#/scores', '#/hq'])
+  }, 30_000)
 })
 
 describe('bottom strip', () => {

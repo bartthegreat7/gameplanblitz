@@ -8,6 +8,7 @@ import { LineupCheckCard } from '../components/cards/LineupCheckCard'
 import { StandingsCard } from '../components/cards/RosterCards'
 import { ProjNotice } from '../components/cards/shared'
 import { ActionItems } from '../components/command/ActionItems'
+import { AutopilotPanel } from '../components/command/AutopilotPanel'
 import { BreakoutRadar } from '../components/command/BreakoutRadar'
 import { CommandHeader } from '../components/command/CommandHeader'
 import { ScoreStrip } from '../components/league/ScoreStrip'
@@ -71,7 +72,7 @@ function MoreLinks({ links }: { links: [string, string][] }) {
  *   center column: title + view tabs, then the selected view
  *     Overview: greeting + 4 stat cards | This Week's Matchup + Top Action Items |
  *               Optimal Lineup + Breakout Radar + Fantasy News
- *   right column (xl+): AI Fantasy GM chat, AI Podcast
+ *   right column (xl+): Autopilot heads-up, AI Fantasy GM chat, AI Podcast
  *   bottom (Overview): Game Day Dashboard strip + Weather Watch
  * Below xl the right column follows the main content. The other tabs hold every earlier
  * dashboard panel and tool card, so nothing was removed.
@@ -263,7 +264,8 @@ function DashboardView({ data }: { data: Ready }) {
           </div>
         </div>
 
-        <aside aria-label="AI Fantasy GM and podcast" className="grid min-w-0 content-start gap-4">
+        <aside aria-label="Autopilot, AI Fantasy GM and podcast" className="grid min-w-0 content-start gap-4">
+          <AutopilotPanel actions={gm.allActions} loading={gm.pending.length > 0} />
           <GmPanel data={data} sheet={sheet} />
           <PodcastPanel data={data} sheet={sheet} />
         </aside>
