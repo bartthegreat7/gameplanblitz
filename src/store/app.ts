@@ -38,6 +38,8 @@ interface AppState {
   deviceVoices: [string | null, string | null]
   /** Aura voices for the two hosts (AI voices) */
   cloudVoices: [string, string]
+  /** The Fantasy War Room: automatic weekly episodes (off until the user opts in) and their style */
+  podcast: PodcastPrefs
 
   toggleTheme: () => void
   setTheme: (t: Theme) => void
@@ -53,7 +55,22 @@ interface AppState {
   toggleRead: (id: string) => void
   setKeeperRules: (leagueId: string, rules: KeeperRules | null) => void
   setAi: (p: Partial<Pick<AppState, 'aiConsent' | 'aiToken' | 'readAloud' | 'deviceVoices' | 'cloudVoices'>>) => void
+  setPodcast: (p: Partial<PodcastPrefs>) => void
 }
+
+export interface PodcastPrefs {
+  /** prepare this week's shows automatically (explicit opt-in) */
+  auto: boolean
+  shows: ('recap' | 'preview' | 'kickoff')[]
+  length: 'short' | 'standard'
+  format: 'solo' | 'debate'
+  /** humor adds good-natured, number-free league ribbing */
+  tone: 'straight' | 'humor'
+  /** show "Your Weekly Fantasy Briefing Is Ready" on the dashboard */
+  banner: boolean
+}
+
+export const DEFAULT_PODCAST: PodcastPrefs = { auto: false, shows: ['recap', 'preview'], length: 'standard', format: 'debate', tone: 'straight', banner: true }
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -93,6 +110,8 @@ export const useAppStore = create<AppState>()(
         set({ keeperRules: next })
       },
       setAi: (p) => set(p),
+      podcast: DEFAULT_PODCAST,
+      setPodcast: (p) => set({ podcast: { ...get().podcast, ...p } }),
     }),
     {
       name: 'gb-app',
@@ -110,6 +129,7 @@ export const useAppStore = create<AppState>()(
         readAloud: s.readAloud,
         deviceVoices: s.deviceVoices,
         cloudVoices: s.cloudVoices,
+        podcast: s.podcast,
       }),
     },
   ),

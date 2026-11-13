@@ -22,12 +22,28 @@ import {
   type Kind,
   type KV,
 } from './logic'
+import {
+  episodeStoreKey,
+  indexKey,
+  listEpisodesFor,
+  runScheduled,
+  subKey,
+  unsubscribe,
+  validateSubscription,
+  type JobKV,
+  type Subscription,
+} from './podcastJob'
 
 /* GameplanBlitz AI Worker. Holds the Anthropic API key (a Worker secret) and runs:
      POST /api/gm             AI Fantasy GM answer, streamed as server-sent events
      POST /api/studio/script  podcast script (JSON) from an approved outline
      POST /api/studio/tts     one line of speech (audio/mpeg), Deepgram Aura on Workers AI
      GET  /api/usage          today's usage and limits for the caller
+     POST /api/podcast/subscribe    opt in to scheduled Fantasy War Room episodes
+     POST /api/podcast/unsubscribe  opt out (deletes the subscription and its episodes)
+     GET  /api/podcast/episodes     the subscriber's private episodes
+     POST /api/podcast/delete       delete one episode
+   and, on its Cron Trigger, the scheduled podcast job (podcastJob.ts).
    Only facts the app sends are used; the Worker stores no league data. */
 
 interface AiBinding {
@@ -44,6 +60,8 @@ export interface Env {
   AI_MODEL?: string
   AI: AiBinding
   USAGE: KV
+  /** scheduled podcasts: subscriptions, job records and private episodes */
+  EPISODES: JobKV
   [k: string]: unknown
 }
 
@@ -67,7 +85,67 @@ async function readBody(req: Request): Promise<unknown> {
   }
 }
 
+const SLEEPER = 'https://api.sleeper.app/v1'
+
+/** The Sleeper user id for a username, if that user is a member of the league. */
+async function memberId(username: string, leagueId: string): Promise<string | null> {
+  const u = await fetch(`${SLEEPER}/user/${encodeURIComponent(username)}`)
+  const user = u.ok ? ((await u.json()) as { user_id?: string } | null) : null
+  if (!user?.user_id) return null
+  const r = await fetch(`${SLEEPER}/league/${encodeURIComponent(leagueId)}/users`)
+  const members = r.ok ? ((await r.json()) as { user_id: string }[]) : []
+  return members.some((m) => m.user_id === user.user_id) ? user.user_id : null
+}
+
+async function podcastRoute(req: Request, url: URL, env: Env, cors: Record<string, string>): Promise<Response> {
+  // episodes are private: without an access token anyone who knew a username could read them
+  if (!env.ACCESS_TOKEN)
+    return json({ error: 'not_configured', message: 'Scheduled podcasts need an ACCESS_TOKEN on the Worker.' }, 403, cors)
+  if (req.method === 'GET' && url.pathname === '/api/podcast/episodes') {
+    const id = await memberId(url.searchParams.get('username') ?? '', url.searchParams.get('leagueId') ?? '')
+    if (!id) return json({ error: 'not_found', message: 'That Sleeper user is not in this league.' }, 404, cors)
+    return json({ episodes: await listEpisodesFor(env.EPISODES, url.searchParams.get('leagueId')!, id) }, 200, cors)
+  }
+  if (req.method !== 'POST') return json({ error: 'not_found' }, 404, cors)
+  const body = (await readBody(req)) as Record<string, unknown>
+  if (url.pathname === '/api/podcast/subscribe') {
+    const s = validateSubscription(body)
+    const id = await memberId(s.username, s.leagueId)
+    if (!id) return json({ error: 'not_found', message: 'That Sleeper user is not in this league.' }, 404, cors)
+    const sub: Subscription = { ...s, userId: id, createdAt: Date.now() }
+    await env.EPISODES.put(subKey(s.leagueId, id), JSON.stringify(sub))
+    return json({ ok: true, shows: sub.shows }, 200, cors)
+  }
+  const username = String(body.username ?? '')
+  const leagueId = String(body.leagueId ?? '')
+  const id = await memberId(username, leagueId)
+  if (!id) return json({ error: 'not_found', message: 'That Sleeper user is not in this league.' }, 404, cors)
+  if (url.pathname === '/api/podcast/unsubscribe') {
+    await unsubscribe(env.EPISODES, leagueId, id)
+    return json({ ok: true }, 200, cors)
+  }
+  if (url.pathname === '/api/podcast/delete') {
+    const epId = String(body.id ?? '')
+    await env.EPISODES.delete(episodeStoreKey(leagueId, id, epId))
+    const index = JSON.parse((await env.EPISODES.get(indexKey(leagueId, id))) ?? '[]') as string[]
+    await env.EPISODES.put(indexKey(leagueId, id), JSON.stringify(index.filter((x) => x !== epId)))
+    return json({ ok: true }, 200, cors)
+  }
+  return json({ error: 'not_found' }, 404, cors)
+}
+
+interface WaitUntil {
+  waitUntil(p: Promise<unknown>): void
+}
+
 export default {
+  /** Cron Trigger (wrangler.toml): prepares due Fantasy War Room episodes, no browser involved. */
+  async scheduled(_event: unknown, env: Env, ctx: WaitUntil): Promise<void> {
+    ctx.waitUntil(
+      runScheduled(env.EPISODES, Date.now()).then((results) => console.log(JSON.stringify({ job: 'podcast', results }))),
+    )
+  },
+
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url)
     const origin = allowedOrigin(req.headers.get('origin'), env.ALLOWED_ORIGINS ?? '')
@@ -94,6 +172,8 @@ export default {
     }
 
     try {
+      if (url.pathname.startsWith('/api/podcast/')) return await podcastRoute(req, url, env, cors)
+
       if (req.method === 'GET' && url.pathname === '/api/usage')
         return json(await usageFor(env.USAGE, who, limits, Date.now()), 200, cors)
 

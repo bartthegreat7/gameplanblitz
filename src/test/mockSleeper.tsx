@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 
 import App from '../App'
 import { createQueryClient } from '../lib/queryClient'
-import { useAppStore } from '../store/app'
+import { DEFAULT_PODCAST, useAppStore } from '../store/app'
 
 /* Test-only harness: mocked Sleeper / FantasyCalc responses. Never imported by production code. */
 
@@ -179,6 +179,7 @@ export function resetStore(over: Partial<ReturnType<typeof useAppStore.getState>
     readAloud: false,
     deviceVoices: [null, null],
     cloudVoices: ['orion', 'asteria'],
+    podcast: DEFAULT_PODCAST,
     ...over,
   })
 }

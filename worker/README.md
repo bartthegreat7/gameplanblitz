@@ -8,6 +8,8 @@ A Cloudflare Worker that powers the optional AI parts of GameplanBlitz:
 | `POST /api/studio/script` | Podcast script (Claude, JSON) from an outline the user approved |
 | `POST /api/studio/tts` | One line of speech, `audio/mpeg` (Deepgram Aura on Workers AI) |
 | `GET /api/usage` | Today's usage and limits for the caller |
+| `POST /api/podcast/subscribe`, `/unsubscribe`, `/delete`; `GET /api/podcast/episodes` | Scheduled Fantasy War Room episodes (opt-in, private) |
+| Cron Trigger (hourly) | Prepares due episodes for subscribers, with no browser involved |
 
 Without this Worker the app still works: it falls back to built-in answers, the built-in script writer and the browser's own voices.
 
@@ -39,6 +41,14 @@ Without this Worker the app still works: it falls back to built-in answers, the 
 - **Hosts:** "Jordan" and "Casey" are fictional characters, not modeled on any real broadcaster.
 - **Disclosure:** the app adds a spoken AI disclosure at the start and end of every episode.
 
+## Scheduled podcasts (The Fantasy War Room)
+
+- **What runs:** every hour (`crons` in `wrangler.toml`) `src/podcastJob.ts` reads the opted-in subscriptions, works out which show is due from the NFL schedule's dates in each subscriber's time zone (Weekly Review two days before the week's first game, The Game Plan on the first game day, Kickoff Briefing the morning of the first weekend games), fetches the league from Sleeper's public API, builds the fact sheet with the app's own code and writes the episode with the built-in, evidence-citing writer. No AI model is called, so episodes cost nothing; the app plays them with device voices.
+- **Reliability:** one job record per league, user, season, week and show (done jobs never rerun); a job marked running is skipped for 15 minutes; failures are recorded and retried on later runs, up to 3 attempts; nothing runs outside the regular season; a daily episode counter is kept for cost tracking.
+- **Privacy:** these routes require `ACCESS_TOKEN` (without it they answer 403), and the Sleeper user must be a member of the league. Stored: the subscription (Sleeper username and id, league id, show settings, time-zone offset) and the episodes, which expire after 120 days. Opting out deletes the subscription and every stored episode.
+- **Plan:** parsing Sleeper's 5 MB player file takes more CPU time than the Workers Free plan allows per invocation; use the Workers Paid plan for the scheduled job.
+- **Verified so far:** the job is unit-tested in-process with an in-memory KV (generation, no duplicates, time-zone due hours, retries and giving up, the running-job guard, out-of-season, opt-out), and bundled without Vite and run in plain Node. It has **not yet run on Cloudflare**: deploy it and check the Cron Trigger's logs (`npx wrangler tail`) to confirm the first scheduled run.
+
 ## Deploy
 
 1. Install the dependencies:
@@ -49,13 +59,14 @@ Without this Worker the app still works: it falls back to built-in answers, the 
    ```
 
 2. Sign in to Cloudflare: `npx wrangler login`
-3. Create the usage store:
+3. Create the usage store and the episode store:
 
    ```sh
    npx wrangler kv namespace create USAGE
+   npx wrangler kv namespace create EPISODES
    ```
 
-   Paste the `id` it prints into `wrangler.toml`.
+   Paste each `id` it prints into `wrangler.toml`.
 4. Add the Anthropic key: `npx wrangler secret put ANTHROPIC_API_KEY`
 5. Optional but recommended: `npx wrangler secret put ACCESS_TOKEN`. Use any long random string.
 6. Check `ALLOWED_ORIGINS` in `wrangler.toml`. It should list your GitHub Pages origin, with no path.

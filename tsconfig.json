@@ -28,6 +28,8 @@
     "scripts",
     "vite.config.ts",
     "worker/src/logic.ts",
-    "worker/src/logic.test.ts"
+    "worker/src/logic.test.ts",
+    "worker/src/podcastJob.ts",
+    "worker/src/podcastJob.test.ts"
   ]
 }

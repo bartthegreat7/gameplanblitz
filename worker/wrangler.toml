@@ -12,6 +12,15 @@ binding = "AI"
 binding = "USAGE"
 id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
 
+# Scheduled podcasts: subscriptions, job records and private episodes
+[[kv_namespaces]]
+binding = "EPISODES"
+id = "REPLACE_WITH_YOUR_EPISODES_KV_NAMESPACE_ID"
+
+# The Fantasy War Room's scheduled job: every hour, prepares due episodes for opted-in users
+[triggers]
+crons = ["17 * * * *"]
+
 [vars]
 # Origins allowed to call the Worker (the GitHub Pages origin has no path)
 ALLOWED_ORIGINS = "https://bartthegreat7.github.io,http://localhost:5173"

@@ -1,7 +1,7 @@
 import { ChevronRight, Send, Sparkles } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 
-import { useFactSheet } from '../../hooks/useFactSheet'
+import type { FactSheet } from '../../hooks/useFactSheet'
 import type { Ready } from '../../hooks/useLeagueData'
 import { GmChat } from '../ai/GmChat'
 import { CARD } from '../dashboard/styles'
@@ -14,8 +14,7 @@ const SHORT: Record<string, string> = { 'What are my playoff chances?': 'My play
  * The AI Fantasy GM, docked on the dashboard: ask here (typed or a suggested question) and the
  * conversation opens in a side panel with the answer. Same chat, history and sources as /ask.
  */
-export function GmPanel({ data }: { data: Ready }) {
-  const sheet = useFactSheet(data)
+export function GmPanel({ data, sheet }: { data: Ready; sheet: FactSheet }) {
   const [input, setInput] = useState('')
   const [chat, setChat] = useState<{ q?: string; key: number } | null>(null)
   const open = (q?: string) => setChat({ q, key: Date.now() })

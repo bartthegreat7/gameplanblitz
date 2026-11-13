@@ -1,5 +1,11 @@
 import { Headphones, List, Mic, Pause, Play, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
+
+import { useAutoEpisodes } from '../../hooks/useAutoEpisodes'
+import type { FactSheet } from '../../hooks/useFactSheet'
+import type { Ready } from '../../hooks/useLeagueData'
+import { SHOWS } from '../../lib/ai/series'
+import { useAppStore } from '../../store/app'
 import { Link } from 'react-router-dom'
 
 import { clock } from '../../lib/ai/episode'
@@ -44,7 +50,17 @@ function Waveform({ durations, elapsed, starts }: { durations: number[]; elapsed
   )
 }
 
-function Player({ ep }: { ep: Episode }) {
+const PLAYED = 'gb-played-episodes'
+const readPlayed = (): string[] => {
+  try {
+    const v = JSON.parse(localStorage.getItem(PLAYED) ?? '[]')
+    return Array.isArray(v) ? v : []
+  } catch {
+    return []
+  }
+}
+
+function Player({ ep, onPlay }: { ep: Episode; onPlay?: () => void }) {
   const pb = usePlayback(ep)
   const type = EPISODE_TYPES.find((t) => t.id === ep.type)
   const status = !ep.audio
@@ -64,7 +80,10 @@ function Player({ ep }: { ep: Episode }) {
           <div className="mt-2 flex items-center gap-2.5">
             <button
               type="button"
-              onClick={pb.toggle}
+              onClick={() => {
+                if (!pb.playing) onPlay?.()
+                pb.toggle()
+              }}
               aria-label={pb.playing ? 'Pause episode' : 'Play episode'}
               className="bg-accent-deep text-select-ink grid size-10 shrink-0 place-items-center rounded-full shadow-[0_0_16px_-4px_var(--accent-deep)]"
             >
@@ -104,16 +123,31 @@ function Player({ ep }: { ep: Episode }) {
  * (and deleted) in the Studio from evidence-checked scripts; the hosts are fictional and their
  * voices synthetic.
  */
-export function PodcastPanel({ leagueId }: { leagueId: string }) {
+export function PodcastPanel({ data, sheet }: { data: Ready; sheet: FactSheet }) {
+  const leagueId = data.league.league_id
+  const prefs = useAppStore((s) => s.podcast)
+  const made = useAutoEpisodes(data, sheet)
   const [eps, setEps] = useState<Episode[] | null>(null)
+  const [played, setPlayed] = useState<string[]>(readPlayed)
   useEffect(() => {
     let live = true
     listEpisodes(leagueId).then((e) => live && setEps(e))
     return () => {
       live = false
     }
-  }, [leagueId])
+  }, [leagueId, made])
   const latest = eps?.[0] ?? null
+  const fresh = !!latest && latest.week === data.week && prefs.banner && !played.includes(latest.id)
+  const markPlayed = () => {
+    if (!latest || played.includes(latest.id)) return
+    const next = [...played, latest.id].slice(-200)
+    setPlayed(next)
+    try {
+      localStorage.setItem(PLAYED, JSON.stringify(next))
+    } catch {
+      /* storage unavailable */
+    }
+  }
   return (
     <section aria-label="AI Podcast" className={`${CARD} grid gap-3 p-4 sm:p-5`}>
       <div className="flex items-start gap-3">
@@ -126,7 +160,14 @@ export function PodcastPanel({ leagueId }: { leagueId: string }) {
       {eps === null ? (
         <div className="bg-line/40 h-28 animate-pulse rounded-xl" />
       ) : latest ? (
-        <Player key={latest.id} ep={latest} />
+        <>
+          {fresh && (
+            <p role="status" className="border-accent/50 bg-accent/12 text-accent rounded-lg border px-3 py-1.5 text-sm font-extrabold">
+              Your Weekly Fantasy Briefing Is Ready
+            </p>
+          )}
+          <Player key={latest.id} ep={latest} onPlay={markPlayed} />
+        </>
       ) : (
         <div className="border-line/70 bg-bg/40 flex gap-3 rounded-xl border p-3">
           <Artwork week={null} label="Your team" />
@@ -145,7 +186,12 @@ export function PodcastPanel({ leagueId }: { leagueId: string }) {
           {eps && eps.length > 0 && <span className="text-ink-3">({eps.length})</span>}
         </Link>
       </div>
-      <p className="text-ink-3 text-xs">AI-generated: fictional hosts with synthetic voices. Scripts cite your league data.</p>
+      <p className="text-ink-3 text-xs">
+        AI-generated: fictional hosts with synthetic voices. Scripts cite your league data.{' '}
+        {prefs.auto
+          ? `Automatic: ${SHOWS.filter((s) => prefs.shows.includes(s.type as never)).map((s) => s.series.replace('The Fantasy War Room: ', '')).join(', ')} (prepared when you open GamePlanBitz).`
+          : 'Automatic weekly shows are off: turn them on in the Studio.'}
+      </p>
     </section>
   )
 }

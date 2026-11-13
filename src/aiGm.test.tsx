@@ -164,10 +164,10 @@ describe('Podcast Studio', () => {
 
     // library: save, then delete with confirmation
     const lib = screen.getByRole('region', { name: 'Episode library' })
-    expect(within(lib).getByText('Matchup preview · Week 5')).toBeInTheDocument()
+    expect(within(lib).getByText('The Game Plan · Week 5')).toBeInTheDocument()
     await user.click(within(player).getByRole('button', { name: 'Save episode' }))
     expect(await within(lib).findByRole('button', { name: /Saved \(1\)/ })).toBeInTheDocument()
-    await user.click(within(lib).getByRole('button', { name: 'Delete Matchup preview · Week 5' }))
+    await user.click(within(lib).getByRole('button', { name: 'Delete The Game Plan · Week 5' }))
     await user.click(within(lib).getByRole('button', { name: 'Delete' }))
     expect(await within(lib).findByText(/No episodes yet/)).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Episode player' })).not.toBeInTheDocument()

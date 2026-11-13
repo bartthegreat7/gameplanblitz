@@ -7,9 +7,11 @@ import { FactRow } from '../components/ai/FactRow'
 import { CARD, PAD } from '../components/dashboard/styles'
 import { LeagueGate } from '../components/LeagueGate'
 import { AudioStep } from '../components/studio/AudioStep'
+import { AutoShows } from '../components/studio/AutoShows'
 import { EpisodePlayer } from '../components/studio/EpisodePlayer'
 import { Library } from '../components/studio/Library'
 import { ShareDialog } from '../components/studio/ShareDialog'
+import { useAutoEpisodes } from '../hooks/useAutoEpisodes'
 import { useFactSheet } from '../hooks/useFactSheet'
 import type { Ready } from '../hooks/useLeagueData'
 import { AiError, aiConfigured, requestScript, withRetry } from '../lib/ai/client'
@@ -84,6 +86,7 @@ function Panel({ title, children, aside }: { title: string; children: ReactNode;
 
 function StudioPage({ data }: { data: Ready }) {
   const sheet = useFactSheet(data)
+  const made = useAutoEpisodes(data, sheet)
   const { aiConsent, aiToken, setAi } = useAppStore()
   const configured = aiConfigured()
   const leagueId = data.league.league_id
@@ -120,7 +123,7 @@ function StudioPage({ data }: { data: Ready }) {
   useEffect(() => {
     void refresh()
     return () => abort.current?.abort()
-  }, [refresh])
+  }, [refresh, made])
 
   const hosts = format === 'debate' ? HOSTS : [HOSTS[0]]
   const at = current ? 3 : lines ? 2 : outline ? 1 : 0
@@ -193,6 +196,7 @@ function StudioPage({ data }: { data: Ready }) {
       id: newId(),
       leagueId,
       leagueName: data.league.name,
+      season: data.season,
       week: data.week,
       createdAt: Date.now(),
       type,
@@ -436,6 +440,7 @@ function StudioPage({ data }: { data: Ready }) {
           )}
         </div>
         <aside ref={libraryRef} tabIndex={-1} aria-label="Episode library" className="grid content-start gap-4 outline-none">
+          <AutoShows leagueId={leagueId} />
           <Library
             episodes={episodes}
             current={current?.id ?? null}

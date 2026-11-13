@@ -1,4 +1,5 @@
 import type { Fact } from './facts'
+import type { Episode } from './storage'
 import type { RawLine } from './podcast'
 
 /* Client for the GameplanBlitz AI Worker (VITE_AI_API). The Worker holds the API key; this file
@@ -149,6 +150,36 @@ export interface Usage {
 export async function getUsage(token: string, signal?: AbortSignal): Promise<Usage> {
   const res = await call('/api/usage', null, token, signal, 'GET')
   return res.json()
+}
+
+/* ---------------- scheduled podcasts (the Worker's Cron Trigger) ---------------- */
+
+export interface PodcastSubscription {
+  username: string
+  leagueId: string
+  shows: ('recap' | 'preview' | 'kickoff')[]
+  length: 'short' | 'standard'
+  format: 'solo' | 'debate'
+  tone: 'straight' | 'humor'
+  /** minutes to add to UTC for local time (the Worker schedules shows in the user's time zone) */
+  tzOffsetMinutes: number
+}
+
+/** Opt in: the Worker prepares due shows on schedule, even with the site closed. */
+export async function podcastSubscribe(sub: PodcastSubscription, token: string): Promise<void> {
+  await call('/api/podcast/subscribe', sub, token)
+}
+
+/** Opt out: the Worker deletes the subscription and every episode it stored for it. */
+export async function podcastUnsubscribe(username: string, leagueId: string, token: string): Promise<void> {
+  await call('/api/podcast/unsubscribe', { username, leagueId }, token)
+}
+
+/** Episodes the Worker prepared (private: requires the access token). */
+export async function fetchServerEpisodes(username: string, leagueId: string, token: string): Promise<Episode[]> {
+  const q = new URLSearchParams({ username, leagueId })
+  const res = await call(`/api/podcast/episodes?${q}`, null, token, undefined, 'GET')
+  return ((await res.json()) as { episodes: Episode[] }).episodes ?? []
 }
 
 /** Aura voices offered for the two hosts (Deepgram Aura on Cloudflare Workers AI). */

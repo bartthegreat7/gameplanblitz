@@ -122,6 +122,10 @@ export interface Episode {
   audio: EpisodeAudio | null
   /** pinned to Saved episodes */
   saved: boolean
+  /** NFL season (episodes before this field existed have none) */
+  season?: string
+  /** prepared automatically (an opted-in weekly show), not made by hand */
+  auto?: boolean
 }
 
 const EP = 'ep:'

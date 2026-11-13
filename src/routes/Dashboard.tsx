@@ -31,6 +31,7 @@ import { CARD } from '../components/dashboard/styles'
 import { WeeklyGamePlan } from '../components/dashboard/WeeklyGamePlan'
 import { WeeklyReport } from '../components/gm/WeeklyReport'
 import { LeagueGate } from '../components/LeagueGate'
+import { useFactSheet } from '../hooks/useFactSheet'
 import { useGmBrief } from '../hooks/useGmBrief'
 import type { Ready } from '../hooks/useLeagueData'
 import { useOddsHistory } from '../hooks/useOddsHistory'
@@ -92,6 +93,7 @@ function DashboardView({ data }: { data: Ready }) {
   const name = userQ.data?.display_name || username || 'Coach'
 
   const gm = useGmBrief(data)
+  const sheet = useFactSheet(data)
   const engine = useProjectionEngine(data)
   const { book, loading: usageLoading } = useUsageBook(data)
   const gd = useMemo(() => gameDay(m, matchups), [m, matchups])
@@ -262,8 +264,8 @@ function DashboardView({ data }: { data: Ready }) {
         </div>
 
         <aside aria-label="AI Fantasy GM and podcast" className="grid min-w-0 content-start gap-4">
-          <GmPanel data={data} />
-          <PodcastPanel leagueId={league.league_id} />
+          <GmPanel data={data} sheet={sheet} />
+          <PodcastPanel data={data} sheet={sheet} />
         </aside>
 
         {tab === 'overview' && (

@@ -12,10 +12,10 @@ export type Tone = 'straight' | 'humor'
 export type Length = 'short' | 'standard'
 
 export const EPISODE_TYPES: { id: EpisodeType; label: string; blurb: string }[] = [
-  { id: 'preview', label: 'Matchup preview', blurb: 'Your opponent, the projections and the lineup calls.' },
-  { id: 'kickoff', label: 'Sunday kickoff briefing', blurb: 'Last checks before lock: injuries, weather, news.' },
-  { id: 'recap', label: 'Weekly recap', blurb: 'Last week’s result, standouts, standings and the race.' },
-  { id: 'moves', label: 'Waivers & trades', blurb: 'Pickups, stashes, trade ideas and keeper notes.' },
+  { id: 'recap', label: 'Weekly Review', blurb: 'Last week around the league, the standings, power rankings and the race.' },
+  { id: 'preview', label: 'The Game Plan', blurb: 'Your matchup, lineup calls, injuries, weather and every matchup this week.' },
+  { id: 'kickoff', label: 'Kickoff Briefing', blurb: 'Last checks before lock: designations, weather, news.' },
+  { id: 'moves', label: 'Waivers & Trades', blurb: 'Pickups, stashes, trade ideas and keeper notes.' },
 ]
 
 export interface Host {

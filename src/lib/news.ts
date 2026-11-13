@@ -5,9 +5,11 @@ import { HttpError, getJson } from './sleeper'
    - optionally, a Worker at VITE_NEWS_API (public URL, not a secret) with the same response shape.
    The browser never contacts publishers directly. */
 
-export const NEWS_API: string = (import.meta.env.VITE_NEWS_API ?? '').replace(/\/+$/, '')
+// build-time settings; absent outside Vite (the AI Worker bundles this module too)
+const ENV: Record<string, string | undefined> = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {}
+export const NEWS_API: string = (ENV.VITE_NEWS_API ?? '').replace(/\/+$/, '')
 export const newsSource: 'worker' | 'static' = NEWS_API ? 'worker' : 'static'
-export const newsUrl = () => (NEWS_API ? `${NEWS_API}/api/news?limit=400` : `${import.meta.env.BASE_URL}news.json`)
+export const newsUrl = () => (NEWS_API ? `${NEWS_API}/api/news?limit=400` : `${ENV.BASE_URL ?? '/'}news.json`)
 
 export interface ArticlePlayer {
   id: string
