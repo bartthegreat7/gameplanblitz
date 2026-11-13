@@ -20,6 +20,8 @@ export interface SleeperUser {
   display_name: string
   avatar: string | null
   metadata?: { team_name?: string } | null
+  /** Sleeper's commissioner flag on /league/{id}/users */
+  is_owner?: boolean | null
 }
 
 export interface SleeperLeagueSettings {
@@ -334,6 +336,32 @@ export interface SleeperDraftPick {
   player_id: string | null
   roster_id: number | null
   is_keeper?: boolean | null
+}
+
+/** One game in a Sleeper playoff bracket. */
+export interface BracketGame {
+  /** round */
+  r: number
+  /** match id */
+  m: number
+  t1: number | null
+  t2: number | null
+  /** winning / losing roster id */
+  w: number | null
+  l: number | null
+  /** placement game: 1 = the final (Sleeper's convention) */
+  p?: number | null
+}
+
+/** Playoff bracket games (Sleeper's winners_bracket). Parsed defensively; empty before the playoffs. */
+export async function getWinnersBracket(leagueId: string): Promise<BracketGame[]> {
+  const rows = await getJson<unknown>(`${SLEEPER}/league/${leagueId}/winners_bracket`)
+  if (!Array.isArray(rows)) return []
+  const num = (x: unknown) => (typeof x === 'number' ? x : null)
+  return rows
+    .map((r) => r as Record<string, unknown>)
+    .filter((r) => typeof r.r === 'number')
+    .map((r) => ({ r: r.r as number, m: num(r.m) ?? 0, t1: num(r.t1), t2: num(r.t2), w: num(r.w), l: num(r.l), p: num(r.p) }))
 }
 
 export async function getDraftPicks(draftId: string): Promise<SleeperDraftPick[]> {

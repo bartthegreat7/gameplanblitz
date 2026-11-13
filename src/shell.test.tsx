@@ -186,7 +186,7 @@ describe('sidebar', () => {
     expect(analytics).toHaveAttribute('aria-expanded', 'true')
     const flyout = within(nav).getByRole('group', { name: 'My Leagues' })
     expect(within(flyout).getByRole('button', { name: 'Test League' })).toHaveAttribute('aria-pressed', 'true')
-    expect(within(flyout).getAllByRole('link')).toHaveLength(1)
+    expect(within(flyout).getAllByRole('link').map((a) => a.textContent)).toEqual(['League HQ', 'Standings'])
     await user.keyboard('{Escape}')
     expect(within(nav).queryByRole('group', { name: 'My Leagues' })).not.toBeInTheDocument()
     expect(analytics).toHaveFocus()

@@ -30,6 +30,7 @@ import {
   TrendingUp,
   Users,
   type LucideIcon,
+  Landmark,
 } from 'lucide-react'
 
 export interface NavLeaf {
@@ -96,7 +97,10 @@ export const NAV_SECTIONS: NavSection[] = [
         id: 'leagues',
         label: 'My Leagues',
         icon: Trophy,
-        children: [{ to: '/standings', label: 'Standings', icon: ListOrdered }],
+        children: [
+          { to: '/hq', label: 'League HQ', icon: Landmark, blurb: 'History, records, rivalries, trades and drafts' },
+          { to: '/standings', label: 'Standings', icon: ListOrdered },
+        ],
       },
       { to: '/team', label: 'My Team', icon: Users },
       { to: '/lineup', label: 'Lineup Optimizer', short: 'Lineup', icon: Layers, primary: true },
