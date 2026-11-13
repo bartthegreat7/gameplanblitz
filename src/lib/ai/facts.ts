@@ -33,9 +33,12 @@ export type Topic =
   | 'recap'
   | 'scouting'
   | 'league'
+  | 'memory'
+  | 'history'
 
 export const TOPIC_ORDER: Topic[] = [
   'matchup',
+  'memory',
   'lineup',
   'injury',
   'weather',
@@ -45,6 +48,7 @@ export const TOPIC_ORDER: Topic[] = [
   'trades',
   'playoffs',
   'standings',
+  'history',
   'keepers',
   'news',
   'recap',
@@ -108,10 +112,12 @@ export interface FactInput {
   lastWeek: { week: number; matchups: SleeperMatchup[] } | null
   /** Around the League: every result, awards, storylines, rankings and previews (see leagueFacts) */
   league?: LeagueFactDraft[]
+  /** further ready-made entries: the GM's memory, your season, trade impact (see gmFacts) */
+  more?: Omit<Fact, 'id'>[]
   stamps: Stamps
 }
 
-export const MAX_FACTS = 220
+export const MAX_FACTS = 260
 
 type Draft = Omit<Fact, 'id'>
 
@@ -497,6 +503,8 @@ export function buildFacts(i: FactInput): Fact[] {
       to: '/scores',
       data: { segment: d.segment },
     })
+
+  for (const d of i.more ?? []) add(d)
 
   return out
     .sort((a, b) => TOPIC_ORDER.indexOf(a.topic) - TOPIC_ORDER.indexOf(b.topic))

@@ -32,6 +32,7 @@ import {
   type LucideIcon,
   Landmark,
   Clover,
+  Fingerprint,
 } from 'lucide-react'
 
 export interface NavLeaf {
@@ -67,6 +68,7 @@ export const SETTINGS: NavLeaf = { to: '/settings', label: 'Settings', icon: Set
 export const LAB_TOOLS: NavLeaf[] = [
   { to: '/gm', label: 'Weekly GM Brief', icon: Briefcase, blurb: "This week's to-do list and report, ranked by urgency." },
   { to: '/startsit', label: 'Start/Sit', icon: Scale, blurb: 'Simulate close calls between 2-4 players.' },
+  { to: '/managers', label: 'Manager Tendencies', icon: Fingerprint, blurb: 'What each manager has done: trades, claims, bids, lineups, keepers.' },
   { to: '/scouting', label: 'Opponent Scouting', icon: Binoculars, blurb: 'Any team: results, set lineup, strengths by position.' },
   { to: '/breakouts', label: 'Breakout Radar', icon: TrendingUp, blurb: 'Rising usage before the points follow.' },
   { to: '/market', label: 'Player Market', icon: LineChart, blurb: 'Trade values, 30-day trends, buy-low and sell-high signals.' },

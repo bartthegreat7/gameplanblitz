@@ -9,7 +9,7 @@ import { ConfidenceBadge } from '../components/ui/badges'
 import { EmptyState, ListSkeleton, Notice } from '../components/ui/states'
 import { useGmBrief } from '../hooks/useGmBrief'
 import type { Ready } from '../hooks/useLeagueData'
-import { CADENCE, focusFor, mergeHistory, recStatus, type RecEntry } from '../lib/analytics/autopilot'
+import { CADENCE, focusFor, historyKey, mergeHistory, readHistory, recStatus, type RecEntry } from '../lib/analytics/autopilot'
 import { gameDate, teamHealth } from '../lib/analytics/command'
 import type { GmAction, Priority } from '../lib/analytics/gm'
 import { f1, relTime } from '../lib/format'
@@ -22,15 +22,7 @@ const URGENCY: Record<Priority, { label: string; cls: string }> = {
   3: { label: 'Consider', cls: 'border-line bg-panel text-ink-2' },
 }
 
-const KEY = (leagueId: string) => `gb-autopilot-${leagueId}`
-function readHistory(leagueId: string): RecEntry[] {
-  try {
-    const v = JSON.parse(localStorage.getItem(KEY(leagueId)) ?? '[]')
-    return Array.isArray(v) ? v : []
-  } catch {
-    return []
-  }
-}
+const KEY = historyKey
 
 function ActionCard({ a, n, freshness }: { a: GmAction; n: number; freshness: string }) {
   const u = URGENCY[a.priority]

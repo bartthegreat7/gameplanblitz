@@ -38,6 +38,18 @@ export interface RecEntry {
 
 export const MAX_HISTORY = 120
 
+/** Where the recommendation history is kept in this browser. */
+export const historyKey = (leagueId: string) => `gb-autopilot-${leagueId}`
+
+export function readHistory(leagueId: string): RecEntry[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(historyKey(leagueId)) ?? '[]')
+    return Array.isArray(v) ? v : []
+  } catch {
+    return []
+  }
+}
+
 /** Adds this week's recommendations to the history (each once; lastSeen refreshed). Newest first. */
 export function mergeHistory(history: RecEntry[], week: number, actions: GmAction[], now: number): RecEntry[] {
   const by = new Map(history.map((h) => [h.key, h]))

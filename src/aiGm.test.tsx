@@ -194,3 +194,31 @@ describe('Podcast Studio', () => {
     expect(text).toContain('Sources')
   }, 90_000)
 })
+
+describe('AI Fantasy GM memory', () => {
+  it('remembers a saved strategy (labeled as yours), can forget it, and prices trading a player away', async () => {
+    const user = userEvent.setup()
+    renderApp('#/ask')
+    const mem = await screen.findByRole('region', { name: 'What the GM remembers' }, SLOW)
+    await user.selectOptions(within(mem).getByRole('combobox', { name: 'Season goal' }), 'win-now')
+    await user.type(within(mem).getByRole('textbox', { name: /Note to the GM/ }), 'Never trading my rookie.')
+    await user.click(within(mem).getByRole('button', { name: 'Save' }))
+    expect(within(mem).getByRole('status')).toHaveTextContent('Saved')
+
+    await ask('What is my strategy?')
+    const a = await screen.findByRole('article', { name: 'Fantasy GM answer' }, SLOW)
+    expect(a).toHaveTextContent('Your saved strategy: you want to win this season, balances floor and ceiling, and trades selectively.')
+    expect(a).toHaveTextContent('Your own note to the GM: "Never trading my rookie."')
+
+    await ask('What happens if I trade Rusher Runnerson?')
+    await vi.waitFor(() => expect(answers()).toHaveLength(2), SLOW)
+    expect(answers()[1]).toHaveTextContent(/If you trade Rusher Runnerson away, your best lineup this week projects 13\.0 instead of 18\.0 \(−5\.0\) before what you get back; FantasyCalc value 1000\./)
+    expect(answers()[1]).toHaveTextContent(/what comes back changes the result/)
+
+    await user.click(within(mem).getByRole('button', { name: 'Clear memory' }))
+    expect(within(mem).getByRole('status')).toHaveTextContent('Cleared')
+    await ask('What is my strategy?')
+    await vi.waitFor(() => expect(answers()).toHaveLength(3), SLOW)
+    expect(answers()[2]).not.toHaveTextContent('Your saved strategy')
+  }, 60_000)
+})

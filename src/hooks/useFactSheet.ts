@@ -4,12 +4,17 @@ import { useMemo } from 'react'
 import { buildFacts, type Fact } from '../lib/ai/facts'
 import type { NameEntry } from '../lib/ai/assistant'
 import type { LeagueFactDraft } from '../lib/ai/leagueFacts'
+import { activityFacts, memoryFacts, partnerFacts, recommendationFacts, tradeImpactFacts } from '../lib/ai/gmFacts'
 import { leagueFacts } from '../lib/ai/leagueFacts'
+import { readHistory } from '../lib/analytics/autopilot'
 import { movers, powerRankings, storylines, weekAwards } from '../lib/analytics/league'
+import { luckReport } from '../lib/analytics/luck'
 import { simulate } from '../lib/analytics/playoffs'
 import { findMyMatchup, findOpponent, gameDay, standings } from '../lib/insights'
 import { lineupTotal } from '../lib/lineup'
+import { useAppStore } from '../store/app'
 import { useGmBrief } from './useGmBrief'
+import { useLeagueBehavior } from './useLeagueBehavior'
 import type { Ready } from './useLeagueData'
 import { useLeagueBoard } from './useLeagueBoard'
 import { useLeagueMatchups } from './useLeagueMatchups'
@@ -69,6 +74,23 @@ export function useFactSheet(data: Ready) {
     })
   }, [leagueSeason.season, board.games, odds, m, week, gm.playoffTeams])
 
+  // the GM's memory and your season: saved strategy, earlier recommendations, moves, luck, partners, trade impact
+  const memory = useAppStore((s) => s.gmMemory[league.league_id] ?? null)
+  const behavior = useLeagueBehavior(data, { past: false })
+  const medianGame = league.settings.league_average_match === 1
+  const luck = useMemo(() => luckReport(behavior.weeks, { medianGame }), [behavior.weeks, medianGame])
+  const more = useMemo(() => {
+    const current = new Set(gm.allActions.map((a) => a.id))
+    const me = behavior.profiles.find((p) => p.rosterId === m.myRosterId) ?? null
+    return [
+      ...memoryFacts(memory),
+      ...recommendationFacts(readHistory(league.league_id), week, current),
+      ...activityFacts(me, luck.teams.find((t) => t.rosterId === m.myRosterId) ?? null, behavior.traits.get(m.myRosterId) ?? [], sleeperAt, m),
+      ...partnerFacts(behavior.ideas, m, sleeperAt),
+      ...tradeImpactFacts(m, lineupIn.projectionsUpdatedAt),
+    ]
+  }, [memory, league.league_id, week, gm.allActions, behavior.profiles, behavior.traits, behavior.ideas, luck, sleeperAt, m, lineupIn.projectionsUpdatedAt])
+
   const facts: Fact[] = useMemo(
     () =>
       buildFacts({
@@ -98,6 +120,7 @@ export function useFactSheet(data: Ready) {
             }
           : null,
         league: league_,
+        more,
         lastWeek: lastWeeks.length && !last.loading ? { week: lastWeeks[0], matchups: last.weeks[0]?.matchups ?? [] } : null,
         stamps: {
           sleeper: sleeperAt,
@@ -128,6 +151,7 @@ export function useFactSheet(data: Ready) {
       last.loading,
       last.weeks,
       league_,
+      more,
       sleeperAt,
       lineupIn.projectionsUpdatedAt,
       valuesAt,

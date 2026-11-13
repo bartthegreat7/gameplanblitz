@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 import type { KeeperRules } from '../lib/analytics/keepers'
+import type { GmMemory } from '../lib/ai/gmFacts'
 
 export type Theme = 'light' | 'dark'
 
@@ -40,6 +41,8 @@ interface AppState {
   cloudVoices: [string, string]
   /** The Fantasy War Room: automatic weekly episodes (off until the user opts in) and their style */
   podcast: PodcastPrefs
+  /** the AI Fantasy GM's saved strategy per league id (user-controlled; this browser only) */
+  gmMemory: Record<string, GmMemory>
 
   toggleTheme: () => void
   setTheme: (t: Theme) => void
@@ -56,6 +59,7 @@ interface AppState {
   setKeeperRules: (leagueId: string, rules: KeeperRules | null) => void
   setAi: (p: Partial<Pick<AppState, 'aiConsent' | 'aiToken' | 'readAloud' | 'deviceVoices' | 'cloudVoices'>>) => void
   setPodcast: (p: Partial<PodcastPrefs>) => void
+  setGmMemory: (leagueId: string, mem: GmMemory | null) => void
 }
 
 export interface PodcastPrefs {
@@ -112,6 +116,13 @@ export const useAppStore = create<AppState>()(
       setAi: (p) => set(p),
       podcast: DEFAULT_PODCAST,
       setPodcast: (p) => set({ podcast: { ...get().podcast, ...p } }),
+      gmMemory: {},
+      setGmMemory: (leagueId, mem) => {
+        const next = { ...get().gmMemory }
+        if (mem) next[leagueId] = mem
+        else delete next[leagueId]
+        set({ gmMemory: next })
+      },
     }),
     {
       name: 'gb-app',
@@ -130,6 +141,7 @@ export const useAppStore = create<AppState>()(
         deviceVoices: s.deviceVoices,
         cloudVoices: s.cloudVoices,
         podcast: s.podcast,
+        gmMemory: s.gmMemory,
       }),
     },
   ),

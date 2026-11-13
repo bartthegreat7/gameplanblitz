@@ -23,6 +23,12 @@ export type Intent =
   | 'news'
   | 'recap'
   | 'league'
+  | 'memory'
+  | 'history'
+  | 'tradeImpact'
+  | 'partner'
+  | 'improve'
+  | 'trend'
   | 'summary'
   | 'unknown'
 
@@ -31,6 +37,12 @@ const RULES: [Intent, RegExp][] = [
     'action',
     /\b(for me|on my behalf)\b|\b(make|submit|execute|place|accept|send|propose)\s+(the|a|my|that)?\s*(trade|claim|move|bid|offer|waiver)\b|\bset my lineup\b|\b(drop|add|claim|cut)\b.*\bnow\b/i,
   ],
+  ['memory', /\b(my (saved )?(strategy|preferences|goals?|notes?)|do you remember|what did you (recommend|suggest|say)|previous(ly)? recommend|earlier recommend|last time you)/i],
+  ['tradeImpact', /\bwhat (happens|would happen|if)\b.*\btrad(e|ed|ing)\b|\bif i trade\b|\btrad(e|ing) away\b/i],
+  ['partner', /\btrade partners?\b|\bwho (would|might|could|should i) trade with\b|\bpartner for a trade\b/i],
+  ['history', /\b(my (moves|transactions|history|season so far|activity)|how (lucky|unlucky)|luck|expected wins|have i (traded|made)|faab (have i )?spent)\b/i],
+  ['improve', /\b(improve|increase|boost|raise|better)\b.*\b(chances?|odds|title|championship|team)\b/i],
+  ['trend', /\b(trending|trend(ing)? (up|upward)|rising|on the rise|heating up|breakouts?|who'?s hot)\b/i],
   ['weather', /\b(weather|wind|windy|rain|snow|cold|forecast|dome|storm)/i],
   ['injury', /\b(injur|hurt|questionable|doubtful|status|health|is .* out\b|ruled out|\bir\b)/i],
   ['keepers', /\b(keeper|keep|dynasty)/i],
@@ -69,6 +81,11 @@ const TOPICS: Partial<Record<Intent, Topic[]>> = {
   news: ['news'],
   recap: ['recap'],
   league: ['league'],
+  memory: ['memory'],
+  history: ['history'],
+  tradeImpact: ['trades'],
+  partner: ['trades'],
+  trend: ['breakout', 'waivers'],
 }
 
 /* ---------------- players ---------------- */
@@ -214,6 +231,11 @@ const LABEL: Record<string, string> = {
   '/gameday': 'Game Day Mode',
   '/edge': 'The Edge',
   '/accuracy': 'Prediction Trust',
+  '/managers': 'Manager Tendencies',
+  '/luck': 'Expected Wins & Luck',
+  '/simulate': 'What-If Simulator',
+  '/autopilot': 'Fantasy Autopilot',
+  '/ask': 'AI Fantasy GM',
 }
 
 const UNCERTAINTY: Partial<Record<Intent, string>> = {
@@ -234,6 +256,11 @@ const UNCERTAINTY: Partial<Record<Intent, string>> = {
   news: 'Headlines are shown as published; GameplanBlitz does not verify them.',
   injury: 'Designations can change up to kickoff; Questionable players often play.',
   weather: 'Forecasts change; weather is context only and is not applied to projections.',
+  tradeImpact: 'This is only what you give up this week (Sleeper projections); what comes back changes the result. Use the What-If Simulator for a full trade.',
+  partner: 'Based on roster fit and past moves only. Whether a manager wants to trade is unknown.',
+  history: 'Counts of completed Sleeper moves; luck compares your record with your all-play record.',
+  trend: 'Usage trends compare the last two games with earlier games; small samples swing.',
+  memory: 'Your preferences are saved in this browser only. Change or clear them on the AI Fantasy GM page.',
 }
 
 const of = (facts: Fact[], topics: Topic[]) => facts.filter((f) => topics.includes(f.topic))
@@ -265,6 +292,12 @@ function missingNote(intent: Intent, d: AnswerDeps): string {
     news: 'No recent articles mention your players.',
     recap: 'Last week has no completed results to recap yet.',
     playoffs: 'There are no regular-season weeks left to simulate.',
+    memory: 'You have not saved a strategy yet, and Autopilot has no earlier recommendations in this browser. Set your preferences on the AI Fantasy GM page.',
+    history: 'No completed moves or results yet this season.',
+    tradeImpact: 'Your lineup projections are not loaded yet, so the cost of trading a player cannot be shown.',
+    partner: 'No team is strong where you are thin and thin where you are strong right now.',
+    improve: 'The tools have nothing loaded yet for this week.',
+    trend: 'No player shows a usage breakout right now.',
     scouting: 'No opponent is posted for this week.',
   }
   return none[intent] ?? "I don't have data on that right now."
@@ -418,6 +451,36 @@ export function answerLocally(q: Parsed, d: AnswerDeps): Answer {
       links: [{ label: 'The Edge', to: '/edge' }, ...linksFor(pick)].slice(0, 3),
     }
   }
+  if (intent === 'improve') {
+    const pick = [
+      d.facts.find((f) => f.data?.role === 'strategy'),
+      d.facts.find((f) => f.topic === 'playoffs'),
+      ...d.facts.filter((f) => f.data?.role === 'swap').slice(0, 1),
+      d.facts.find((f) => f.topic === 'waivers'),
+      d.facts.find((f) => f.topic === 'trades' && f.data?.role !== 'impact' && f.data?.role !== 'partner'),
+    ].filter((f): f is Fact => !!f)
+    if (pick.length === 0) return { intent, players, parts: [{ text: missingNote(intent, d), cite: [] }], uncertainty: null, links: [] }
+    return {
+      intent,
+      players,
+      parts: [{ text: 'Where your title odds can move, from the tools:', cite: [] }, ...pick.map((f) => ({ text: f.text, cite: [f.id] }))],
+      uncertainty: UNCERTAINTY.playoffs!,
+      links: [{ label: 'Playoff Simulator', to: '/playoffs' }, ...linksFor(pick)].slice(0, 3),
+    }
+  }
+  if (intent === 'tradeImpact' || intent === 'partner') {
+    const role = intent === 'tradeImpact' ? 'impact' : 'partner'
+    const pool = d.facts.filter((f) => f.data?.role === role)
+    const focused = players.length ? about(pool, players) : pool
+    const picked = (focused.length ? focused : pool).slice(0, intent === 'partner' ? 3 : 4)
+    const extra =
+      intent === 'tradeImpact' && players.length
+        ? about(of(d.facts, ['trades']), players).filter((f) => f.data?.role !== 'impact').slice(0, 2)
+        : []
+    if (picked.length === 0) return { intent, players, parts: [{ text: missingNote(intent, d), cite: [] }], uncertainty: null, links: [] }
+    const all = [...picked, ...extra]
+    return { intent, players, parts: all.map((f) => ({ text: f.text, cite: [f.id] })), uncertainty: UNCERTAINTY[intent]!, links: linksFor(all) }
+  }
   if (intent === 'unknown')
     return {
       intent,
@@ -527,5 +590,10 @@ export function suggestions(facts: Fact[], name: (id: string) => string): string
   if (facts.some((f) => f.topic === 'matchup')) out.push('How does my matchup look?')
   if (facts.some((f) => f.topic === 'playoffs')) out.push('What are my playoff odds?')
   if (facts.some((f) => f.topic === 'trades')) out.push('Any trade ideas?')
-  return out.slice(0, 6)
+  // the GM's newer abilities, offered after the weekly basics
+  const impact = facts.find((f) => f.data?.role === 'impact')
+  if (impact) out.push(`What happens if I trade ${name(impact.players[0])}?`)
+  if (facts.some((f) => f.data?.role === 'partner')) out.push('Find a realistic trade partner.')
+  if (facts.some((f) => f.topic === 'playoffs')) out.push('How can I improve my championship chances?')
+  return out.slice(0, 8)
 }

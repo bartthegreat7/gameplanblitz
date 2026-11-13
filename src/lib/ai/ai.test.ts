@@ -157,6 +157,15 @@ describe('questions', () => {
     expect(detectIntent('Is it going to rain in Buffalo?')).toBe('weather')
     expect(detectIntent('Drop Benchwood for me')).toBe('action')
     expect(detectIntent('Make the trade with Rival')).toBe('action')
+    // the GM's longer memory and new question types
+    expect(detectIntent('What happens if I trade Derrick Henry?')).toBe('tradeImpact')
+    expect(detectIntent('Find a realistic trade partner.')).toBe('partner')
+    expect(detectIntent('Which players are trending upward?')).toBe('trend')
+    expect(detectIntent('How can I improve my championship chances?')).toBe('improve')
+    expect(detectIntent('What did you recommend last week?')).toBe('memory')
+    expect(detectIntent('What is my strategy?')).toBe('memory')
+    expect(detectIntent('How lucky have I been?')).toBe('history')
+    expect(detectIntent('Who should I start this week?')).toBe('startsit')
   })
 
   it('finds players by full name, last name and possessive, in order', () => {

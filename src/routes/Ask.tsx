@@ -1,6 +1,7 @@
 import { Bot, Database, MessageSquareText, ShieldCheck, Sparkles } from 'lucide-react'
 
 import { GmChat } from '../components/ai/GmChat'
+import { GmMemoryPanel } from '../components/ai/GmMemoryPanel'
 import { CARD, PAD } from '../components/dashboard/styles'
 import { LeagueGate } from '../components/LeagueGate'
 import { useFactSheet, type FactSheet } from '../hooks/useFactSheet'
@@ -27,6 +28,8 @@ const TOPIC_LABEL: Record<Topic, string> = {
   recap: 'Last week',
   scouting: 'Opponent',
   league: 'Around the league',
+  memory: 'Your preferences',
+  history: 'Your season',
 }
 
 function Knowledge({ sheet }: { sheet: FactSheet }) {
@@ -124,6 +127,7 @@ function AskPage({ data }: { data: Ready }) {
           <GmChat data={data} sheet={sheet} />
         </section>
         <aside className="grid content-start gap-4">
+          <GmMemoryPanel leagueId={data.league.league_id} />
           <Knowledge sheet={sheet} />
           <HowItWorks />
         </aside>

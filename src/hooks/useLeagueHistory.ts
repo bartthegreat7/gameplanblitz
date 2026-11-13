@@ -67,7 +67,8 @@ async function loadPast(league: SleeperLeague): Promise<{ seasons: HistorySeason
 }
 
 /** League Headquarters data: this season (from the loaded league) plus past seasons, trades and drafts. */
-export function useLeagueHistory(data: Ready) {
+export function useLeagueHistory(data: Ready, opts: { past?: boolean } = {}) {
+  const wantPast = opts.past ?? true
   const { league, model: m } = data
   const { currentWeek } = useSession()
   const { completed, loading: seasonLoading } = useLeagueSeason(data)
@@ -76,7 +77,7 @@ export function useLeagueHistory(data: Ready) {
   const pastQ = useQuery({
     queryKey: ['leagueHistory', league.league_id, league.previous_league_id],
     queryFn: () => loadPast(league),
-    enabled: !!league.previous_league_id && league.previous_league_id !== '0',
+    enabled: wantPast && !!league.previous_league_id && league.previous_league_id !== '0',
     staleTime: 12 * 60 * 60_000,
     retry: 1,
   })
@@ -104,14 +105,17 @@ export function useLeagueHistory(data: Ready) {
     })),
   })
   const txStamp = txQs.map((q) => q.dataUpdatedAt).join(',')
-  const trades = useMemo<SleeperTransaction[]>(
-    () =>
-      txQs
-        .flatMap((q) => q.data ?? [])
-        .filter((t) => t.type === 'trade' && (t.status ?? 'complete') === 'complete')
-        .sort((a, b) => (b.created ?? 0) - (a.created ?? 0)),
+  const allTransactions = useMemo<SleeperTransaction[]>(
+    () => txQs.flatMap((q) => q.data ?? []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [txStamp],
+  )
+  const trades = useMemo<SleeperTransaction[]>(
+    () =>
+      allTransactions
+        .filter((t) => t.type === 'trade' && (t.status ?? 'complete') === 'complete')
+        .sort((a, b) => (b.created ?? 0) - (a.created ?? 0)),
+    [allTransactions],
   )
 
   const current = useMemo<HistorySeason>(
@@ -136,6 +140,7 @@ export function useLeagueHistory(data: Ready) {
     current,
     awardTally,
     trades,
+    allTransactions,
     pastLoading: pastQ.isFetching && !pastQ.data,
     pastFailed: pastQ.isError || (pastQ.data?.gaps ?? 0) > 0,
     seasonLoading,
