@@ -1,4 +1,4 @@
-import { TrendingUp } from 'lucide-react'
+import { BarChart3 } from 'lucide-react'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -6,9 +6,8 @@ import { radarProfile } from '../../lib/analytics/command'
 import type { Breakout, UsageBook } from '../../lib/analytics/opportunity'
 import { f1 } from '../../lib/format'
 import type { Model } from '../../lib/model'
-import { CardLink, DashboardCard } from '../dashboard/DashboardCard'
-import { Ownership } from '../opportunity/parts'
-import { PlayerAvatar } from '../ui/Avatar'
+import { CardLink } from '../dashboard/DashboardCard'
+import { CARD } from '../dashboard/styles'
 import { EmptyState, ListSkeleton, Skeleton } from '../ui/states'
 
 const RadarChartView = lazy(() => import('./RadarChartView'))
@@ -46,20 +45,20 @@ export function BreakoutRadar({
     : 0
 
   return (
-    <DashboardCard
-      title="Breakout Radar"
-      subtitle={profile ? `Opportunity vs other ${profile.pos}s · last 2 games` : 'Rising usage, before the points follow'}
-      icon={TrendingUp}
-      tone="good"
-      className={className}
-      aside={<CardLink to="/breakouts">View All</CardLink>}
-    >
+    <section aria-label="Breakout Radar" className={`${CARD} flex min-w-0 flex-col p-4 sm:p-5 ${className}`}>
+      <div className="mb-2 flex items-center gap-2.5">
+        <BarChart3 size={22} aria-hidden className="text-accent shrink-0" />
+        <h2 className="min-w-0 flex-1 truncate text-lg font-extrabold tracking-tight">Breakout Radar</h2>
+        <CardLink to="/breakouts" className="shrink-0">
+          View All
+        </CardLink>
+      </div>
       {loading && !b ? (
         <ListSkeleton rows={3} />
       ) : !b || !profile ? (
         <EmptyState>No player meets the breakout criteria right now.</EmptyState>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid gap-2">
           {candidates.length > 1 && (
             <div role="radiogroup" aria-label="Breakout candidates" className="flex flex-wrap gap-1.5">
               {candidates.map((c) => (
@@ -69,7 +68,7 @@ export function BreakoutRadar({
                   role="radio"
                   aria-checked={c.id === b.id}
                   onClick={() => setPicked(c.id)}
-                  className={`rounded-full border px-2.5 py-1 text-xs font-bold transition-colors ${
+                  className={`rounded-full border px-2.5 py-0.5 text-xs font-bold transition-colors ${
                     c.id === b.id ? 'border-accent bg-accent/15 text-ink' : 'border-line text-ink-2 hover:text-ink'
                   }`}
                 >
@@ -78,49 +77,29 @@ export function BreakoutRadar({
               ))}
             </div>
           )}
-          <div className="flex items-center gap-3">
-            <PlayerAvatar player={m.players[b.id]} className="size-12 shrink-0 text-sm" />
-            <div className="min-w-0 flex-1">
-              <Link to={`/players/${b.id}`} className="block truncate font-extrabold hover:underline">
-                {m.name(b.id)}
-              </Link>
-              <div className="text-ink-3 flex flex-wrap items-center gap-1.5 text-xs font-semibold">
-                {b.pos} · {m.team(b.id) || 'FA'} <Ownership m={m} id={b.id} />
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-extrabold tabular-nums">{f1(projOf(b.id))}</div>
-              <div className="text-ink-3 text-[11px]">Proj. pts</div>
-            </div>
-            <div className="text-right">
-              <div className={`text-lg font-extrabold tabular-nums ${trend >= 0 ? 'text-good' : 'text-bad'}`}>
-                {`${trend >= 0 ? '+' : '−'}${Math.abs(Math.round(trend))}%`}
-              </div>
-              <div className="text-ink-3 text-[11px]">Usage trend</div>
-            </div>
-          </div>
+          <p className="text-ink-2 truncate text-xs">
+            <Link to={`/players/${b.id}`} className="text-ink font-bold hover:underline">
+              {m.name(b.id)}
+            </Link>{' '}
+            · {b.pos} {m.team(b.id) || 'FA'} · {f1(projOf(b.id))} proj ·{' '}
+            <span className={trend >= 0 ? 'text-good font-bold' : 'text-bad font-bold'}>
+              {`${trend >= 0 ? '+' : '−'}${Math.abs(Math.round(trend))}%`} usage
+            </span>
+          </p>
           <figure className="m-0">
-            <Suspense fallback={<Skeleton className="h-[210px]" />}>
+            <Suspense fallback={<Skeleton className="h-[178px]" />}>
               <RadarChartView axes={profile.axes} name={m.name(b.id)} />
             </Suspense>
-            <figcaption className="text-ink-3 text-center text-xs">
-              Percentile among {profile.peers} {profile.pos}s with 2+ games (Sleeper weekly stats)
+            <figcaption className="text-ink-3 text-center text-[11px]">
+              Percentile vs {profile.peers} {profile.pos}s, last 2 games (Sleeper stats)
             </figcaption>
           </figure>
-          <dl className="grid grid-cols-3 gap-1.5 text-center">
-            {profile.axes.map((a) => (
-              <div key={a.key} className="border-line/60 bg-bg/40 rounded-lg border px-1 py-1.5">
-                <dt className="text-ink-3 truncate text-[11px] font-semibold">{a.label}</dt>
-                <dd className="text-sm font-extrabold tabular-nums">{a.display}</dd>
-              </div>
-            ))}
-          </dl>
-          <details className="border-line/60 bg-bg/40 rounded-xl border px-3 py-2 text-sm">
-            <summary className="cursor-pointer font-bold">Player breakdown: percentiles and signals</summary>
-            <table className="mt-2 w-full text-sm">
+          <details className="border-line/60 bg-bg/40 rounded-lg border px-3 py-1.5 text-sm">
+            <summary className="cursor-pointer text-xs font-bold">Player breakdown</summary>
+            <table className="mt-2 w-full text-xs">
               <caption className="sr-only">Opportunity profile for {m.name(b.id)}</caption>
               <thead>
-                <tr className="text-ink-3 text-left text-xs">
+                <tr className="text-ink-3 text-left">
                   <th scope="col" className="font-semibold">Measure (last 2 games)</th>
                   <th scope="col" className="text-right font-semibold">Value</th>
                   <th scope="col" className="text-right font-semibold">Percentile</th>
@@ -144,6 +123,6 @@ export function BreakoutRadar({
           </details>
         </div>
       )}
-    </DashboardCard>
+    </section>
   )
 }

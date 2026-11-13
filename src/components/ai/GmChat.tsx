@@ -134,7 +134,20 @@ function AnswerCard({ msg, compact, onRetry, onBuiltIn }: { msg: ChatMessage; co
  * The AI Fantasy GM conversation. Built-in answers arrange cited facts with no AI; AI answers
  * (when the site has a Worker and the user consented) are checked against the same facts.
  */
-export function GmChat({ data, sheet, compact = false, seeds }: { data: Ready; sheet: FactSheet; compact?: boolean; seeds?: string[] }) {
+export function GmChat({
+  data,
+  sheet,
+  compact = false,
+  seeds,
+  initialQuestion,
+}: {
+  data: Ready
+  sheet: FactSheet
+  compact?: boolean
+  seeds?: string[]
+  /** asked once, as soon as the saved conversation has loaded (the dashboard panel opens the chat with it) */
+  initialQuestion?: string
+}) {
   const { model: m, league } = data
   const { aiConsent, aiToken, readAloud, deviceVoices: voicePrefs, setAi } = useAppStore()
   const configured = aiConfigured()
@@ -152,6 +165,7 @@ export function GmChat({ data, sheet, compact = false, seeds }: { data: Ready; s
   const endRef = useRef<HTMLDivElement>(null)
   const logRef = useRef<HTMLDivElement>(null)
   const Recognition = recognitionCtor()
+  const askedInitial = useRef(false)
 
   useEffect(() => {
     let live = true
@@ -255,6 +269,13 @@ export function GmChat({ data, sheet, compact = false, seeds }: { data: Ready; s
       abortRef.current = null
     }
   }
+
+  useEffect(() => {
+    if (!loaded || !initialQuestion || askedInitial.current) return
+    askedInitial.current = true
+    void ask(initialQuestion)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, initialQuestion])
 
   const retry = (msgId: string, viaBuiltIn = false) => {
     const k = messages.findIndex((x) => x.id === msgId)

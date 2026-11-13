@@ -84,6 +84,8 @@ export interface ActionItem {
   detail: string
   state: ItemState
   to: string
+  /** short evidence shown after the title on compact lists: "+6.5 pts", "2" */
+  tag?: string
 }
 
 export interface ActionInput {
@@ -118,6 +120,7 @@ export function actionItems(i: ActionInput): ActionItem[] {
             id: 'lineup',
             title: 'Set optimal lineup',
             detail: `${plural(changes, 'change')} worth +${gain.toFixed(1)} projected pts.`,
+            tag: `+${gain.toFixed(1)} pts`,
             state: 'attention',
             to: '/lineup',
           }
@@ -134,6 +137,7 @@ export function actionItems(i: ActionInput): ActionItem[] {
             id: 'injuries',
             title: 'Review injury updates',
             detail: blocked.map((c) => `${c.name} (${c.status})`).join(', '),
+            tag: String(blocked.length),
             state: 'attention',
             to: '/injuries',
           }
@@ -162,6 +166,7 @@ export function actionItems(i: ActionInput): ActionItem[] {
         ? {
             id: 'waivers',
             title: 'Investigate high-value waivers',
+            tag: String(i.waivers.upgrades.length),
             detail: `${plural(i.waivers.upgrades.length, 'upgrade')}: best is ${best.name} (+${best.gain.toFixed(1)} pts/wk).`,
             state: 'attention',
             to: '/waivers',
@@ -177,6 +182,7 @@ export function actionItems(i: ActionInput): ActionItem[] {
         ? {
             id: 'trades',
             title: 'Review trade opportunities',
+            tag: String(i.trades.mutual),
             detail: `${plural(i.trades.mutual, 'fair trade')} that help both teams. Optional.`,
             state: 'pending',
             to: '/trades',
@@ -191,6 +197,7 @@ export function actionItems(i: ActionInput): ActionItem[] {
         ? {
             id: 'weather',
             title: 'Check upcoming game weather',
+            tag: String(i.weatherFlags),
             detail: `${plural(i.weatherFlags, 'starter')} with a flagged forecast (wind, heavy rain or snow).`,
             state: 'attention',
             to: '/weather',
@@ -278,6 +285,31 @@ export const gameDate = (date: string) =>
         timeZone: 'UTC',
       })
     : 'Date TBD'
+
+/**
+ * Where the week stands, from the schedule's dates and statuses (Sleeper has no kickoff times, so
+ * this counts days): "4 days until kickoff", "Kickoff today", "Games underway", "Week complete".
+ */
+export function kickoffNote(schedule: ScheduleLike[] | null | undefined, week: number, today: string): string | null {
+  const games = (schedule ?? []).filter((g) => g.week === week && g.date)
+  if (!games.length) return null
+  if (games.every((g) => g.status === 'complete')) return 'Week complete'
+  if (games.some((g) => g.status !== 'pre_game' && g.status !== 'complete') || games.some((g) => g.status === 'complete'))
+    return 'Games underway'
+  const first = games.map((g) => g.date).sort()[0]
+  const days = Math.round((Date.parse(`${first}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000)
+  if (days <= 0) return 'Kickoff today'
+  return `${days} day${days === 1 ? '' : 's'} until kickoff`
+}
+
+/** The greeting's one-line read on the matchup (model: best projected lineups). */
+export function outlookLine(week: number, my: number | null, opp: number | null): { text: string; margin: number | null } {
+  if (my === null) return { text: `No Week ${week} matchup is posted yet.`, margin: null }
+  if (opp === null) return { text: `Week ${week}: your team is on a bye this week.`, margin: null }
+  const d = my - opp
+  if (Math.abs(d) < 0.05) return { text: `Week ${week} is here. Your matchup projects as a dead heat.`, margin: 0 }
+  return { text: `Week ${week} is here. You're projected to ${d > 0 ? 'win' : 'lose'} by`, margin: d }
+}
 
 /* ---------------- breakout radar ---------------- */
 

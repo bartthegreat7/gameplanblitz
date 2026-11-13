@@ -2,10 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import {
   Check,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Moon,
-  PanelLeftClose,
-  PanelLeftOpen,
   Settings,
   Shield,
   Sun,
@@ -26,11 +25,24 @@ import { GAME_DAY, isGroup, NAV_SECTIONS, SETTINGS, type NavGroup, type NavLeaf 
    Surfaces: sidebar < raised (hover) < active (selected, with an accent bar and accent icon). */
 const ROW =
   'group/row relative flex items-center gap-3 rounded-lg transition-colors duration-150 focus-visible:-outline-offset-2'
-const TOP = `${ROW} min-h-[38px] px-3 text-[14.5px]`
+const TOP = `${ROW} min-h-[38px] px-3 text-[15px]`
 const RAIL = `${ROW} mx-auto size-11 justify-center`
 const idle = 'text-ink-2 font-medium hover:bg-raised hover:text-ink'
-/* the current page: a solid blue row (white text and icon) */
-const selected = 'bg-select text-select-ink font-semibold shadow-[0_6px_16px_-8px_var(--select)]'
+/* the current page: a solid blue row with a soft glow (white text and icon) */
+const selected =
+  'bg-select text-select-ink font-semibold ring-1 ring-inset ring-accent/45 shadow-[0_8px_22px_-10px_var(--accent-deep)]'
+const onPath = (pathname: string, to: string) => pathname === to || pathname.startsWith(`${to}/`)
+
+/** Small tag at the end of a row: "New", a count. */
+function Tag({ children, on }: { children: React.ReactNode; on: boolean }) {
+  return (
+    <span
+      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] leading-none font-bold ${on ? 'bg-select-ink/20 text-select-ink' : 'bg-accent-deep text-select-ink'}`}
+    >
+      {children}
+    </span>
+  )
+}
 const iconCls = (on: boolean, solid = true) =>
   `shrink-0 transition-colors ${on ? (solid ? 'text-select-ink' : 'text-accent') : 'text-ink-3 group-hover/row:text-ink-2'}`
 
@@ -42,14 +54,11 @@ export function Logo({ collapsed = false }: { collapsed?: boolean }) {
     <div className="flex min-w-0 items-center gap-3">
       <span className="relative grid size-10 shrink-0 place-items-center">
         <Shield size={40} strokeWidth={1.75} aria-hidden className="text-accent fill-accent/15 absolute inset-0 drop-shadow-[0_6px_14px_var(--accent)]" />
-        <span className="text-ink relative -mt-0.5 text-[12px] font-extrabold tracking-tight">GB</span>
+        <span className="text-ink relative -mt-0.5 text-[12px] font-extrabold tracking-tight">GP</span>
       </span>
       {!collapsed && (
-        <div className="min-w-0 leading-tight">
-          <div className="truncate text-lg font-extrabold tracking-tight">GamePlanBitz</div>
-          <div className="text-ink-3 truncate text-[10px] font-bold tracking-[0.12em] uppercase">
-            Fantasy football HQ
-          </div>
+        <div className="min-w-0 truncate text-[1.3rem] leading-tight font-extrabold tracking-tight">
+          GamePlan<span className="text-accent">Bitz</span>
         </div>
       )}
     </div>
@@ -68,6 +77,9 @@ function Leaf({
   live?: boolean
 }) {
   const Icon = item.icon
+  const { pathname } = useLocation()
+  // a hub (Strategy Lab) stays highlighted on the pages it opens
+  const viaHub = (item.also ?? []).some((to) => onPath(pathname, to))
   return (
     <NavLink
       to={item.to}
@@ -75,12 +87,13 @@ function Leaf({
       onClick={onNavigate}
       title={collapsed ? item.label : undefined}
       aria-label={collapsed ? `${item.label}${live ? ', live' : ''}` : undefined}
-      className={({ isActive }) => `${collapsed ? RAIL : TOP} ${isActive ? selected : idle}`}
+      className={({ isActive }) => `${collapsed ? RAIL : TOP} ${isActive || viaHub ? selected : idle}`}
     >
       {({ isActive }) => (
         <>
-          <Icon size={collapsed ? 20 : 18} aria-hidden className={iconCls(isActive)} />
+          <Icon size={collapsed ? 20 : 19} aria-hidden className={iconCls(isActive || viaHub)} />
           {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
+          {!collapsed && item.isNew && <Tag on={isActive || viaHub}>New</Tag>}
           {live &&
             (collapsed ? (
               <span aria-hidden className="bg-good ring-sidebar absolute top-2 right-2 size-2 rounded-full ring-2" />
@@ -176,6 +189,8 @@ function TreeGroup({ group, onNavigate }: { group: NavGroup; onNavigate?: () => 
   }
   const panelId = useId()
   const Icon = group.icon
+  const { leagues } = useSession()
+  const count = group.id === 'leagues' ? leagues.length : 0
   return (
     <div>
       <button
@@ -185,14 +200,20 @@ function TreeGroup({ group, onNavigate }: { group: NavGroup; onNavigate?: () => 
         onClick={() => setOpen(!open)}
         className={`${TOP} w-full text-left ${holdsActive ? 'text-ink hover:bg-raised font-semibold' : idle}`}
       >
-        <Icon size={18} aria-hidden className={iconCls(holdsActive, false)} />
+        <Icon size={19} aria-hidden className={iconCls(holdsActive, false)} />
         <span className="min-w-0 flex-1 truncate">{group.label}</span>
         {holdsActive && !open && <span aria-hidden className="bg-accent size-1.5 rounded-full" />}
-        <ChevronDown
-          size={16}
-          aria-hidden
-          className={`text-ink-3 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-        />
+        {count > 0 && !open ? (
+          <span aria-hidden>
+            <Tag on={false}>{count}</Tag>
+          </span>
+        ) : (
+          <ChevronDown
+            size={16}
+            aria-hidden
+            className={`text-ink-3 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          />
+        )}
       </button>
       {open && (
         <div
@@ -380,11 +401,14 @@ export function NavContent({
             {collapsed || !label ? (
               i > 0 && <div aria-hidden className="bg-line/50 mx-auto mb-2 h-px w-6" />
             ) : (
-              <div
-                id={headingId}
-                className="text-ink-3 px-3 pb-1.5 text-[11px] font-bold tracking-[0.14em] uppercase"
-              >
-                {label}
+              <div className="flex items-center gap-3 px-3 pb-1.5">
+                <span
+                  id={headingId}
+                  className="text-ink-3 text-[12px] font-bold tracking-[0.1em] uppercase"
+                >
+                  {label}
+                </span>
+                <span aria-hidden className="bg-line/70 h-px flex-1" />
               </div>
             )}
             {sec.entries.map((e) =>
@@ -411,8 +435,8 @@ export function NavContent({
   )
 }
 
-/** One-button theme toggle (icon rail and the sidebar's connection card). */
-function ThemeButton({ className, size = 20 }: { className: string; size?: number }) {
+/** One-button theme toggle. */
+export function ThemeButton({ className, size = 20 }: { className: string; size?: number }) {
   const theme = useAppStore((s) => s.theme)
   const setTheme = useAppStore((s) => s.setTheme)
   const next = theme === 'light' ? 'dark' : 'light'
@@ -531,42 +555,74 @@ export function ConnectionBox({
   )
 }
 
+/** The sidebar's footer line: Sleeper connection and the last sync, linking to Settings. */
+function SyncStatus({ collapsed }: { collapsed: boolean }) {
+  const { username, leagueId } = useSession()
+  const rostersQ = useQuery({
+    queryKey: ['rosters', leagueId],
+    queryFn: () => getRosters(leagueId!),
+    enabled: false,
+  })
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30_000)
+    return () => clearInterval(t)
+  }, [])
+  if (!username) return <span className="flex-1" />
+  const synced = rostersQ.dataUpdatedAt || 0
+  return (
+    <NavLink
+      to={SETTINGS.to}
+      title="Sleeper connected · Settings"
+      aria-label={collapsed ? 'Settings' : undefined}
+      className={`text-ink-3 hover:text-ink flex min-w-0 items-center gap-2 rounded-lg text-xs transition-colors ${collapsed ? 'size-9 justify-center' : 'min-h-9 flex-1'}`}
+    >
+      <span aria-hidden className="bg-good size-2 shrink-0 rounded-full shadow-[0_0_8px_var(--good)]" />
+      {!collapsed && (
+        <span className="min-w-0 truncate leading-tight">
+          <span className="text-ink-2 block font-semibold">Sleeper connected</span>
+          {synced ? `Last sync ${relTime(synced, now)}` : 'Syncing…'}
+        </span>
+      )}
+    </NavLink>
+  )
+}
+
 export function Sidebar() {
   const collapsed = useAppStore((s) => s.sidebarCollapsed)
   const toggle = useAppStore((s) => s.toggleSidebar)
-  const Toggle = collapsed ? PanelLeftOpen : PanelLeftClose
+  const Toggle = collapsed ? ChevronRight : ChevronLeft
   return (
     <aside
       data-collapsed={collapsed}
       className={`border-line/60 bg-sidebar sticky top-0 z-[35] hidden h-dvh shrink-0 flex-col overflow-hidden border-r transition-[width] duration-200 md:flex ${
-        collapsed ? 'w-20' : 'w-[264px] xl:w-[280px]'
+        collapsed ? 'w-20' : 'w-[256px] xl:w-[264px]'
       }`}
     >
       <div
-        className={`flex shrink-0 items-center gap-2 ${collapsed ? 'flex-col px-2 pt-5 pb-4' : 'justify-between px-4 pt-6 pb-5 xl:px-5'}`}
+        className={`flex shrink-0 items-center ${collapsed ? 'justify-center px-2 pt-5 pb-4' : 'px-5 pt-6 pb-5'}`}
       >
         <Logo collapsed={collapsed} />
+      </div>
+      <div
+        className={`nav-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-4 ${collapsed ? 'px-2' : 'px-3 xl:px-4'}`}
+      >
+        <NavContent collapsed={collapsed} />
+      </div>
+      <div
+        className={`flex shrink-0 items-center gap-2 ${collapsed ? 'flex-col px-2 py-4' : 'px-4 py-3.5 xl:px-5'}`}
+      >
+        <SyncStatus collapsed={collapsed} />
         <button
           type="button"
           onClick={toggle}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-expanded={!collapsed}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="text-ink-3 hover:bg-raised hover:text-ink grid size-9 shrink-0 place-items-center rounded-lg transition-colors"
+          className="border-line/70 text-ink-2 hover:bg-raised hover:text-ink grid size-9 shrink-0 place-items-center rounded-lg border transition-colors"
         >
           <Toggle size={18} aria-hidden />
         </button>
-      </div>
-      <div
-        className={`nav-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-6 ${collapsed ? 'px-2' : 'px-3 xl:px-4'}`}
-      >
-        <NavContent collapsed={collapsed} />
-      </div>
-      <div
-        className={`border-line/40 grid shrink-0 gap-2.5 border-t ${collapsed ? 'justify-items-center px-2 py-4' : 'p-3 xl:p-4'}`}
-      >
-        <ConnectionBox collapsed={collapsed} withTheme={!collapsed} />
-        {collapsed && <ThemeSwitch collapsed />}
       </div>
     </aside>
   )

@@ -2,6 +2,8 @@ import {
   actionItems,
   gameStrip,
   greetingFor,
+  kickoffNote,
+  outlookLine,
   oddsChange,
   percentile,
   radarProfile,
@@ -166,5 +168,23 @@ describe('playoff odds history', () => {
     expect(h).toHaveLength(2)
     expect(oddsChange(h, '2025-10-03', 62)).toMatchObject({ delta: 12, since: { day: '2025-10-01' } })
     expect(oddsChange(h.slice(1), '2025-10-03', 62)).toBeNull()
+  })
+})
+
+describe('week status and outlook', () => {
+  const g = (date: string, status = 'pre_game', week = 5) => ({ game_id: date + status, week, status, date, home: 'A', away: 'B' })
+  it('counts days to the first game of the week from the schedule', () => {
+    expect(kickoffNote([g('2025-10-09'), g('2025-10-12')], 5, '2025-10-05')).toBe('4 days until kickoff')
+    expect(kickoffNote([g('2025-10-06')], 5, '2025-10-05')).toBe('1 day until kickoff')
+    expect(kickoffNote([g('2025-10-05')], 5, '2025-10-05')).toBe('Kickoff today')
+    expect(kickoffNote([g('2025-10-05', 'complete'), g('2025-10-06')], 5, '2025-10-06')).toBe('Games underway')
+    expect(kickoffNote([g('2025-10-05', 'complete')], 5, '2025-10-07')).toBe('Week complete')
+    expect(kickoffNote([g('2025-10-05', 'pre_game', 6)], 5, '2025-10-01')).toBeNull()
+  })
+  it('states the projected margin, or why there is none', () => {
+    expect(outlookLine(11, 127.4, 119.6)).toEqual({ text: "Week 11 is here. You're projected to win by", margin: 127.4 - 119.6 })
+    expect(outlookLine(11, 100, 110).text).toMatch(/lose by$/)
+    expect(outlookLine(11, 100, null)).toEqual({ text: 'Week 11: your team is on a bye this week.', margin: null })
+    expect(outlookLine(11, null, null).margin).toBeNull()
   })
 })

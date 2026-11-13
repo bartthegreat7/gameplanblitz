@@ -91,9 +91,9 @@ describe('command center header', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Your AI-powered war room for a championship season.')).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { level: 2, name: /^Good (Morning|Afternoon|Evening), Me$/ }),
+      await screen.findByRole('heading', { level: 2, name: /^Good (Morning|Afternoon|Evening), Me$/ }, SLOW),
     ).toBeInTheDocument()
-    expect(screen.getByText('NFL Week 5 · Test League')).toBeInTheDocument()
+    expect(screen.getByText(/Week 5 is here\. You're projected to win by/)).toHaveTextContent('12.0 points')
 
     const tabs = within(screen.getByRole('tablist', { name: 'Command Center views' })).getAllByRole('tab')
     expect(tabs.map((t) => t.textContent)).toEqual(['Overview', 'Team', 'Matchup', 'League', 'Strategy', 'Reports'])
@@ -121,12 +121,13 @@ describe('overview: the four stat cards', () => {
     const welcome = await screen.findByRole('region', { name: 'Welcome' }, SLOW)
     const card = (name: RegExp) => within(welcome).getByRole('link', { name })
     expect(card(/Win Probability/)).toHaveTextContent(`${p}%`)
-    expect(card(/Win Probability/)).toHaveTextContent('Proj. margin +12.0')
-    expect(card(/Win Probability/)).toHaveTextContent(/vs Rival/)
+    expect(card(/Win Probability/)).toHaveTextContent('▲ +12.0 pts')
+    expect(card(/Win Probability/)).toHaveTextContent(/against Rival/)
     expect(within(card(/Win Probability/)).getByRole('img', { name: `${p}% win probability` })).toBeInTheDocument()
     expect(card(/Projected Points/)).toHaveTextContent('18.0')
-    expect(card(/Projected Points/)).toHaveTextContent('Opponent 6.0')
-    expect(card(/Team Health/)).toHaveTextContent('Ready')
+    expect(card(/Projected Points/)).toHaveTextContent('Opp: 6.0')
+    expect(card(/Team Health/)).toHaveTextContent('100%')
+    expect(card(/Team Health/)).toHaveTextContent('All starters available')
     expect(card(/Team Health/)).toHaveTextContent('2 of 2 starters available')
     expect(await within(card(/Playoff Odds/)).findByText('100%', {}, SLOW)).toBeInTheDocument()
     expect(card(/Playoff Odds/)).toHaveTextContent('First snapshot in this browser')
@@ -139,11 +140,12 @@ describe('overview: the four stat cards', () => {
     renderApp()
     const welcome = await screen.findByRole('region', { name: 'Welcome' }, SLOW)
     const health = within(welcome).getByRole('link', { name: /Team Health/ })
-    expect(await within(health).findByText('Action needed', {}, SLOW)).toBeInTheDocument()
+    expect(await within(health).findByText('50%', {}, SLOW)).toBeInTheDocument()
+    expect(health).toHaveTextContent("1 concern · 1 can't play")
     expect(health).toHaveTextContent('1 of 2 starters available')
     expect(health).toHaveTextContent(/R\. Runnerson \(Out\)/)
     const odds = within(welcome).getByRole('link', { name: /Playoff Odds/ })
-    expect(await within(odds).findByText(/\+20 pts since 1\/1/, {}, SLOW)).toBeInTheDocument()
+    expect(await within(odds).findByText(/\+20% since 1\/1/, {}, SLOW)).toBeInTheDocument()
   }, 30_000)
 })
 
@@ -154,16 +156,20 @@ describe('overview: matchup and action items', () => {
     expect(within(card).getByText('Gridiron Gang')).toBeInTheDocument()
     expect(within(card).getByText('3-1 (1st)')).toBeInTheDocument()
     expect(within(card).getByText('1-3 (2nd)')).toBeInTheDocument()
-    expect(within(card).getByText('18.0')).toBeInTheDocument()
+    expect(card).toHaveTextContent('18.0 – 6.0')
     expect(within(card).getByRole('progressbar', { name: 'Win probability' })).toHaveTextContent(`${p}% Win Chance`)
     expect(within(card).getByRole('link', { name: 'Full Analysis' })).toHaveAttribute('href', '#/?tab=matchup')
   }, 30_000)
 
   it('lists the week checklist, verified against the data, each linking to its tool', async () => {
+    const user = userEvent.setup()
     renderApp()
     const card = await screen.findByRole('region', { name: 'Top Action Items' }, SLOW)
+    expect(within(card).getAllByRole('listitem')).toHaveLength(3) // top 3, attention first
+    await user.click(within(card).getByRole('button', { name: /Show all 6 checks/ }))
     const waivers = await within(card).findByRole('link', { name: /Investigate high-value waivers \(Needs attention\)/ }, SLOW)
-    expect(waivers).toHaveTextContent('best is F. Agentson (+4.0 pts/wk)')
+    expect(waivers).toHaveAccessibleName(/best is F\. Agentson \(\+4\.0 pts\/wk\)/)
+    expect(waivers).toHaveTextContent('Investigate high-value waivers (1)')
     expect(waivers).toHaveAttribute('href', '#/waivers')
     // the lineup as set already is the best one: done, from the data
     expect(within(card).getByRole('link', { name: /Lineup is optimal \(Done\)/ })).toHaveAttribute('href', '#/lineup')
@@ -212,11 +218,20 @@ describe('league view', () => {
   }, 30_000)
 })
 
-describe('overview: optimal lineup', () => {
-  it('compares the optimized lineup with the one set in Sleeper, with injury tags and an Optimize Lineup action', async () => {
-    const user = userEvent.setup()
+describe('optimal lineup', () => {
+  it('shows the recommended lineup on the overview with an Optimize Lineup action', async () => {
     mockFetch({ '/players/nfl': { ...PLAYERS, rb1: { ...PLAYERS.rb1, injury_status: 'Out' } } })
     renderApp()
+    const card = await screen.findByRole('region', { name: 'Optimal Lineup' }, SLOW)
+    expect(within(card).getByRole('row', { name: /B\. Benchwood/ })).toHaveTextContent('RB')
+    expect(within(card).queryByRole('row', { name: /R\. Runnerson/ })).not.toBeInTheDocument()
+    expect(within(card).getByRole('link', { name: 'Optimize Lineup' })).toHaveAttribute('href', '#/lineup')
+  }, 30_000)
+
+  it('compares the optimized lineup with the one set in Sleeper on the Team view, with injury tags', async () => {
+    const user = userEvent.setup()
+    mockFetch({ '/players/nfl': { ...PLAYERS, rb1: { ...PLAYERS.rb1, injury_status: 'Out' } } })
+    renderApp('#/?tab=team')
     const card = await screen.findByRole('region', { name: 'Optimal Lineup' }, SLOW)
     const row = (name: RegExp) => within(card).getByRole('row', { name })
     // rb1 is Out: the optimized lineup starts rb2 at RB
@@ -235,13 +250,12 @@ describe('overview: news', () => {
   it('shows the newest articles linking to the publishers, with the player named, and lists unavailable sources', async () => {
     mockFetch({ '/news.json': newsFile() })
     renderApp()
-    const card = await screen.findByRole('region', { name: 'Latest Fantasy News' }, SLOW)
+    const card = await screen.findByRole('region', { name: 'Fantasy News' }, SLOW)
     const links = await within(card).findAllByRole('link', { name: /Headline/ }, SLOW)
     expect(links.map((l) => l.getAttribute('href'))).toEqual([
       'https://www.pub.com/newest',
       'https://www.pub.com/second',
       'https://www.pub.com/mid',
-      'https://www.pub.com/old',
     ])
     expect(links[0]).toHaveAttribute('target', '_blank')
     expect(links[0]).toHaveTextContent('Rusher Runnerson')
@@ -250,7 +264,7 @@ describe('overview: news', () => {
 
   it('explains when the news feed has not been published', async () => {
     renderApp()
-    const card = await screen.findByRole('region', { name: 'Latest Fantasy News' }, SLOW)
+    const card = await screen.findByRole('region', { name: 'Fantasy News' }, SLOW)
     expect(await within(card).findByText(/hasn't been published yet/, {}, SLOW)).toBeInTheDocument()
   }, 30_000)
 })
@@ -261,16 +275,24 @@ describe('right column', () => {
     renderApp()
     const gm = await screen.findByRole('region', { name: 'AI Fantasy GM' }, SLOW)
     const chips = within(within(gm).getByRole('group', { name: 'Suggested questions' })).getAllByRole('button')
-    expect(chips.map((c) => c.textContent)).toEqual([
+    expect(chips.map((c) => c.getAttribute('aria-label'))).toEqual([
       'Who should I start this week?',
       'Evaluate a trade for me',
       'Best waiver pickups?',
       'What are my playoff chances?',
     ])
     expect(within(gm).getByRole('button', { name: 'Send question' })).toBeDisabled()
+    // asking opens the conversation with the answer
     await user.click(chips[2])
-    const answer = await within(gm).findByRole('article', { name: 'Fantasy GM answer' }, SLOW)
+    const dialog = await screen.findByRole('dialog', { name: 'AI Fantasy GM' })
+    const answer = await within(dialog).findByRole('article', { name: 'Fantasy GM answer' }, SLOW)
     expect(answer).toHaveTextContent(/Free Agentson/)
+    await user.keyboard('{Escape}')
+    // a typed question works the same way
+    await user.type(within(gm).getByLabelText('Ask the Fantasy GM'), 'What are my playoff odds?')
+    await user.click(within(gm).getByRole('button', { name: 'Send question' }))
+    const again = await screen.findByRole('dialog', { name: 'AI Fantasy GM' })
+    expect(await within(again).findByText('What are my playoff odds?', {}, SLOW)).toBeInTheDocument()
   }, 30_000)
 
   it('shows the podcast panel with working New Episode and Episode Library actions', async () => {
@@ -295,9 +317,9 @@ describe('bottom strip', () => {
     const games = await within(strip).findAllByRole('listitem', {}, SLOW)
     expect(games).toHaveLength(1) // only CCC @ AAA involves either lineup
     expect(games[0]).toHaveTextContent('Live')
-    expect(games[0]).toHaveTextContent('CCC@AAA')
+    expect(games[0]).toHaveTextContent('CCC @ AAA')
     expect(games[0]).toHaveTextContent(/You: R\. Runnerson, W\. Catchwell/)
-    expect(within(strip).getByRole('link', { name: /Game Day Live/ })).toHaveAttribute('href', '#/gameday')
+    expect(within(strip).getByRole('link', { name: /Game Day Dashboard/ })).toHaveAttribute('href', '#/gameday')
   }, 30_000)
 
   it('counts games with weather concerns and opens the weather analysis', async () => {

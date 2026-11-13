@@ -15,7 +15,7 @@ const SHORT: Record<RadarAxis['key'], string> = {
 export default function RadarChartView({ axes, name }: { axes: RadarAxis[]; name: string }) {
   const data = axes.map((a) => ({ axis: SHORT[a.key], pct: Math.round(a.pct) }))
   return (
-    <ResponsiveContainer width="100%" height={210}>
+    <ResponsiveContainer width="100%" height={178}>
       <RadarChart data={data} outerRadius="72%" margin={{ top: 6, right: 24, bottom: 6, left: 24 }}>
         <PolarGrid stroke="var(--line)" />
         <PolarAngleAxis dataKey="axis" tick={{ fill: 'var(--ink-2)', fontSize: 11, fontWeight: 600 }} />

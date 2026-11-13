@@ -9,9 +9,9 @@ import { weekContext } from '../../lib/analytics/schedule'
 import { f1 } from '../../lib/format'
 import { findMyMatchup, findOpponent } from '../../lib/insights'
 import { getMatchups, getSchedule, type SleeperMatchup } from '../../lib/sleeper'
-import { CardLink } from '../dashboard/DashboardCard'
+import { Link } from 'react-router-dom'
 import { CARD } from '../dashboard/styles'
-import { EmptyState, Skeleton } from '../ui/states'
+import { Skeleton } from '../ui/states'
 
 export function TeamLogo({ team, className = 'size-8' }: { team: string; className?: string }) {
   const [failed, setFailed] = useState(false)
@@ -45,41 +45,40 @@ const strip = (s: LiveSide | null, team: (id: string) => string): StripPlayer[] 
     .map((p) => ({ id: p.id, name: p.name, team: team(p.id), points: p.points, remaining: p.remaining, state: p.state }))
 
 function Game({ g }: { g: StripGame }) {
-  const st = STATE[g.state]
   const pts = (ps: StripPlayer[]) => ps.reduce((a, p) => a + p.points, 0)
+  const names = (ps: StripPlayer[]) => (ps.length ? ps.map((p) => p.name).join(', ') : 'none')
+  const status =
+    g.state === 'live'
+      ? `Live · ${f1(pts(g.mine))}–${f1(pts(g.theirs))}`
+      : g.state === 'final'
+        ? `Final · ${f1(pts(g.mine))}–${f1(pts(g.theirs))}`
+        : gameDate(g.date)
+  const impact =
+    g.state === 'final' || Math.abs(g.net) < 0.05
+      ? null
+      : `${g.net > 0 ? '+' : '−'}${f1(Math.abs(g.net))} ${g.net > 0 ? 'you' : 'opp'}`
   return (
-    <li className="border-line/60 bg-card-2/60 flex w-64 shrink-0 snap-start flex-col gap-2 rounded-xl border p-3">
-      <div className="flex items-center justify-between gap-2 text-xs font-bold">
-        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 ${st.cls}`}>
-          {g.state === 'live' && <span aria-hidden className="bg-bad size-1.5 animate-pulse rounded-full" />}
-          {st.label}
+    <li
+      title={`You: ${names(g.mine)} · Opponent: ${names(g.theirs)}`}
+      className="border-line/60 flex shrink-0 snap-start items-center gap-3 border-l px-4 first:border-l-0"
+    >
+      <TeamLogo team={g.away} className="size-10" />
+      <span className="leading-tight">
+        <span className="block text-[15px] font-extrabold whitespace-nowrap">
+          {g.away} @ {g.home}
         </span>
-        <span className="text-ink-3">{gameDate(g.date)}</span>
-      </div>
-      <div className="flex items-center gap-2 font-extrabold">
-        <TeamLogo team={g.away} />
-        <span>{g.away}</span>
-        <span className="text-ink-3 text-sm">@</span>
-        <TeamLogo team={g.home} />
-        <span>{g.home}</span>
-      </div>
-      <div className="text-ink-2 grid gap-0.5 text-xs">
-        <span className="truncate">
-          <b className="text-ink">You:</b> {g.mine.length ? g.mine.map((p) => p.name).join(', ') : 'none'}
-          {g.state !== 'scheduled' && g.mine.length > 0 && ` · ${f1(pts(g.mine))} pts`}
+        <span className="text-ink-2 block text-[13px] whitespace-nowrap">
+          {g.state === 'live' && <span aria-hidden className="bg-bad mr-1.5 inline-block size-1.5 animate-pulse rounded-full align-middle" />}
+          {status}
+          {impact && (
+            <span className={`ml-1.5 font-bold ${g.net > 0 ? 'text-good' : 'text-bad'}`}>{impact}</span>
+          )}
         </span>
-        <span className="truncate">
-          <b className="text-ink">Opp:</b> {g.theirs.length ? g.theirs.map((p) => p.name).join(', ') : 'none'}
-          {g.state !== 'scheduled' && g.theirs.length > 0 && ` · ${f1(pts(g.theirs))} pts`}
+        <span className="sr-only">
+          {STATE[g.state].label}. You: {names(g.mine)}. Opp: {names(g.theirs)}.
+          {impact ? ` Projected points still to come: ${impact}.` : ''}
         </span>
-      </div>
-      <div className={`mt-auto text-xs font-bold ${g.net > 0.05 ? 'text-good' : g.net < -0.05 ? 'text-bad' : 'text-ink-3'}`}>
-        {g.state === 'final'
-          ? 'Game over'
-          : Math.abs(g.net) < 0.05
-            ? 'Even stakes'
-            : `${g.net > 0 ? '+' : '−'}${f1(Math.abs(g.net))} proj. pts ${g.net > 0 ? 'for you' : 'for your opponent'}`}
-      </div>
+      </span>
     </li>
   )
 }
@@ -119,39 +118,33 @@ export function GameDayStrip({ data, className = '' }: { data: Ready; className?
   }, [scheduleQ.data, matchups, m, week])
   const live = games?.filter((g) => g.state === 'live').length ?? 0
   return (
-    <section aria-label="Game Day Dashboard" className={`${CARD} min-w-0 p-5 ${className}`}>
-      <div className="mb-3 flex flex-wrap items-center gap-3">
-        <span className="bg-bad/12 text-bad grid size-10 shrink-0 place-items-center rounded-xl">
-          <Radio size={20} aria-hidden />
+    <section
+      aria-label="Game Day Dashboard"
+      className={`${CARD} flex min-w-0 flex-col gap-3 p-4 lg:flex-row lg:items-center ${className}`}
+    >
+      <Link to="/gameday" className="group flex shrink-0 items-center gap-3 lg:pr-2">
+        <Radio size={30} aria-hidden className="text-accent shrink-0" />
+        <span className="leading-tight">
+          <span className="block text-lg font-extrabold tracking-tight group-hover:underline">Game Day Dashboard</span>
+          <span className="text-ink-2 block text-[13px]">
+            {live ? `${live} game${live === 1 ? '' : 's'} live now` : 'Live status and impact on your matchup'}
+          </span>
+          <span className="sr-only"> (open Game Day Live)</span>
         </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-extrabold tracking-tight">Game Day Dashboard</h2>
-          <p className="text-ink-3 text-sm">
-            {live
-              ? `${live} game${live === 1 ? '' : 's'} live now`
-              : `Week ${week} games with your starters or your opponent's`}{' '}
-            · kickoff times aren't published by Sleeper
-          </p>
-        </div>
-        <CardLink to="/gameday">Game Day Live</CardLink>
-      </div>
+      </Link>
       {!games ? (
         scheduleQ.isError ? (
-          <EmptyState>The NFL schedule could not be loaded.</EmptyState>
+          <span className="text-ink-3 text-sm">The NFL schedule could not be loaded.</span>
         ) : (
-          <div className="flex gap-3">
-            {[0, 1, 2].map((i) => (
-              <Skeleton key={i} className="h-36 w-64 shrink-0" />
-            ))}
-          </div>
+          <Skeleton className="h-12 flex-1" />
         )
       ) : games.length === 0 ? (
-        <EmptyState>No Week {week} games involve your matchup.</EmptyState>
+        <span className="text-ink-3 text-sm">No Week {week} games involve your matchup.</span>
       ) : (
         <ul
           aria-label={`Week ${week} games`}
           tabIndex={0}
-          className="nav-scroll -mx-1 flex snap-x gap-3 overflow-x-auto px-1 pb-2"
+          className="nav-scroll border-line/60 relative flex min-w-0 flex-1 snap-x overflow-x-auto py-1 lg:border-l"
         >
           {games.map((g) => (
             <Game key={g.id} g={g} />

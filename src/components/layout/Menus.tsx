@@ -5,8 +5,10 @@ import {
   CalendarDays,
   ChevronDown,
   LogOut,
+  Moon,
   Newspaper,
   Settings,
+  Sun,
 } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -226,6 +228,8 @@ export function Notifications() {
 export function UserMenu() {
   const username = useAppStore((s) => s.username)
   const signOut = useAppStore((s) => s.signOut)
+  const theme = useAppStore((s) => s.theme)
+  const setTheme = useAppStore((s) => s.setTheme)
   const navigate = useNavigate()
   const userQ = useQuery({
     queryKey: ['user', username],
@@ -253,6 +257,15 @@ export function UserMenu() {
             <Link to="/settings" onClick={close} className={item}>
               <Settings size={16} aria-hidden /> Settings
             </Link>
+            <button
+              type="button"
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+              className={item}
+            >
+              {theme === 'light' ? <Moon size={16} aria-hidden /> : <Sun size={16} aria-hidden />}
+              {theme === 'light' ? 'Dark theme' : 'Light theme'}
+            </button>
             <button
               type="button"
               onClick={() => {

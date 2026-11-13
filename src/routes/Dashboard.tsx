@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { ArrowRight, FileText } from 'lucide-react'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { GameDayCard } from '../components/cards/GameDayCard'
@@ -12,13 +12,16 @@ import { BreakoutRadar } from '../components/command/BreakoutRadar'
 import { CommandHeader } from '../components/command/CommandHeader'
 import { GameDayStrip } from '../components/command/GameDayStrip'
 import { GmPanel } from '../components/command/GmPanel'
+import { LineupCompact } from '../components/command/LineupCompact'
+import { MatchupCompact } from '../components/command/MatchupCompact'
 import { MyTeam } from '../components/command/MyTeam'
+import { NewsCompact } from '../components/command/NewsCompact'
 import { PodcastPanel } from '../components/command/PodcastPanel'
 import { isTab, type TabId } from '../components/command/tabs'
 import { WeatherWatch } from '../components/command/WeatherWatch'
 import { Welcome } from '../components/command/Welcome'
 import { DashboardBackground } from '../components/dashboard/DashboardBackground'
-import { FantasyNews, OptimalLineup, WaiverTargets } from '../components/dashboard/Insights'
+import { WaiverTargets } from '../components/dashboard/Insights'
 import { LeagueRace } from '../components/dashboard/LeagueRace'
 import { MatchupHero } from '../components/dashboard/Matchup'
 import { QuickAccess } from '../components/dashboard/QuickAccess'
@@ -32,10 +35,10 @@ import { useOddsHistory } from '../hooks/useOddsHistory'
 import { useProjectionEngine } from '../hooks/useProjectionEngine'
 import { useSession } from '../hooks/useSession'
 import { useUsageBook } from '../hooks/useUsageBook'
-import { actionItems, teamHealth } from '../lib/analytics/command'
+import { actionItems, kickoffNote, teamHealth } from '../lib/analytics/command'
 import { breakouts } from '../lib/analytics/opportunity'
 import { findMyMatchup, gameDay } from '../lib/insights'
-import { getUser } from '../lib/sleeper'
+import { getSchedule, getUser } from '../lib/sleeper'
 
 const LINKS: [string, string][] = [
   ['/scouting', 'Opponent Scouting'],
@@ -90,6 +93,17 @@ function DashboardView({ data }: { data: Ready }) {
   const engine = useProjectionEngine(data)
   const { book, loading: usageLoading } = useUsageBook(data)
   const gd = useMemo(() => gameDay(m, matchups), [m, matchups])
+  const scheduleQ = useQuery({
+    queryKey: ['schedule', data.season],
+    queryFn: () => getSchedule(data.season),
+    staleTime: 30 * 60_000,
+    retry: 1,
+  })
+  const [today] = useState(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })
+  const weekNote = kickoffNote(scheduleQ.data, week, today)
   const plan = gm.lineup?.plan ?? null
   const health = useMemo(() => (plan ? teamHealth(plan) : null), [plan])
   const oddsChange = useOddsHistory(league.league_id, week, gm.playoff?.playoffPct ?? null)
@@ -124,22 +138,24 @@ function DashboardView({ data }: { data: Ready }) {
   return (
     <>
       <DashboardBackground />
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_21rem] 2xl:grid-cols-[minmax(0,1fr)_23.5rem] 3xl:grid-cols-[minmax(0,1fr)_26rem]">
-        <div className="@container/main grid min-w-0 content-start gap-5">
-          <CommandHeader tab={tab} onTab={setTab} />
-          <ProjNotice data={data} />
+      <div className="-mt-1 mb-3 grid grid-cols-1 gap-3">
+        <CommandHeader tab={tab} onTab={setTab} />
+        <ProjNotice data={data} />
+      </div>
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_21rem] 2xl:grid-cols-[minmax(0,1fr)_23.5rem] 3xl:grid-cols-[minmax(0,1fr)_26rem] gap-4">
+        <div className="@container/main grid min-w-0 content-start gap-4">
           <div
             role="tabpanel"
             id={`cc-panel-${tab}`}
             aria-labelledby={`cc-tab-${tab}`}
-            className="grid min-w-0 gap-5"
+            className="grid min-w-0 gap-4"
           >
             {tab === 'overview' && (
               <>
                 <Welcome
                   name={name}
                   week={week}
-                  leagueName={league.name}
+                  weekNote={weekNote}
                   gd={gd}
                   health={health}
                   odds={gm.playoff}
@@ -147,30 +163,14 @@ function DashboardView({ data }: { data: Ready }) {
                   oddsChange={oddsChange}
                   seasonDone={gm.seasonDone}
                 />
-                <div className="grid grid-cols-1 gap-5 @[46rem]/main:grid-cols-2">
-                  <MatchupHero
-                    m={m}
-                    matchups={matchups}
-                    gd={gd}
-                    week={week}
-                    weatherPlayer={null}
-                    analysisTo="/?tab=matchup"
-                  />
+                <div className="grid grid-cols-1 gap-4 @[46rem]/main:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+                  <MatchupCompact m={m} matchups={matchups} gd={gd} week={week} />
                   <ActionItems items={items} />
                 </div>
-                <div className="grid grid-cols-1 gap-5 @[46rem]/main:grid-cols-2 @[68rem]/main:grid-cols-3">
-                  <OptimalLineup analysis={gm.lineup} week={week} projOf={projOf} />
-                  <BreakoutRadar
-                    m={m}
-                    list={radar}
-                    book={book}
-                    projOf={projOf}
-                    loading={usageLoading}
-                  />
-                  <FantasyNews
-                    news={gm.news}
-                    className="@[46rem]/main:col-span-2 @[68rem]/main:col-span-1"
-                  />
+                <div className="grid grid-cols-1 gap-4 @[40rem]/main:grid-cols-2 @[52rem]/main:grid-cols-3">
+                  <LineupCompact analysis={gm.lineup} week={week} projOf={projOf} />
+                  <BreakoutRadar m={m} list={radar} book={book} projOf={projOf} loading={usageLoading} />
+                  <NewsCompact news={gm.news} className="@[40rem]/main:col-span-2 @[52rem]/main:col-span-1" />
                 </div>
               </>
             )}
@@ -256,13 +256,13 @@ function DashboardView({ data }: { data: Ready }) {
           </div>
         </div>
 
-        <aside aria-label="AI Fantasy GM and podcast" className="grid min-w-0 content-start gap-5">
+        <aside aria-label="AI Fantasy GM and podcast" className="grid min-w-0 content-start gap-4">
           <GmPanel data={data} />
           <PodcastPanel leagueId={league.league_id} />
         </aside>
 
         {tab === 'overview' && (
-          <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_19rem] xl:col-span-2">
+          <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_19rem] xl:col-span-2 xl:grid-cols-[minmax(0,1fr)_21rem] 2xl:grid-cols-[minmax(0,1fr)_23.5rem] 3xl:grid-cols-[minmax(0,1fr)_26rem]">
             <GameDayStrip data={data} />
             <WeatherWatch week={week} />
           </div>

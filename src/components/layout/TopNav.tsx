@@ -29,8 +29,10 @@ export function TopNav({ onOpenNav }: { onOpenNav: () => void }) {
   useSearchShortcut(openSearch)
 
   return (
-    <header className="border-line bg-bg/85 sticky top-0 z-30 border-b px-4 pt-[max(env(safe-area-inset-top,0px),0.75rem)] pb-3 backdrop-blur md:px-6 md:pt-3">
-      <div className="flex items-center gap-2.5">
+    <header
+      className={`sticky top-0 z-30 border-b px-4 pt-[max(env(safe-area-inset-top,0px),0.75rem)] pb-3 backdrop-blur md:px-6 md:pt-3 ${onDashboard ? 'border-line md:border-transparent bg-bg/85 md:static md:bg-transparent md:pt-4 md:pb-0 md:backdrop-blur-none' : 'border-line bg-bg/85'}`}
+    >
+      <div className="flex flex-wrap items-center gap-2.5">
         <button
           type="button"
           onClick={onOpenNav}
@@ -42,22 +44,40 @@ export function TopNav({ onOpenNav }: { onOpenNav: () => void }) {
         <span className="md:hidden">
           <Logo collapsed />
         </span>
+        {onDashboard && (
+          <div className="order-last min-w-0 basis-full pt-2 md:order-none md:flex-1 md:basis-auto md:pt-0">
+            <h1 className="text-2xl leading-tight font-extrabold tracking-tight sm:text-[1.75rem] xl:text-[2.1rem]">
+              Fantasy Football Command Center
+            </h1>
+            <p className="text-ink-2 text-sm sm:text-base xl:text-lg">
+              Your AI-powered war room for a championship season.
+            </p>
+          </div>
+        )}
         <button
           type="button"
           onClick={openSearch}
           aria-label="Search players, articles, or your league"
           aria-keyshortcuts={isMac ? 'Meta+K' : 'Control+K'}
-          className="border-line bg-card text-ink-3 hover:border-accent/50 ml-auto flex h-11 min-w-0 items-center gap-3 rounded-xl border px-3 text-left transition-colors sm:ml-0 sm:max-w-xl sm:flex-1"
+          className={
+            onDashboard
+              ? `${ICON_BTN} ml-auto md:ml-0`
+              : 'border-line bg-card text-ink-3 hover:border-accent/50 ml-auto flex h-11 min-w-0 items-center gap-3 rounded-xl border px-3 text-left transition-colors sm:ml-0 sm:max-w-xl sm:flex-1'
+          }
         >
           <Search size={18} aria-hidden className="text-ink-2" />
-          <span className="hidden flex-1 truncate sm:inline">
-            Search players, articles, or your league…
-          </span>
-          <kbd className="border-line bg-panel text-ink-3 hidden rounded-md border px-1.5 py-0.5 text-xs font-semibold sm:inline">
-            {isMac ? '⌘K' : 'Ctrl K'}
-          </kbd>
+          {!onDashboard && (
+            <>
+              <span className="hidden flex-1 truncate sm:inline">
+                Search players, articles, or your league…
+              </span>
+              <kbd className="border-line bg-panel text-ink-3 hidden rounded-md border px-1.5 py-0.5 text-xs font-semibold sm:inline">
+                {isMac ? '⌘K' : 'Ctrl K'}
+              </kbd>
+            </>
+          )}
         </button>
-        <div className="flex items-center gap-2 sm:ml-auto">
+        <div className={`flex items-center gap-2 ${onDashboard ? '' : 'sm:ml-auto'}`}>
           {username && (
             <>
               {!onDashboard && <WeekSelect className="hidden lg:flex" />}

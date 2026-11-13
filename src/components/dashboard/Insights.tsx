@@ -44,7 +44,7 @@ const INJURY_SHORT: Record<string, string> = {
 }
 
 /** Sleeper's injury designation as a compact tag (full text for screen readers and on hover). */
-function InjuryTag({ status }: { status: string }) {
+export function InjuryTag({ status }: { status: string }) {
   if (!status) return null
   const out = availabilityOf(status) === 'out'
   return (
